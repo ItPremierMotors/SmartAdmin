@@ -1,0 +1,34 @@
+﻿@model SmartAdmin.Models.UserRole.RoleViewModels.UpdateRoleViewModel
+
+<form id="formEditarRol">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="row">
+        <!-- SOLO VISUAL -->
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Nombre actual del rol</label>
+            <input type="text"
+                   class="form-control"
+                   value="@Model.Name"
+                   readonly />
+        </div>
+
+        <!-- ESTE ES EL QUE SE ENVÍA -->
+        <div class="col-md-6 mb-3">
+            <label class="form-label">
+                Nuevo nombre del rol <span class="text-danger">*</span>
+            </label>
+            <input asp-for="Name" class="form-control" required />
+            <span asp-validation-for="Name" class="text-danger small"></span>
+        </div>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" onclick="ModificarRol()">
+        <i class="fas fa-save me-2"></i>Guardar
+    </button>
+</div>

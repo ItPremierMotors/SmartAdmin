@@ -1,0 +1,550 @@
+@{
+    ViewData["Title"] = "Administración de Versiones de Vehículo";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-car me-2"></i>@ViewData["Title"]</h1>
+        <button class="btn btn-primary" id="btnNuevo">
+            <i class="fas fa-plus me-2"></i>Nueva Versión
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Filtros -->
+            <div class="row g-3 mb-3" id="filtrosAvanzados">
+                <div class="col-md-5">
+                    <label class="form-label small text-muted">Marca</label>
+                    <select class="form-select form-select-sm" id="filtroMarca">
+                        <option value="">Todas las marcas</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small text-muted">Modelo</label>
+                    <select class="form-select form-select-sm" id="filtroModelo">
+                        <option value="">Todos los modelos</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-secondary btn-sm w-100" onclick="limpiarFiltros()">
+                        <i class="fas fa-times me-1"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando versiones...</p>
+            </div>
+
+            <table class="table table-hover table-sm d-none" id="tabla" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th></th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Marca - Modelo</th>
+                        <th>Motor</th>
+                        <th>Transmisión</th>
+                        <th>Potencia</th>
+                        <th>Precio Base</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+    /* Ocultar la flecha automática de DataTables, solo mostrar nuestro ícono */
+    td.dt-control:before {
+        display: none !important;
+    }
+
+    td.dt-control {
+        text-align: center;
+        cursor: pointer;
+    }
+</style>
+<script>
+    const URLS = {
+        getAll: '@Url.Action("GetAll")',
+        getDetail: '@Url.Action("VersionDetailPartial")',
+        createPartial: '@Url.Action("CreatePartial")',
+        editPartial: '@Url.Action("EditPartial")',
+        deletePartial: '@Url.Action("DeletePartial")',
+        create: '@Url.Action("Create")',
+        edit: '@Url.Action("Edit")',
+        delete: '@Url.Action("Delete")',
+        getMarcas: '@Url.Action("GetAll", "Marca")',
+        getModelos: '@Url.Action("GetByMarca", "Modelos")'
+    };
+
+    let dataTable = null;
+    let datosOriginales = [];
+
+    $(document).ready(function () {
+        cargarDatos();
+        cargarFiltros();
+        $('#btnNuevo').on('click', abrirModalCrear);
+    });
+
+    function cargarDatos() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function(response) {
+                if (response.success && response.data) {
+                    datosOriginales = response.data;
+                    inicializarDataTable(response.data);
+                } else {
+                    Toast.error('Error al cargar versiones');
+                    $('#loading').addClass('d-none');
+                }
+            },
+            error: function() {
+                Toast.error('Error al conectar con el servidor');
+                $('#loading').addClass('d-none');
+            }
+        });
+    }
+
+    function inicializarDataTable(datos) {
+        dataTable = $('#tabla').DataTable({
+            data: datos,
+            columns: [
+                {
+                    className: 'dt-control',
+                    orderable: false,
+                    data: null,
+                    defaultContent: '<i class="fas fa-plus-circle text-primary" style="cursor:pointer"></i>'
+                },
+                {
+                    data: 'codigo',
+                    render: data => `<span class="badge bg-secondary">${data || 'N/A'}</span>`
+                },
+                { data: 'nombre' },
+                {
+                    data: null,
+                    render: (data, type, row) => {
+                        return `<div class="text-nowrap">
+                                    <strong>${row.marcaNombre}</strong> ${row.modeloNombre}
+                                </div>`;
+                    }
+                },
+                {
+                    data: 'motor',
+                    render: data => data || '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: 'transmision',
+                    render: data => data || '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: null,
+                    render: (data, type, row) => {
+                        if (row.potenciaHp) {
+                            return `<strong>${row.potenciaHp} HP</strong>`;
+                        }
+                        return '<span class="text-muted">N/A</span>';
+                    }
+                },
+                {
+                    data: 'precioBase',
+                    render: data => data ? `<span class="text-success">$${data.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>` : '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: 'versionId',
+                    orderable: false,
+                    className: 'text-center',
+                    render: (data, type, row) => `
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="abrirModalEliminar(${data})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `
+                }
+            ],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            order: [[1, 'asc']],
+            responsive: true
+        });
+
+        $('#loading').addClass('d-none');
+        $('#tabla').removeClass('d-none');
+
+        // Agregar evento para expandir/colapsar filas (off para evitar duplicados al recargar)
+        $('#tabla tbody').off('click', 'td.dt-control').on('click', 'td.dt-control', function () {
+            var tr = $(this).closest('tr');
+            var row = dataTable.row(tr);
+
+            if (row.child.isShown()) {
+                // Cerrar fila
+                row.child.hide();
+                tr.find('.dt-control i').removeClass('fa-minus-circle text-danger').addClass('fa-plus-circle text-primary');
+            } else {
+                // Abrir fila
+                row.child(formatearDetalles(row.data())).show();
+                tr.find('.dt-control i').removeClass('fa-plus-circle text-primary').addClass('fa-minus-circle text-danger');
+            }
+        });
+    }
+
+    function formatearDetalles(d) {
+        return `
+            <div class="p-3 bg-light border rounded">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-primary text-white py-2">
+                                <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Motor y Rendimiento</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr>
+                                        <td class="text-muted">Cilindraje:</td>
+                                        <td><strong>${d.cilindraje ? d.cilindraje + ' L' : 'N/A'}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Potencia:</td>
+                                        <td><strong>${d.potenciaHp ? d.potenciaHp + ' HP' : 'N/A'}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Torque:</td>
+                                        <td><strong>${d.torqueNm ? d.torqueNm + ' Nm' : 'N/A'}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Tracción:</td>
+                                        <td><strong>${d.traccionNombre || 'N/A'}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Combustible:</td>
+                                        <td><strong>${d.tipoCombustibleNombre || 'N/A'}</strong></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-success text-white py-2">
+                                <h6 class="mb-0"><i class="fas fa-car me-2"></i>Características</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr>
+                                        <td class="text-muted">Puertas:</td>
+                                        <td><strong>${d.numPuertas || 'N/A'}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Pasajeros:</td>
+                                        <td><strong>${d.numPasajeros || 'N/A'}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Transmisión:</td>
+                                        <td><strong>${d.transmision || 'N/A'}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Año Versión:</td>
+                                        <td><strong>${d.anioVersion || 'N/A'}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Precio:</td>
+                                        <td><strong class="text-success">${d.precioBase ? '$' + d.precioBase.toLocaleString('en-US', {minimumFractionDigits: 2}) : 'N/A'}</strong></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    ${d.caracteristicasPrincipales ? `
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-info text-white py-2">
+                                <h6 class="mb-0"><i class="fas fa-list-ul me-2"></i>Características Principales</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-0">${d.caracteristicasPrincipales}</p>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    function cargarFiltros() {
+        // Inicializar Select2 en Marca
+        $('#filtroMarca').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Todas las marcas',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Inicializar Select2 en Modelo
+        $('#filtroModelo').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Todos los modelos',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Cargar marcas
+        $.ajax({
+            url: URLS.getMarcas,
+            type: 'GET',
+            success: function(response) {
+                if (response.success && response.data) {
+                    response.data.forEach(marca => {
+                        $('#filtroMarca').append(`<option value="${marca.marcaId}">${marca.nombre}</option>`);
+                    });
+                }
+            }
+        });
+
+        // Cascada marca -> modelo
+        $('#filtroMarca').on('change', function() {
+            const marcaId = $(this).val();
+            $('#filtroModelo').html('<option value="">Todos los modelos</option>').val('').trigger('change.select2');
+
+            if (marcaId) {
+                $.ajax({
+                    url: URLS.getModelos,
+                    type: 'GET',
+                    data: { marcaId: marcaId },
+                    success: function(response) {
+                        if (response.success && response.data) {
+                            response.data.forEach(modelo => {
+                                $('#filtroModelo').append(`<option value="${modelo.modeloId}">${modelo.nombre}</option>`);
+                            });
+                        }
+                    }
+                });
+            }
+
+            aplicarFiltros();
+        });
+
+        // Filtrar al cambiar modelo
+        $('#filtroModelo').on('change', function() {
+            aplicarFiltros();
+        });
+    }
+
+    function aplicarFiltros() {
+        const marcaNombre = $('#filtroMarca option:selected').text().trim();
+        const modeloId = $('#filtroModelo').val();
+        const marcaSeleccionada = $('#filtroMarca').val();
+
+        let datosFiltrados = [...datosOriginales];
+
+        if (marcaSeleccionada) {
+            datosFiltrados = datosFiltrados.filter(v => v.marcaNombre === marcaNombre);
+        }
+        if (modeloId) {
+            datosFiltrados = datosFiltrados.filter(v => v.modeloId == modeloId);
+        }
+
+        if (dataTable) {
+            dataTable.destroy();
+        }
+        inicializarDataTable(datosFiltrados);
+    }
+
+    function limpiarFiltros() {
+        $('#filtroMarca').val('').trigger('change.select2');
+        $('#filtroModelo').html('<option value="">Todos los modelos</option>').val('').trigger('change.select2');
+
+        if (dataTable) {
+            dataTable.destroy();
+        }
+        inicializarDataTable(datosOriginales);
+    }
+
+    function recargarTabla() {
+        if (dataTable) {
+            dataTable.destroy();
+        }
+        cargarDatos();
+    }
+
+    // Funciones para abrir modales
+    function abrirModalCrear() {
+        AppModal.open({
+            title: '<i class="fas fa-car me-2"></i>Nueva Versión',
+            url: URLS.createPartial,
+            size: 'xl'
+        });
+    }
+
+    function abrirModalEditar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-pencil me-2"></i>Editar Versión',
+            url: URLS.editPartial,
+            data: { id: id },
+            size: 'xl'
+        });
+    }
+
+    function abrirModalEliminar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-trash me-2"></i>Eliminar Versión',
+            url: URLS.deletePartial,
+            data: { id: id },
+            size: 'sm'
+        });
+    }
+
+    // Guardar nueva versión
+    function guardarVersion() {
+        const form = document.getElementById('formCrearVersion');
+        const btn = document.getElementById('btnGuardarVersion');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const data = {
+            modeloId: parseInt($('#ModeloId').val()),
+            codigo: $('#Codigo').val().trim(),
+            nombre: $('#Nombre').val().trim(),
+            motor: $('#Motor').val().trim() || null,
+            transmision: $('#Transmision').val().trim() || null,
+            traccion: $('#Traccion').val() ? parseInt($('#Traccion').val()) : null,
+            numPuertas: $('#NumPuertas').val() ? parseInt($('#NumPuertas').val()) : null,
+            numPasajeros: $('#NumPasajeros').val() ? parseInt($('#NumPasajeros').val()) : null,
+            tipoCombustible: parseInt($('#TipoCombustible').val()),
+            cilindraje: $('#Cilindraje').val() ? parseFloat($('#Cilindraje').val()) : null,
+            potenciaHp: $('#PotenciaHp').val() ? parseInt($('#PotenciaHp').val()) : null,
+            torqueNm: $('#TorqueNm').val() ? parseInt($('#TorqueNm').val()) : null,
+            precioBase: $('#PrecioBase').val() ? parseFloat($('#PrecioBase').val()) : null,
+            anioVersion: $('#AnioVersion').val() ? parseInt($('#AnioVersion').val()) : null,
+            caracteristicasPrincipales: $('#CaracteristicasPrincipales').val().trim() || null
+        };
+
+        $.ajax({
+            url: URLS.create,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: function () {
+                $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando...');
+            },
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Versión creada exitosamente');
+                }
+            },
+            error: function (xhr) {
+                const response = xhr.responseJSON;
+                Toast.error(response?.message || 'Error al guardar la versión');
+            },
+            complete: function () {
+                $(btn).prop('disabled', false).html(btnOriginal);
+            }
+        });
+    }
+
+    // Actualizar versión existente
+    function actualizarVersion() {
+        const form = document.getElementById('formEditarVersion');
+        const btn = document.getElementById('btnActualizarVersion');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const data = {
+            versionId: parseInt($('input[name="VersionId"]').val()),
+            modeloId: parseInt($('#ModeloIdEdit').val()),
+            codigo: $('#Codigo').val().trim(),
+            nombre: $('#Nombre').val().trim(),
+            motor: $('#Motor').val().trim() || null,
+            transmision: $('#Transmision').val().trim() || null,
+            traccion: $('#TraccionEdit').val() ? parseInt($('#TraccionEdit').val()) : null,
+            numPuertas: $('#NumPuertasEdit').val() ? parseInt($('#NumPuertasEdit').val()) : null,
+            numPasajeros: $('#NumPasajerosEdit').val() ? parseInt($('#NumPasajerosEdit').val()) : null,
+            tipoCombustible: parseInt($('#TipoCombustibleEdit').val()),
+            cilindraje: $('#Cilindraje').val() ? parseFloat($('#Cilindraje').val()) : null,
+            potenciaHp: $('#PotenciaHp').val() ? parseInt($('#PotenciaHp').val()) : null,
+            torqueNm: $('#TorqueNm').val() ? parseInt($('#TorqueNm').val()) : null,
+            precioBase: $('#PrecioBase').val() ? parseFloat($('#PrecioBase').val()) : null,
+            anioVersion: $('#AnioVersion').val() ? parseInt($('#AnioVersion').val()) : null,
+            caracteristicasPrincipales: $('#CaracteristicasPrincipales').val().trim() || null
+        };
+
+        $.ajax({
+            url: URLS.edit,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: function () {
+                $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...');
+            },
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Versión actualizada exitosamente');
+                }
+            },
+            error: function (xhr) {
+                const response = xhr.responseJSON;
+                Toast.error(response?.message || 'Error al actualizar la versión');
+            },
+            complete: function () {
+                $(btn).prop('disabled', false).html(btnOriginal);
+            }
+        });
+    }
+
+    // Eliminar versión
+    function confirmarEliminar() {
+        const id = parseInt($('#deleteId').val());
+        const btn = document.getElementById('btnEliminarVersion');
+        const btnOriginal = btn.innerHTML;
+
+        $.ajax({
+            url: URLS.delete,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(id),
+            beforeSend: function () {
+                $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Eliminando...');
+            },
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Versión eliminada exitosamente');
+                } else {
+                    Toast.error(response.message || 'Error al eliminar');
+                }
+            },
+            error: function (xhr) {
+                const response = xhr.responseJSON;
+                Toast.error(response?.message || 'Error al eliminar la versión');
+            },
+            complete: function () {
+                $(btn).prop('disabled', false).html(btnOriginal);
+            }
+        });
+    }
+</script>
+}

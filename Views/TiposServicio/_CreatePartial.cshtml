@@ -1,0 +1,95 @@
+@model SmartAdmin.Models.Catalogo.TipoServicio.CreateTipoServicioViewModel
+
+<form id="formCrearTipoServicio">
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Codigo" class="form-label">
+                @Html.DisplayNameFor(m => m.Codigo)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Codigo" class="form-control text-uppercase" placeholder="Ej: SRV-CAM, SRV-FRN" required />
+            <span asp-validation-for="Codigo" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Nombre" class="form-label">
+                @Html.DisplayNameFor(m => m.Nombre)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Nombre" class="form-control" placeholder="Ej: Cambio de aceite, Alineación" required />
+            <span asp-validation-for="Nombre" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="Clasificacion" class="form-label">
+                @Html.DisplayNameFor(m => m.Clasificacion)<span class="text-danger">*</span>
+            </label>
+            <select asp-for="Clasificacion"
+                    asp-items="Html.GetEnumSelectList<SmartAdmin.Models.Enums.ClasificacionServicio>()"
+                    class="form-select" required>
+            </select>
+            <span asp-validation-for="Clasificacion" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="DuracionEstimadaMin" class="form-label">
+                @Html.DisplayNameFor(m => m.DuracionEstimadaMin)<span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+                <input asp-for="DuracionEstimadaMin" class="form-control" type="number" min="1" max="1440" placeholder="60" required />
+                <span class="input-group-text">min</span>
+            </div>
+            <span asp-validation-for="DuracionEstimadaMin" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="PrecioBase" class="form-label">
+                @Html.DisplayNameFor(m => m.PrecioBase)
+            </label>
+            <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input asp-for="PrecioBase" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+            </div>
+            <span asp-validation-for="PrecioBase" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="StockRequerido" class="form-label">
+                @Html.DisplayNameFor(m => m.StockRequerido)
+            </label>
+            <input asp-for="StockRequerido" class="form-control" type="number" min="0" placeholder="0" />
+            <span asp-validation-for="StockRequerido" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3 d-flex align-items-end">
+            <div class="form-check form-switch">
+                <input asp-for="PermiteWalkIn" class="form-check-input" type="checkbox" />
+                <label class="form-check-label" asp-for="PermiteWalkIn">Permite Walk-In</label>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3 d-flex align-items-end">
+            <div class="form-check form-switch">
+                <input asp-for="RequiereCita" class="form-check-input" type="checkbox" checked />
+                <label class="form-check-label" asp-for="RequiereCita">Requiere Cita</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-3">
+            <label asp-for="Descripcion" class="form-label">
+                @Html.DisplayNameFor(m => m.Descripcion)
+            </label>
+            <textarea asp-for="Descripcion" class="form-control" rows="3"
+                      placeholder="Descripción del servicio..."></textarea>
+            <span asp-validation-for="Descripcion" class="text-danger"></span>
+        </div>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnGuardarTipoServicio" onclick="guardarTipoServicio()">
+        <i class="fas fa-save me-1"></i> Guardar
+    </button>
+</div>

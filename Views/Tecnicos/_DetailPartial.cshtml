@@ -1,0 +1,53 @@
+@model SmartAdmin.Models.Catalogo.Tecnico.TecnicoViewModel
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white py-2">
+                <h6 class="mb-0"><i class="fas fa-user-cog me-2"></i>Información del Técnico</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted" style="width:40%">Código:</td>
+                        <td><span class="badge bg-secondary">@Model.Codigo</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Nombre Completo:</td>
+                        <td><strong>@Model.NombreCompleto</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Especialidad:</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(Model.Especialidad))
+                            {
+                                <span class="badge bg-info">@Model.Especialidad</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Sin asignar</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Bahía Asignada:</td>
+                        <td>
+                            @if (Model.BahiaAsignada.HasValue)
+                            {
+                                <span class="badge bg-primary">Bahía @Model.BahiaAsignada</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Sin asignar</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Sucursal:</td>
+                        <td>@(Model.SucursalNombre ?? "Sin asignar")</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,93 @@
+@model SmartAdmin.Models.Catalogo.TipoServicio.TipoServicioViewModel
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white py-2">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información General</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted" style="width:40%">Código:</td>
+                        <td><span class="badge bg-secondary">@Model.Codigo</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Nombre:</td>
+                        <td><strong>@Model.Nombre</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Clasificación:</td>
+                        <td><span class="badge bg-info">@Model.ClasificacionNombre</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Descripción:</td>
+                        <td>@(Model.Descripcion ?? "N/A")</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white py-2">
+                <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Operación</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted">Duración:</td>
+                        <td><strong>@Model.DuracionFormateada</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Precio Base:</td>
+                        <td><strong class="text-success">$@Model.PrecioBase.ToString("N2")</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Stock Requerido:</td>
+                        <td><strong>@Model.StockRequerido</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark py-2">
+                <h6 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Disponibilidad</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted">Permite Walk-In:</td>
+                        <td>
+                            @if (Model.PermiteWalkIn)
+                            {
+                                <span class="badge bg-success"><i class="fas fa-check"></i> Sí</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary"><i class="fas fa-times"></i> No</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Requiere Cita:</td>
+                        <td>
+                            @if (Model.RequiereCita)
+                            {
+                                <span class="badge bg-info"><i class="fas fa-calendar-check"></i> Sí</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary"><i class="fas fa-times"></i> No</span>
+                            }
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,214 @@
+@{
+    ViewData["Title"] = "Estados de Orden de Servicio";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-stream me-2"></i>@ViewData["Title"]</h1>
+        <span class="badge bg-info fs-6"><i class="fas fa-lock me-1"></i> Solo lectura</span>
+    </div>
+
+    <!-- Flujo de Estados Visual -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h6 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Flujo de Estados</h6>
+        </div>
+        <div class="card-body">
+            <div id="flujoEstados" class="d-flex flex-wrap align-items-center justify-content-center gap-2 py-3">
+                <div class="text-center text-muted">
+                    <div class="spinner-border spinner-border-sm"></div> Cargando flujo...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Estados -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div id="loading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando estados...</p>
+            </div>
+
+            <table class="table table-hover table-sm d-none" id="tabla" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>Orden</th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Estado Final</th>
+                        <th>Permite Modificación</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+    .estado-nodo {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: 2px solid;
+        transition: transform 0.2s;
+    }
+    .estado-nodo:hover {
+        transform: scale(1.05);
+    }
+    .estado-nodo.normal {
+        background-color: #e3f2fd;
+        border-color: #1976d2;
+        color: #1976d2;
+    }
+    .estado-nodo.final {
+        background-color: #fce4ec;
+        border-color: #c62828;
+        color: #c62828;
+    }
+    .estado-flecha {
+        color: #9e9e9e;
+        font-size: 1.2rem;
+    }
+</style>
+<script>
+    const URLS = {
+        getAll: '@Url.Action("GetAll")',
+        getDetail: '@Url.Action("DetailPartial")'
+    };
+
+    let dataTable = null;
+
+    $(document).ready(function () {
+        cargarDatos();
+    });
+
+    function cargarDatos() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    renderizarFlujo(response.data);
+                    inicializarDataTable(response.data);
+                } else {
+                    Toast.error('Error al cargar estados');
+                    $('#loading').addClass('d-none');
+                    $('#flujoEstados').html('<p class="text-danger">Error al cargar flujo</p>');
+                }
+            },
+            error: function () {
+                Toast.error('Error al conectar con el servidor');
+                $('#loading').addClass('d-none');
+            }
+        });
+    }
+
+    function renderizarFlujo(estados) {
+        // Separar flujo principal de estados especiales (orden >= 90, ej: Cancelada)
+        const ordenados = [...estados].sort((a, b) => a.ordenSecuencial - b.ordenSecuencial);
+        const flujoPrincipal = ordenados.filter(e => e.ordenSecuencial < 90);
+        const estadosEspeciales = ordenados.filter(e => e.ordenSecuencial >= 90);
+
+        let html = '<div class="d-flex flex-wrap align-items-center justify-content-center gap-2">';
+
+        flujoPrincipal.forEach((estado, index) => {
+            const clase = estado.esEstadoFinal ? 'final' : 'normal';
+            const icono = estado.esEstadoFinal ? 'fa-flag-checkered' : 'fa-circle';
+
+            html += `<div class="estado-nodo ${clase}" title="${estado.descripcion || estado.nombre}">
+                        <i class="fas ${icono} me-2"></i>${estado.nombre}
+                     </div>`;
+
+            if (index < flujoPrincipal.length - 1) {
+                html += `<span class="estado-flecha"><i class="fas fa-arrow-right"></i></span>`;
+            }
+        });
+
+        html += '</div>';
+
+        // Estados especiales (Cancelada, etc.) se muestran debajo separados
+        if (estadosEspeciales.length > 0) {
+            html += '<div class="d-flex justify-content-center gap-2 mt-3">';
+            estadosEspeciales.forEach(estado => {
+                const clase = estado.esEstadoFinal ? 'final' : 'normal';
+                const icono = estado.esEstadoFinal ? 'fa-flag-checkered' : 'fa-circle';
+                html += `<div class="estado-nodo ${clase}" title="${estado.descripcion || estado.nombre}">
+                            <i class="fas ${icono} me-2"></i>${estado.nombre}
+                         </div>`;
+            });
+            html += '</div>';
+        }
+
+        $('#flujoEstados').html(html);
+    }
+
+    function inicializarDataTable(datos) {
+        dataTable = $('#tabla').DataTable({
+            data: datos,
+            columns: [
+                {
+                    data: 'ordenSecuencial',
+                    render: data => `<span class="badge bg-dark">${data}</span>`
+                },
+                {
+                    data: 'codigo',
+                    render: data => `<span class="badge bg-secondary font-monospace">${data}</span>`
+                },
+                {
+                    data: 'nombre',
+                    render: (data, type, row) => `<strong>${data}</strong>`
+                },
+                {
+                    data: 'descripcion',
+                    render: data => data || '<span class="text-muted">Sin descripción</span>'
+                },
+                {
+                    data: 'esEstadoFinal',
+                    render: data => data
+                        ? '<span class="badge bg-danger"><i class="fas fa-flag-checkered"></i> Sí</span>'
+                        : '<span class="badge bg-success"><i class="fas fa-play"></i> No</span>'
+                },
+                {
+                    data: 'permiteModificacion',
+                    render: data => data
+                        ? '<span class="badge bg-success"><i class="fas fa-check"></i> Sí</span>'
+                        : '<span class="badge bg-secondary"><i class="fas fa-lock"></i> No</span>'
+                },
+                {
+                    data: 'estadoId',
+                    orderable: false,
+                    className: 'text-center',
+                    render: (data) => `
+                        <button class="btn btn-outline-info btn-sm" onclick="abrirModalDetalle(${data})" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    `
+                }
+            ],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            pageLength: 10,
+            order: [[0, 'asc']],
+            responsive: true
+        });
+
+        $('#loading').addClass('d-none');
+        $('#tabla').removeClass('d-none');
+    }
+
+    function abrirModalDetalle(id) {
+        AppModal.open({
+            title: '<i class="fas fa-eye me-2"></i>Detalle del Estado',
+            url: URLS.getDetail,
+            data: { id: id },
+            size: 'md'
+        });
+    }
+</script>
+}

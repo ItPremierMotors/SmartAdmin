@@ -1,0 +1,306 @@
+@{
+    ViewData["Title"] = "Administración de Modelos";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-car me-2"></i>@ViewData["Title"]</h1>
+        <button class="btn btn-primary" id="btnNuevo">
+            <i class="fas fa-plus me-2"></i>Nuevo Modelo
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div id="loading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando modelos...</p>
+            </div>
+
+            <table class="table table-hover table-sm d-none" id="tabla" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Marca</th>
+                        <th>Segmento</th>
+                        <th>Años</th>
+                        <th>Estado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@section Scripts {
+<script>
+    const URLS = {
+        getAll: '@Url.Action("GetAll")',
+        getDetail: '@Url.Action("ModeloDetailPartial")',
+        createPartial: '@Url.Action("CreatePartial")',
+        editPartial: '@Url.Action("EditPartial")',
+        deletePartial: '@Url.Action("DeletePartial")',
+        create: '@Url.Action("Create")',
+        edit: '@Url.Action("Edit")',
+        delete: '@Url.Action("Delete")'
+    };
+
+    let dataTable = null;
+
+    $(document).ready(function () {
+        inicializarDataTable();
+        $('#btnNuevo').on('click', abrirModalCrear);
+    });
+
+    function inicializarDataTable() {
+        dataTable = $('#tabla').DataTable({
+            ajax: {
+                url: URLS.getAll,
+                dataSrc: function (res) {
+                    $('#loading').addClass('d-none');
+                    $('#tabla').removeClass('d-none');
+                    return res.success ? (res.data || []) : [];
+                }
+            },
+            columns: [
+                {
+                    data: 'codigo',
+                    render: data => `<span class="badge bg-secondary">${data || 'N/A'}</span>`
+                },
+                { data: 'nombre' },
+                {
+                    data: 'marcaNombre',
+                    render: data => data || '<span class="text-muted">Sin marca</span>'
+                },
+                {
+                    data: 'segmentoNombre',
+                    render: data => {
+                       const segmentos = {
+                        'Sedan': 'primary',
+                        'Suv': 'success',
+                        'Hatchback': 'info',
+                        'Pickup': 'warning',
+                        'Deportivo': 'danger',
+                        'Van': 'secondary',
+                        'Coupe': 'dark',
+                        'Electrico': 'success',
+                        'Hibrido': 'info',
+                        'Otro': 'light text-dark'
+                    };
+                        const color = segmentos[data] || 'dark';
+                        return `<span class="badge bg-${color}">${data || 'N/A'}</span>`;
+                    }
+                },
+                {
+                    data: null,
+                    render: (data, type, row) => {
+                        const inicio = row.anioInicio || '?';
+                        const fin = row.anioFin || 'Actual';
+                        return `${inicio} - ${fin}`;
+                    }
+                },
+                {
+                    data: 'estaEnProduccion',
+                    render: data =>
+                        data
+                            ? '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>En producción</span>'
+                            : '<span class="badge bg-secondary"><i class="fas fa-stop-circle me-1"></i>Descontinuado</span>'
+                },
+                {
+                    data: 'modeloId',
+                    orderable: false,
+                    className: 'text-center',
+                    render: (data, type, row) => `
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-info" onclick="abrirModalDetalle('${data}')" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="abrirModalEditar('${data}')" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="abrirModalEliminar('${data}')" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `
+                }
+            ],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            order: [[1, 'asc']],
+            responsive: true
+        });
+    }
+
+    // Funciones para recargar datatable
+    function recargarTabla() {
+        dataTable.ajax.reload(null, false);
+    }
+
+    // Funciones para abrir modales
+    function abrirModalCrear() {
+        AppModal.open({
+            title: '<i class="fas fa-car me-2"></i>Nuevo Modelo',
+            url: URLS.createPartial,
+            size: 'lg'
+        });
+    }
+
+    function abrirModalDetalle(id) {
+        AppModal.open({
+            title: '<i class="fas fa-eye me-2"></i>Detalle del Modelo',
+            url: URLS.getDetail,
+            data: { id: id },
+            size: 'lg'
+        });
+    }
+
+    function abrirModalEditar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-pencil me-2"></i>Editar Modelo',
+            url: URLS.editPartial,
+            data: { id: id },
+            size: 'lg'
+        });
+    }
+
+    function abrirModalEliminar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-trash me-2"></i>Eliminar Modelo',
+            url: URLS.deletePartial,
+            data: { id: id },
+            size: 'sm'
+        });
+    }
+
+    // Guardar nuevo modelo
+    function guardarModelo() {
+        const form = document.getElementById('formCrearModelo');
+        const btn = document.getElementById('btnGuardarModelo');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const data = {
+            marcaId: parseInt($('#MarcaId').val()),
+            codigo: $('#Codigo').val().trim(),
+            nombre: $('#Nombre').val().trim(),
+            segmento: parseInt($('#Segmento').val()),
+            anioInicio: $('#AnioInicio').val() ? parseInt($('#AnioInicio').val()) : null,
+            anioFin: $('#AnioFin').val() ? parseInt($('#AnioFin').val()) : null,
+            descripcion: $('#Descripcion').val().trim(),
+            imagenUrl: $('#ImagenUrl').val().trim()
+        };
+
+        $.ajax({
+            url: URLS.create,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: function () {
+                $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando...');
+            },
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Modelo creado exitosamente');
+                }
+            },
+            error: function (xhr) {
+                const response = xhr.responseJSON;
+                Toast.error(response?.message || 'Error al guardar el modelo');
+            },
+            complete: function () {
+                $(btn).prop('disabled', false).html(btnOriginal);
+            }
+        });
+    }
+
+    // Actualizar modelo existente
+    function actualizarModelo() {
+        const form = document.getElementById('formEditarModelo');
+        const btn = document.getElementById('btnEditarModelo');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const data = {
+            modeloId: parseInt($('#ModeloId').val()),
+            marcaId: parseInt($('#MarcaId').val()),
+            codigo: $('#Codigo').val().trim(),
+            nombre: $('#Nombre').val().trim(),
+            segmento: parseInt($('#Segmento').val()),
+            anioInicio: $('#AnioInicio').val() ? parseInt($('#AnioInicio').val()) : null,
+            anioFin: $('#AnioFin').val() ? parseInt($('#AnioFin').val()) : null,
+            descripcion: $('#Descripcion').val().trim(),
+            imagenUrl: $('#ImagenUrl').val().trim()
+        };
+
+        $.ajax({
+            url: URLS.edit,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: function () {
+                $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...');
+            },
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Modelo actualizado exitosamente');
+                }
+            },
+            error: function (xhr) {
+                const response = xhr.responseJSON;
+                Toast.error(response?.message || 'Error al actualizar el modelo');
+            },
+            complete: function () {
+                $(btn).prop('disabled', false).html(btnOriginal);
+            }
+        });
+    }
+
+    // Eliminar modelo
+    function confirmarEliminar() {
+        const id = parseInt($('#deleteId').val());
+        const btn = document.getElementById('btnEliminarModelo');
+        const btnOriginal = btn.innerHTML;
+
+        $.ajax({
+            url: URLS.delete,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(id),
+            beforeSend: function () {
+                $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Eliminando...');
+            },
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Modelo eliminado exitosamente');
+                } else {
+                    Toast.error(response.message || 'Error al eliminar');
+                }
+            },
+            error: function (xhr) {
+                const response = xhr.responseJSON;
+                Toast.error(response?.message || 'Error al eliminar el modelo');
+            },
+            complete: function () {
+                $(btn).prop('disabled', false).html(btnOriginal);
+            }
+        });
+    }
+</script>
+}

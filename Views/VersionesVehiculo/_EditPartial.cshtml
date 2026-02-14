@@ -1,0 +1,238 @@
+@model SmartAdmin.Models.Catalogo.VersionVehiculo.EditVersionVehiculoViewModel
+
+<form id="formEditarVersion">
+    <input type="hidden" asp-for="VersionId" />
+
+    <ul class="nav nav-tabs mb-3" id="versionEditTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="basico-edit-tab" data-bs-toggle="tab" data-bs-target="#basico-edit" type="button" role="tab">
+                <i class="fas fa-info-circle me-1"></i> Básico
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="motor-edit-tab" data-bs-toggle="tab" data-bs-target="#motor-edit" type="button" role="tab">
+                <i class="fas fa-cog me-1"></i> Motor y Transmisión
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="caracteristicas-edit-tab" data-bs-toggle="tab" data-bs-target="#caracteristicas-edit" type="button" role="tab">
+                <i class="fas fa-car me-1"></i> Características
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="versionEditTabContent">
+        <!-- Tab Básico -->
+        <div class="tab-pane fade show active" id="basico-edit" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ModeloId" class="form-label">
+                        @Html.DisplayNameFor(m => m.ModeloId)<span class="text-danger">*</span>
+                    </label>
+                    <select asp-for="ModeloId" class="form-select select2-modelo-edit" id="ModeloIdEdit" required>
+                        <option value="">Seleccione un modelo...</option>
+                    </select>
+                    <span asp-validation-for="ModeloId" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Codigo" class="form-label">
+                        @Html.DisplayNameFor(m => m.Codigo)<span class="text-danger">*</span>
+                    </label>
+                    <input asp-for="Codigo" class="form-control text-uppercase" placeholder="Ej: EX-MT, LUX-AT" required />
+                    <span asp-validation-for="Codigo" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <label asp-for="Nombre" class="form-label">
+                        @Html.DisplayNameFor(m => m.Nombre)<span class="text-danger">*</span>
+                    </label>
+                    <input asp-for="Nombre" class="form-control" placeholder="Ej: EX 1.5L Manual" required />
+                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="AnioVersion" class="form-label">
+                        @Html.DisplayNameFor(m => m.AnioVersion)
+                    </label>
+                    <input asp-for="AnioVersion" class="form-control" type="number" min="2000" max="2100" placeholder="2024" />
+                    <span asp-validation-for="AnioVersion" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label asp-for="PrecioBase" class="form-label">
+                        @Html.DisplayNameFor(m => m.PrecioBase)
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input asp-for="PrecioBase" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+                    </div>
+                    <span asp-validation-for="PrecioBase" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Motor y Transmisión -->
+        <div class="tab-pane fade" id="motor-edit" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Motor" class="form-label">
+                        @Html.DisplayNameFor(m => m.Motor)
+                    </label>
+                    <input asp-for="Motor" class="form-control" placeholder="Ej: 1.5L 4 cilindros" />
+                    <span asp-validation-for="Motor" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Transmision" class="form-label">
+                        @Html.DisplayNameFor(m => m.Transmision)
+                    </label>
+                    <input asp-for="Transmision" class="form-control" placeholder="Ej: Manual 5 velocidades" />
+                    <span asp-validation-for="Transmision" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="TipoCombustible" class="form-label">
+                        @Html.DisplayNameFor(m => m.TipoCombustible)<span class="text-danger">*</span>
+                    </label>
+                    <select asp-for="TipoCombustible"
+                            asp-items="Html.GetEnumSelectList<SmartAdmin.Models.Enums.TipoCombustible>()"
+                            class="form-select" id="TipoCombustibleEdit" required>
+                    </select>
+                    <span asp-validation-for="TipoCombustible" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Traccion" class="form-label">
+                        @Html.DisplayNameFor(m => m.Traccion)
+                    </label>
+                    <select asp-for="Traccion"
+                            asp-items="Html.GetEnumSelectList<SmartAdmin.Models.Enums.TipoTraccion>()"
+                            class="form-select" id="TraccionEdit">
+                        <option value="">Seleccione...</option>
+                    </select>
+                    <span asp-validation-for="Traccion" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Cilindraje" class="form-label">
+                        @Html.DisplayNameFor(m => m.Cilindraje)
+                    </label>
+                    <div class="input-group">
+                        <input asp-for="Cilindraje" class="form-control" type="number" step="0.1" min="0.1" max="10" placeholder="1.5" />
+                        <span class="input-group-text">L</span>
+                    </div>
+                    <span asp-validation-for="Cilindraje" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="PotenciaHp" class="form-label">
+                        @Html.DisplayNameFor(m => m.PotenciaHp)
+                    </label>
+                    <div class="input-group">
+                        <input asp-for="PotenciaHp" class="form-control" type="number" min="1" placeholder="105" />
+                        <span class="input-group-text">HP</span>
+                    </div>
+                    <span asp-validation-for="PotenciaHp" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="TorqueNm" class="form-label">
+                        @Html.DisplayNameFor(m => m.TorqueNm)
+                    </label>
+                    <div class="input-group">
+                        <input asp-for="TorqueNm" class="form-control" type="number" min="1" placeholder="145" />
+                        <span class="input-group-text">Nm</span>
+                    </div>
+                    <span asp-validation-for="TorqueNm" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Características -->
+        <div class="tab-pane fade" id="caracteristicas-edit" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="NumPuertas" class="form-label">
+                        @Html.DisplayNameFor(m => m.NumPuertas)
+                    </label>
+                    <select asp-for="NumPuertas" class="form-select" id="NumPuertasEdit">
+                        <option value="">Seleccione...</option>
+                        <option value="2">2 puertas</option>
+                        <option value="3">3 puertas</option>
+                        <option value="4">4 puertas</option>
+                        <option value="5">5 puertas</option>
+                    </select>
+                    <span asp-validation-for="NumPuertas" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="NumPasajeros" class="form-label">
+                        @Html.DisplayNameFor(m => m.NumPasajeros)
+                    </label>
+                    <select asp-for="NumPasajeros" class="form-select" id="NumPasajerosEdit">
+                        <option value="">Seleccione...</option>
+                        <option value="2">2 pasajeros</option>
+                        <option value="4">4 pasajeros</option>
+                        <option value="5">5 pasajeros</option>
+                        <option value="7">7 pasajeros</option>
+                        <option value="8">8 pasajeros</option>
+                        <option value="9">9 pasajeros</option>
+                    </select>
+                    <span asp-validation-for="NumPasajeros" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <label asp-for="CaracteristicasPrincipales" class="form-label">
+                        @Html.DisplayNameFor(m => m.CaracteristicasPrincipales)
+                    </label>
+                    <textarea asp-for="CaracteristicasPrincipales" class="form-control" rows="4"
+                              placeholder="Ej: Aire acondicionado, Frenos ABS, Airbags frontales y laterales, Sistema de audio Bluetooth..."></textarea>
+                    <span asp-validation-for="CaracteristicasPrincipales" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnActualizarVersion" onclick="actualizarVersion()">
+        <i class="fas fa-save me-1"></i> Actualizar
+    </button>
+</div>
+
+<script>
+    $(document).ready(function() {
+        cargarModelosEdit();
+    });
+
+    function cargarModelosEdit() {
+        $.ajax({
+            url: '@Url.Action("GetAll", "Modelos")',
+            type: 'GET',
+            success: function(response) {
+                if (response.success && response.data) {
+                    const select = $('#ModeloIdEdit');
+                    select.empty().append('<option value="">Seleccione un modelo...</option>');
+                    response.data.forEach(modelo => {
+                        const selected = modelo.modeloId == @Model.ModeloId ? 'selected' : '';
+                        select.append(`<option value="${modelo.modeloId}" ${selected}>${modelo.marcaNombre} - ${modelo.nombre}</option>`);
+                    });
+
+                    $('.select2-modelo-edit').select2({
+                        dropdownParent: $('.modal'),
+                        theme: 'bootstrap-5',
+                        placeholder: 'Seleccione un modelo...',
+                        allowClear: true
+                    });
+                }
+            }
+        });
+    }
+</script>

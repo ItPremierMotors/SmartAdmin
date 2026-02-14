@@ -1,0 +1,349 @@
+@{
+    ViewData["Title"] = "Administración de Tipos de Servicio";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-tools me-2"></i>@ViewData["Title"]</h1>
+        <button class="btn btn-primary" id="btnNuevo">
+            <i class="fas fa-plus me-2"></i>Nuevo Tipo de Servicio
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Filtros -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Clasificación</label>
+                    <select class="form-select form-select-sm" id="filtroClasificacion">
+                        <option value="">Todas</option>
+                        <option value="Rapido">Rápido</option>
+                        <option value="Estandar">Estándar</option>
+                        <option value="Largo">Largo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Walk-In</label>
+                    <select class="form-select form-select-sm" id="filtroWalkIn">
+                        <option value="">Todos</option>
+                        <option value="true">Sí permite</option>
+                        <option value="false">No permite</option>
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end gap-2">
+                    <button class="btn btn-primary btn-sm" onclick="aplicarFiltros()">
+                        <i class="fas fa-filter me-1"></i> Filtrar
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="limpiarFiltros()">
+                        <i class="fas fa-times me-1"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando tipos de servicio...</p>
+            </div>
+
+            <table class="table table-hover table-sm d-none" id="tabla" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Clasificación</th>
+                        <th>Duración</th>
+                        <th>Precio Base</th>
+                        <th>Walk-In</th>
+                        <th>Cita</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const URLS = {
+        getAll: '@Url.Action("GetAll")',
+        getDetail: '@Url.Action("DetailPartial")',
+        createPartial: '@Url.Action("CreatePartial")',
+        editPartial: '@Url.Action("EditPartial")',
+        deletePartial: '@Url.Action("DeletePartial")',
+        create: '@Url.Action("Create")',
+        edit: '@Url.Action("Edit")',
+        delete: '@Url.Action("Delete")'
+    };
+
+    let dataTable = null;
+    let datosOriginales = [];
+
+    $(document).ready(function () {
+        cargarDatos();
+        $('#btnNuevo').on('click', abrirModalCrear);
+    });
+
+    function cargarDatos() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    datosOriginales = response.data;
+                    inicializarDataTable(response.data);
+                } else {
+                    Toast.error('Error al cargar tipos de servicio');
+                    $('#loading').addClass('d-none');
+                }
+            },
+            error: function () {
+                Toast.error('Error al conectar con el servidor');
+                $('#loading').addClass('d-none');
+            }
+        });
+    }
+
+    function inicializarDataTable(datos) {
+        dataTable = $('#tabla').DataTable({
+            data: datos,
+            columns: [
+                {
+                    data: 'codigo',
+                    render: data => `<span class="badge bg-secondary">${data || 'N/A'}</span>`
+                },
+                { data: 'nombre' },
+                {
+                    data: 'clasificacion',
+                    render: function (data) {
+                        const badges = { 0: 'bg-success', 1: 'bg-success', 2: 'bg-primary', 3: 'bg-warning text-dark' };
+                        const nombres = { 0: 'Rápido', 1: 'Rápido', 2: 'Estándar', 3: 'Largo' };
+                        return `<span class="badge ${badges[data] || 'bg-secondary'}">${nombres[data] || data}</span>`;
+                    }
+                },
+                {
+                    data: 'duracionFormateada',
+                    render: data => data || 'N/A'
+                },
+                {
+                    data: 'precioBase',
+                    render: data => data ? `<span class="text-success fw-bold">$${data.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>` : '$0.00'
+                },
+                {
+                    data: 'permiteWalkIn',
+                    render: data => data
+                        ? '<span class="badge bg-success"><i class="fas fa-check"></i> Sí</span>'
+                        : '<span class="badge bg-secondary"><i class="fas fa-times"></i> No</span>'
+                },
+                {
+                    data: 'requiereCita',
+                    render: data => data
+                        ? '<span class="badge bg-info"><i class="fas fa-calendar-check"></i> Sí</span>'
+                        : '<span class="badge bg-secondary"><i class="fas fa-times"></i> No</span>'
+                },
+                {
+                    data: 'tipoServicioId',
+                    orderable: false,
+                    className: 'text-center',
+                    render: (data) => `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" onclick="abrirModalDetalle(${data})" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="abrirModalEliminar(${data})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `
+                }
+            ],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            order: [[0, 'asc']],
+            responsive: true
+        });
+
+        $('#loading').addClass('d-none');
+        $('#tabla').removeClass('d-none');
+    }
+
+    function aplicarFiltros() {
+        const clasificacion = $('#filtroClasificacion').val();
+        const walkIn = $('#filtroWalkIn').val();
+
+        let datosFiltrados = [...datosOriginales];
+
+        if (clasificacion) {
+            const mapClasificacion = { 'Rapido': 1, 'Estandar': 2, 'Largo': 3 };
+            datosFiltrados = datosFiltrados.filter(v => v.clasificacion === mapClasificacion[clasificacion]);
+        }
+        if (walkIn !== '') {
+            const esWalkIn = walkIn === 'true';
+            datosFiltrados = datosFiltrados.filter(v => v.permiteWalkIn === esWalkIn);
+        }
+
+        if (dataTable) dataTable.destroy();
+        inicializarDataTable(datosFiltrados);
+    }
+
+    function limpiarFiltros() {
+        $('#filtroClasificacion').val('');
+        $('#filtroWalkIn').val('');
+        if (dataTable) dataTable.destroy();
+        inicializarDataTable(datosOriginales);
+    }
+
+    function recargarTabla() {
+        if (dataTable) dataTable.destroy();
+        cargarDatos();
+    }
+
+    // Modales
+    function abrirModalCrear() {
+        AppModal.open({
+            title: '<i class="fas fa-tools me-2"></i>Nuevo Tipo de Servicio',
+            url: URLS.createPartial,
+            size: 'lg'
+        });
+    }
+
+    function abrirModalDetalle(id) {
+        AppModal.open({
+            title: '<i class="fas fa-eye me-2"></i>Detalle del Tipo de Servicio',
+            url: URLS.getDetail,
+            data: { id: id },
+            size: 'md'
+        });
+    }
+
+    function abrirModalEditar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-pencil me-2"></i>Editar Tipo de Servicio',
+            url: URLS.editPartial,
+            data: { id: id },
+            size: 'lg'
+        });
+    }
+
+    function abrirModalEliminar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-trash me-2"></i>Eliminar Tipo de Servicio',
+            url: URLS.deletePartial,
+            data: { id: id },
+            size: 'sm'
+        });
+    }
+
+    // CRUD
+    function guardarTipoServicio() {
+        const form = document.getElementById('formCrearTipoServicio');
+        const btn = document.getElementById('btnGuardarTipoServicio');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            codigo: $('#Codigo').val().trim(),
+            nombre: $('#Nombre').val().trim(),
+            descripcion: $('#Descripcion').val().trim() || null,
+            duracionEstimadaMin: parseInt($('#DuracionEstimadaMin').val()),
+            clasificacion: parseInt($('#Clasificacion').val()),
+            permiteWalkIn: $('#PermiteWalkIn').is(':checked'),
+            requiereCita: $('#RequiereCita').is(':checked'),
+            precioBase: parseFloat($('#PrecioBase').val()) || 0,
+            stockRequerido: parseInt($('#StockRequerido').val()) || 0
+        };
+
+        $.ajax({
+            url: URLS.create,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Tipo de servicio creado exitosamente');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al guardar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function actualizarTipoServicio() {
+        const form = document.getElementById('formEditarTipoServicio');
+        const btn = document.getElementById('btnActualizarTipoServicio');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            tipoServicioId: parseInt($('#TipoServicioId').val()),
+            codigo: $('#Codigo').val().trim(),
+            nombre: $('#Nombre').val().trim(),
+            descripcion: $('#Descripcion').val().trim() || null,
+            duracionEstimadaMin: parseInt($('#DuracionEstimadaMin').val()),
+            clasificacion: parseInt($('#Clasificacion').val()),
+            permiteWalkIn: $('#PermiteWalkIn').is(':checked'),
+            requiereCita: $('#RequiereCita').is(':checked'),
+            precioBase: parseFloat($('#PrecioBase').val()) || 0,
+            stockRequerido: parseInt($('#StockRequerido').val()) || 0
+        };
+
+        $.ajax({
+            url: URLS.edit,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Tipo de servicio actualizado exitosamente');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al actualizar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function confirmarEliminar() {
+        const id = parseInt($('#deleteId').val());
+        const btn = document.getElementById('btnEliminarTipoServicio');
+        const btnOriginal = btn.innerHTML;
+
+        $.ajax({
+            url: URLS.delete,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(id),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Eliminando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Tipo de servicio eliminado');
+                } else {
+                    Toast.error(response.message || 'Error al eliminar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al eliminar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+</script>
+}

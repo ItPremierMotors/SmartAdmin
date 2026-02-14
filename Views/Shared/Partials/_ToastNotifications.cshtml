@@ -1,0 +1,108 @@
+﻿<!-- Este es un contenedor que se posiciona en la esquina superior derecha -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+
+    <!-- TOAST DE ÉXITO (Verde) -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="toast align-items-center text-bg-success border-0"
+             role="alert"
+             aria-live="assertive"
+             aria-atomic="true"
+             data-bs-autohide="true"
+             data-bs-delay="5000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @TempData["SuccessMessage"]
+                </div>
+                <button type="button"
+                        class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast"
+                        aria-label="Close"></button>
+            </div>
+        </div>
+    }
+
+    <!-- TOAST DE ERROR (Rojo) -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="toast align-items-center text-bg-danger border-0"
+             role="alert"
+             aria-live="assertive"
+             aria-atomic="true"
+             data-bs-autohide="true"
+             data-bs-delay="5000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    @TempData["ErrorMessage"]
+                </div>
+                <button type="button"
+                        class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast"
+                        aria-label="Close"></button>
+            </div>
+        </div>
+    }
+
+    <!-- TOAST DE ADVERTENCIA (Amarillo) -->
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="toast align-items-center text-bg-warning border-0"
+             role="alert"
+             aria-live="assertive"
+             aria-atomic="true"
+             data-bs-autohide="true"
+             data-bs-delay="5000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    @TempData["WarningMessage"]
+                </div>
+                <button type="button"
+                        class="btn-close me-2 m-auto"
+                        data-bs-dismiss="toast"
+                        aria-label="Close"></button>
+            </div>
+        </div>
+    }
+
+    <!-- TOAST DE INFORMACIÓN (Azul) -->
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="toast align-items-center text-bg-info border-0"
+             role="alert"
+             aria-live="assertive"
+             aria-atomic="true"
+             data-bs-autohide="true"
+             data-bs-delay="5000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-info-circle me-2"></i>
+                    @TempData["InfoMessage"]
+                </div>
+                <button type="button"
+                        class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast"
+                        aria-label="Close"></button>
+            </div>
+        </div>
+    }
+
+</div>
+
+<!-- JavaScript para mostrar los toasts automáticamente -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Buscar todos los elementos con clase 'toast'
+        var toastElements = document.querySelectorAll('.toast');
+
+        // Por cada toast encontrado
+        toastElements.forEach(function (toastEl) {
+            // Crear instancia de Bootstrap Toast
+            var toast = new bootstrap.Toast(toastEl);
+            // Mostrar el toast
+            toast.show();
+        });
+    });
+</script>

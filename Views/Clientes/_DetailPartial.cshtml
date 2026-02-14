@@ -1,0 +1,154 @@
+@model SmartAdmin.Models.Cliente.ClienteViewModel
+
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0">@Model.NombreCompleto</h5>
+            @if (Model.TipoCliente == 1)
+            {
+                <span class="badge bg-info">Natural</span>
+            }
+            else
+            {
+                <span class="badge bg-primary">Jurídica</span>
+            }
+            @if (Model.TieneAlertaNoShow)
+            {
+                <span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>@Model.NoShowCount inasistencias</span>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Datos del Cliente -->
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="fas fa-id-card me-2"></i>Datos del Cliente</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    @if (!string.IsNullOrEmpty(Model.DNI))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold" style="width:40%">DNI:</td>
+                            <td>@(Model.DNI.Length == 13 ? $"{Model.DNI.Substring(0,4)}-{Model.DNI.Substring(4,4)}-{Model.DNI.Substring(8,5)}" : Model.DNI)</td>
+                        </tr>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.RTN))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">RTN:</td>
+                            <td>@Model.RTN</td>
+                        </tr>
+                    }
+                    <tr>
+                        <td class="text-muted fw-bold">Teléfono:</td>
+                        <td>@Model.Telefono</td>
+                    </tr>
+                    @if (!string.IsNullOrEmpty(Model.TelefonoSecundario))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">Tel. Secundario:</td>
+                            <td>@Model.TelefonoSecundario</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    @if (!string.IsNullOrEmpty(Model.Email))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold" style="width:40%">Email:</td>
+                            <td>@Model.Email</td>
+                        </tr>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Ciudad))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">Ciudad:</td>
+                            <td>@Model.Ciudad</td>
+                        </tr>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Direccion))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">Dirección:</td>
+                            <td>@Model.Direccion</td>
+                        </tr>
+                    }
+                    <tr>
+                        <td class="text-muted fw-bold">Registro:</td>
+                        <td>@Model.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vehículos del Cliente -->
+<div class="card">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="fas fa-car me-2"></i>Vehículos (<span id="conteoVehiculos">...</span>)</h6>
+    </div>
+    <div class="card-body" id="vehiculosList">
+        <div class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <span class="text-muted ms-2">Cargando vehículos...</span>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-end mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cerrar
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            url: '@Url.Action("GetByCliente", "Inventario")',
+            data: { clienteId: @Model.ClienteId },
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data && response.data.length > 0) {
+                    $('#conteoVehiculos').text(response.data.length);
+                    let html = '<table class="table table-sm table-hover mb-0"><thead class="table-light"><tr>';
+                    html += '<th>Identificador</th><th>Descripción</th><th>Estado</th></tr></thead><tbody>';
+
+                    const estadoColors = {
+                        1: 'secondary', 2: 'warning', 3: 'info',
+                        4: 'primary', 5: 'purple', 6: 'success', 7: 'dark'
+                    };
+                    const estadoNames = {
+                        1: 'En Tránsito', 2: 'En Aduana', 3: 'En Bodega',
+                        4: 'En Exhibición', 5: 'Reservado', 6: 'Vendido', 7: 'Entregado'
+                    };
+
+                    response.data.forEach(v => {
+                        const color = estadoColors[v.estado] || 'secondary';
+                        const estadoName = estadoNames[v.estado] || v.estado;
+                        html += `<tr>
+                            <td><strong>${v.identificador}</strong></td>
+                            <td>${v.descripcionCompleta}</td>
+                            <td><span class="badge bg-${color}">${estadoName}</span></td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table>';
+                    $('#vehiculosList').html(html);
+                } else {
+                    $('#conteoVehiculos').text('0');
+                    $('#vehiculosList').html('<p class="text-muted text-center mb-0">No tiene vehículos asignados</p>');
+                }
+            },
+            error: function () {
+                $('#conteoVehiculos').text('0');
+                $('#vehiculosList').html('<p class="text-muted text-center mb-0">Error al cargar vehículos</p>');
+            }
+        });
+    });
+</script>

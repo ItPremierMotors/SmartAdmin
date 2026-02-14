@@ -1,0 +1,140 @@
+@model SmartAdmin.Models.Cliente.CreateClienteViewModel
+
+<form id="formCrearCliente">
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="TipoCliente" class="form-label">
+                @Html.DisplayNameFor(m => m.TipoCliente)<span class="text-danger">*</span>
+            </label>
+            <select asp-for="TipoCliente" class="form-select" id="TipoCliente">
+                <option value="1" selected>Persona Natural</option>
+                <option value="2">Empresa</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Nombre" class="form-label">
+                @Html.DisplayNameFor(m => m.Nombre)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Nombre" class="form-control" placeholder="Nombre o Razón Social" required />
+            <span asp-validation-for="Nombre" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3" id="divApellidos">
+            <label asp-for="Apellidos" class="form-label">
+                @Html.DisplayNameFor(m => m.Apellidos)<span class="text-danger" id="reqApellidos">*</span>
+            </label>
+            <input asp-for="Apellidos" class="form-control" placeholder="Apellidos" />
+            <span asp-validation-for="Apellidos" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3" id="divDNI">
+            <label asp-for="DNI" class="form-label">
+                @Html.DisplayNameFor(m => m.DNI)
+            </label>
+            <input asp-for="DNI" class="form-control" placeholder="0801-1990-12345" maxlength="15" oninput="formatearDNI(this)" />
+            <small class="text-muted">13 dígitos</small>
+            <span asp-validation-for="DNI" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3" id="divRTN">
+            <label asp-for="RTN" class="form-label">
+                @Html.DisplayNameFor(m => m.RTN)<span class="text-danger d-none" id="reqRTN">*</span>
+            </label>
+            <input asp-for="RTN" class="form-control" placeholder="08011990123456" maxlength="14" oninput="soloDigitos(this)" />
+            <small class="text-muted">14 dígitos</small>
+            <span asp-validation-for="RTN" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Telefono" class="form-label">
+                @Html.DisplayNameFor(m => m.Telefono)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Telefono" class="form-control" placeholder="9999-9999" required />
+            <span asp-validation-for="Telefono" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="TelefonoSecundario" class="form-label">
+                @Html.DisplayNameFor(m => m.TelefonoSecundario)
+            </label>
+            <input asp-for="TelefonoSecundario" class="form-control" placeholder="9999-9999" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Email" class="form-label">
+                @Html.DisplayNameFor(m => m.Email)
+            </label>
+            <input asp-for="Email" class="form-control" type="email" placeholder="correo@ejemplo.com" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Ciudad" class="form-label">
+                @Html.DisplayNameFor(m => m.Ciudad)
+            </label>
+            <input asp-for="Ciudad" class="form-control" placeholder="Ej: San Pedro Sula" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-3">
+            <label asp-for="Direccion" class="form-label">
+                @Html.DisplayNameFor(m => m.Direccion)
+            </label>
+            <textarea asp-for="Direccion" class="form-control" rows="2" placeholder="Dirección completa"></textarea>
+        </div>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnGuardarCliente" onclick="guardarCliente()">
+        <i class="fas fa-save me-1"></i> Guardar
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#TipoCliente').on('change', toggleTipoCliente);
+        toggleTipoCliente();
+    });
+
+    function toggleTipoCliente() {
+        const isEmpresa = $('#TipoCliente').val() === '2';
+        if (isEmpresa) {
+            $('#divApellidos').hide();
+            $('#Apellidos').val('').removeAttr('required');
+            $('#reqApellidos').addClass('d-none');
+            $('#reqRTN').removeClass('d-none');
+        } else {
+            $('#divApellidos').show();
+            $('#reqApellidos').removeClass('d-none');
+            $('#reqRTN').addClass('d-none');
+        }
+    }
+
+    function formatearDNI(input) {
+        let digits = input.value.replace(/\D/g, '').substring(0, 13);
+        let formatted = '';
+        if (digits.length > 4) {
+            formatted = digits.substring(0, 4) + '-' + digits.substring(4);
+        } else {
+            formatted = digits;
+        }
+        if (digits.length > 8) {
+            formatted = digits.substring(0, 4) + '-' + digits.substring(4, 8) + '-' + digits.substring(8);
+        }
+        input.value = formatted;
+    }
+
+    function soloDigitos(input) {
+        input.value = input.value.replace(/\D/g, '');
+    }
+</script>

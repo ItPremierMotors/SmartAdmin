@@ -1,0 +1,305 @@
+@model SmartAdmin.Models.Vehiculo.EditVehiculoViewModel
+
+<form id="formEditarVehiculo">
+    <input type="hidden" asp-for="VehiculoId" />
+
+    <!-- Sección 1: Identificación -->
+    <h6 class="text-primary border-bottom pb-2 mb-3"><i class="fas fa-fingerprint me-2"></i>Identificación</h6>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Vin" class="form-label">@Html.DisplayNameFor(m => m.Vin)<span class="text-danger">*</span></label>
+            <input asp-for="Vin" class="form-control text-uppercase" maxlength="17" required />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Placa" class="form-label">@Html.DisplayNameFor(m => m.Placa)</label>
+            <input asp-for="Placa" class="form-control text-uppercase" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="NumeroMotor" class="form-label">@Html.DisplayNameFor(m => m.NumeroMotor)</label>
+            <input asp-for="NumeroMotor" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="NumeroChasis" class="form-label">@Html.DisplayNameFor(m => m.NumeroChasis)</label>
+            <input asp-for="NumeroChasis" class="form-control" />
+        </div>
+    </div>
+
+    <!-- Sección 2: Catálogo -->
+    <h6 class="text-primary border-bottom pb-2 mb-3 mt-2"><i class="fas fa-car me-2"></i>Catálogo</h6>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="MarcaId" class="form-label">@Html.DisplayNameFor(m => m.MarcaId)<span class="text-danger">*</span></label>
+            <select asp-for="MarcaId" class="form-select" id="MarcaId" required>
+                <option value="">Seleccione marca...</option>
+            </select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="ModeloId" class="form-label">@Html.DisplayNameFor(m => m.ModeloId)<span class="text-danger">*</span></label>
+            <select asp-for="ModeloId" class="form-select" id="ModeloId" required>
+                <option value="">Seleccione modelo...</option>
+            </select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="VersionId" class="form-label">@Html.DisplayNameFor(m => m.VersionId)</label>
+            <select asp-for="VersionId" class="form-select" id="VersionId">
+                <option value="">Seleccione versión...</option>
+            </select>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <label asp-for="Anio" class="form-label">@Html.DisplayNameFor(m => m.Anio)<span class="text-danger">*</span></label>
+            <input asp-for="Anio" class="form-control" type="number" min="1900" max="2100" required />
+        </div>
+        <div class="col-md-3 mb-3">
+            <label asp-for="Color" class="form-label">@Html.DisplayNameFor(m => m.Color)</label>
+            <input asp-for="Color" class="form-control" />
+        </div>
+        <div class="col-md-3 mb-3">
+            <label asp-for="TipoCombustible" class="form-label">@Html.DisplayNameFor(m => m.TipoCombustible)</label>
+            <select asp-for="TipoCombustible" class="form-select" id="TipoCombustible">
+                <option value="1">Gasolina</option>
+                <option value="2">Diésel</option>
+                <option value="3">Híbrido</option>
+                <option value="4">Eléctrico</option>
+                <option value="5">Gas Natural</option>
+                <option value="6">GLP</option>
+            </select>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label asp-for="Transmision" class="form-label">@Html.DisplayNameFor(m => m.Transmision)</label>
+            <select asp-for="Transmision" class="form-select" id="Transmision">
+                <option value="">Seleccione...</option>
+                <option value="0">Manual</option>
+                <option value="1">Automática</option>
+                <option value="2">CVT</option>
+                <option value="3">Dual Clutch</option>
+                <option value="4">Semiautomática</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Sección 3: Estado y Ubicación -->
+    <h6 class="text-primary border-bottom pb-2 mb-3 mt-2"><i class="fas fa-map-marker-alt me-2"></i>Estado y Ubicación</h6>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="Estado" class="form-label">@Html.DisplayNameFor(m => m.Estado)</label>
+            <select asp-for="Estado" class="form-select" id="Estado" disabled>
+                <option value="1">En Tránsito</option>
+                <option value="2">En Aduana</option>
+                <option value="3">En Bodega</option>
+                <option value="4">En Exhibición</option>
+                <option value="5">Reservado</option>
+            </select>
+            <small class="text-muted">Use "Cambiar Estado" desde el detalle</small>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="SucursalId" class="form-label">@Html.DisplayNameFor(m => m.SucursalId)</label>
+            <select asp-for="SucursalId" class="form-select" id="SucursalId">
+                <option value="">Seleccione sucursal...</option>
+            </select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Procedencia" class="form-label">@Html.DisplayNameFor(m => m.Procedencia)</label>
+            <select asp-for="Procedencia" class="form-select" id="Procedencia">
+                <option value="1">Local</option>
+                <option value="2">Importado</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Sección 4: Importación -->
+    <div id="seccionImportacion">
+        <h6 class="text-primary border-bottom pb-2 mb-3 mt-2"><i class="fas fa-ship me-2"></i>Importación</h6>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label asp-for="NumeroImportacion" class="form-label">@Html.DisplayNameFor(m => m.NumeroImportacion)</label>
+                <input asp-for="NumeroImportacion" class="form-control" />
+            </div>
+            <div class="col-md-4 mb-3">
+                <label asp-for="NumeroPoliza" class="form-label">@Html.DisplayNameFor(m => m.NumeroPoliza)</label>
+                <input asp-for="NumeroPoliza" class="form-control" />
+            </div>
+            <div class="col-md-4 mb-3">
+                <label asp-for="CostoImportacion" class="form-label">@Html.DisplayNameFor(m => m.CostoImportacion)</label>
+                <input asp-for="CostoImportacion" class="form-control" type="number" step="0.01" min="0" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="FechaIngresoPais" class="form-label">@Html.DisplayNameFor(m => m.FechaIngresoPais)</label>
+                <input asp-for="FechaIngresoPais" class="form-control" type="date" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="FechaRecepcion" class="form-label">@Html.DisplayNameFor(m => m.FechaRecepcion)</label>
+                <input asp-for="FechaRecepcion" class="form-control" type="date" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección 5: Comercial -->
+    <h6 class="text-primary border-bottom pb-2 mb-3 mt-2"><i class="fas fa-dollar-sign me-2"></i>Comercial</h6>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="PrecioLista" class="form-label">@Html.DisplayNameFor(m => m.PrecioLista)</label>
+            <input asp-for="PrecioLista" class="form-control" type="number" step="0.01" min="0" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="ClienteId" class="form-label">@Html.DisplayNameFor(m => m.ClienteId)</label>
+            <select asp-for="ClienteId" class="form-select" id="ClienteId">
+                <option value="">Sin asignar</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Sección 6: Taller -->
+    <h6 class="text-primary border-bottom pb-2 mb-3 mt-2"><i class="fas fa-wrench me-2"></i>Taller</h6>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="KilometrajeActual" class="form-label">@Html.DisplayNameFor(m => m.KilometrajeActual)</label>
+            <input asp-for="KilometrajeActual" class="form-control" type="number" min="0" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="FechaPrimeraMatricula" class="form-label">@Html.DisplayNameFor(m => m.FechaPrimeraMatricula)</label>
+            <input asp-for="FechaPrimeraMatricula" class="form-control" type="date" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="GarantiaHasta" class="form-label">@Html.DisplayNameFor(m => m.GarantiaHasta)</label>
+            <input asp-for="GarantiaHasta" class="form-control" type="date" />
+        </div>
+    </div>
+
+    <!-- Observaciones -->
+    <div class="row">
+        <div class="col-12 mb-3">
+            <label asp-for="Observaciones" class="form-label">@Html.DisplayNameFor(m => m.Observaciones)</label>
+            <textarea asp-for="Observaciones" class="form-control" rows="2"></textarea>
+        </div>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnActualizarVehiculo" onclick="actualizarVehiculo()">
+        <i class="fas fa-save me-1"></i> Actualizar
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        cargarMarcasEdit(function () {
+            $('#MarcaId').val('@Model.MarcaId');
+            cargarModelosEdit('@Model.MarcaId', function () {
+                $('#ModeloId').val('@Model.ModeloId');
+                cargarVersionesEdit('@Model.ModeloId', function () {
+                    @if (Model.VersionId.HasValue)
+                    {
+                        @:$('#VersionId').val('@Model.VersionId');
+                    }
+                });
+            });
+        });
+
+        cargarSucursalesEdit();
+        initClienteSelect2Edit();
+
+        $('#Procedencia').on('change', function () {
+            $('#seccionImportacion').toggle($(this).val() === '2');
+        });
+        $('#Procedencia').trigger('change');
+
+        $('#MarcaId').on('change', function () {
+            $('#ModeloId').empty().append('<option value="">Seleccione modelo...</option>');
+            $('#VersionId').empty().append('<option value="">Seleccione versión...</option>');
+            const marcaId = $(this).val();
+            if (marcaId) cargarModelosEdit(marcaId);
+        });
+
+        $('#ModeloId').on('change', function () {
+            $('#VersionId').empty().append('<option value="">Seleccione versión...</option>');
+            const modeloId = $(this).val();
+            if (modeloId) cargarVersionesEdit(modeloId);
+        });
+    });
+
+    function cargarMarcasEdit(callback) {
+        $.get('@Url.Action("GetAll", "Marca")', function (res) {
+            if (res.success && res.data) {
+                const select = $('#MarcaId');
+                res.data.forEach(m => select.append(`<option value="${m.marcaId}">${m.nombre}</option>`));
+            }
+            if (callback) callback();
+        });
+    }
+
+    function cargarModelosEdit(marcaId, callback) {
+        $.get('@Url.Action("GetByMarca", "Modelos")?marcaId=' + marcaId, function (res) {
+            if (res.success && res.data) {
+                const select = $('#ModeloId');
+                res.data.forEach(m => select.append(`<option value="${m.modeloId}">${m.nombre}</option>`));
+            }
+            if (callback) callback();
+        });
+    }
+
+    function cargarVersionesEdit(modeloId, callback) {
+        $.get('@Url.Action("GetByModelo", "VersionesVehiculo")?modeloId=' + modeloId, function (res) {
+            if (res.success && res.data) {
+                const select = $('#VersionId');
+                res.data.forEach(v => select.append(`<option value="${v.versionId}">${v.nombre}</option>`));
+            }
+            if (callback) callback();
+        });
+    }
+
+    function cargarSucursalesEdit() {
+        $.get('@Url.Action("GetSucursales", "Inventario")', function (res) {
+            if (res.success && res.data) {
+                const select = $('#SucursalId');
+                const currentValue = @(Model.SucursalId.HasValue ? Model.SucursalId.Value.ToString() : "null");
+                res.data.forEach(s => {
+                    const selected = s.id == currentValue ? 'selected' : '';
+                    select.append(`<option value="${s.id}" ${selected}>${s.nombre}</option>`);
+                });
+            }
+        });
+    }
+
+    function initClienteSelect2Edit() {
+        $('#ClienteId').select2({
+            dropdownParent: $('.modal'),
+            theme: 'bootstrap-5',
+            placeholder: 'Buscar cliente...',
+            allowClear: true,
+            minimumInputLength: 2,
+            language: { inputTooShort: () => 'Escriba al menos 2 caracteres...' },
+            ajax: {
+                url: '@Url.Action("Search", "Clientes")',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) { return { term: params.term }; },
+                processResults: function (data) {
+                    if (data.success && data.data) {
+                        return {
+                            results: data.data.map(c => ({
+                                id: c.clienteId,
+                                text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono) + ')'
+                            }))
+                        };
+                    }
+                    return { results: [] };
+                }
+            }
+        });
+
+        @if (Model.ClienteId.HasValue)
+        {
+            @:var option = new Option('@ViewBag.ClienteNombre', '@Model.ClienteId', true, true);
+            @:$('#ClienteId').append(option).trigger('change');
+        }
+    }
+</script>

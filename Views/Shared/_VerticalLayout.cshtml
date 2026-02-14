@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+@{
+    var html_attributes = ViewBag.HTMLAttributes != null ? ViewBag.HTMLAttributes : "";
+    var html_class = ViewBag.HTMLClass != null ? ViewBag.HTMLClass : "";
+}
+<html lang="en" class="@html_class" @html_attributes>
+<head>
+    @await Html.PartialAsync("~/Views/Shared/Partials/_TitleMeta.cshtml")
+    @RenderSection("styles", false)
+    @await Html.PartialAsync("~/Views/Shared/Partials/_HeadCSS.cshtml")
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
+</head>
+<body>
+    <div class="app-wrap">
+        @await Html.PartialAsync("~/Views/Shared/Partials/_Header.cshtml")
+        @await Html.PartialAsync("~/Views/Shared/Partials/_Sidebar.cshtml")
+        <main class="app-body">
+            <div class="app-content">
+                <div class="content-wrapper">
+                    @RenderBody()
+                </div>
+                @RenderSection("modelBlock", required: false)
+            </div>
+            @await Html.PartialAsync("~/Views/Shared/Partials/_Footer.cshtml")
+        </main>
+        @await Html.PartialAsync("~/Views/Shared/Partials/_AppDrawer.cshtml")
+        @await Html.PartialAsync("~/Views/Shared/Partials/_AppSettings.cshtml")
+    </div>
+
+    <!-- Modal Global -->
+    <div class="modal fade" id="globalModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog" id="globalModalDialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="globalModalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="globalModalBody"></div>
+                <div class="modal-footer" id="globalModalFooter"></div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("~/Views/Shared/Partials/_FooterScripts.cshtml")
+
+    
+
+    <!-- iziToast -->
+    <script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
+    <script src="~/js/toast-helper.js"></script>
+
+    <!-- Scripts de las páginas -->
+    @RenderSection("scripts", required: false)
+
+    <!-- Toast desde ViewBag/TempData -->
+    @if (ViewBag.SuccessMessage != null)
+    {
+        <script>Toast.success('@ViewBag.SuccessMessage');</script>
+    }
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <script>Toast.error('@ViewBag.ErrorMessage');</script>
+    }
+    @if (ViewBag.WarningMessage != null)
+    {
+        <script>Toast.warning('@ViewBag.WarningMessage');</script>
+    }
+    @if (ViewBag.InfoMessage != null)
+    {
+        <script>Toast.info('@ViewBag.InfoMessage');</script>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>Toast.success('@TempData["SuccessMessage"]');</script>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>Toast.error('@TempData["ErrorMessage"]');</script>
+    }
+    @if (TempData["WarningMessage"] != null)
+    {
+        <script>Toast.warning('@TempData["WarningMessage"]');</script>
+    }
+    @if (TempData["InfoMessage"] != null)
+    {
+        <script>Toast.info('@TempData["InfoMessage"]');</script>
+    }
+</body>
+</html>
+@* 
+    // Con ViewBag
+ViewBag.SuccessMessage = "Cuenta creada exitosamente";
+ViewBag.ErrorMessage = "Error al crear la cuenta";
+
+// Con TempData (para RedirectToAction)
+TempData["SuccessMessage"] = "Registro eliminado"; *@
+@* 
+        // Básico
+Toast.success('Operación exitosa');
+Toast.error('Algo salió mal');
+Toast.warning('Ten cuidado');
+Toast.info('Nueva actualización disponible');
+
+// Loading
+Toast.loading('Guardando...');
+Toast.hideLoading();
+
+// Confirmación
+Toast.question('¿Eliminar este registro?',
+    function() { /* Confirmado */ },
+    function() { /* Cancelado */ }
+);
+
+// Tema oscuro
+Toast.dark.success('Mensaje oscuro');
+
+// Cerrar todas
+Toast.hideAll(); *@
+@* 
+en js
+document.getElementById('btnGuardar').onclick = function() {
+    Toast.success('Cambios guardados');
+};
+eventod
+fetch('/api/data')
+    .then(() => Toast.success('Datos cargados'))
+    .catch(() => Toast.error('Error de conexión')); *@

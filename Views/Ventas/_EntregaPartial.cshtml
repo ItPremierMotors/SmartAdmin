@@ -1,0 +1,45 @@
+@model SmartAdmin.Models.Vehiculo.ProcesarEntregaViewModel
+
+@{
+    var vehiculoInfo = ViewBag.VehiculoInfo as string;
+    var clienteNombre = ViewBag.ClienteNombre as string;
+}
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-1"></i>
+    Al procesar la entrega, el vehículo pasará a estado <strong>Entregado</strong>.
+</div>
+
+@if (!string.IsNullOrEmpty(vehiculoInfo))
+{
+    <div class="mb-3">
+        <label class="form-label text-muted small">Vehículo</label>
+        <div class="form-control-plaintext fw-bold">@vehiculoInfo</div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(clienteNombre))
+{
+    <div class="mb-3">
+        <label class="form-label text-muted small">Cliente</label>
+        <div class="form-control-plaintext">@clienteNombre</div>
+    </div>
+}
+
+<form id="formProcesarEntrega">
+    <input type="hidden" id="EntregaVehiculoId" value="@Model.VehiculoId" />
+
+    <div class="mb-3">
+        <label class="form-label">Fecha de Entrega <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" id="EntregaFecha" value="@Model.FechaEntrega.ToString("yyyy-MM-dd")" required />
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-dark" id="btnProcesarEntrega" onclick="confirmarProcesarEntrega()">
+        <i class="fas fa-truck me-1"></i> Confirmar Entrega
+    </button>
+</div>

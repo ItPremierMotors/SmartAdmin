@@ -1,0 +1,71 @@
+﻿@model SmartAdmin.Models.Catalogo.Marca.EditMarcaViewModel
+
+<form id="formEditarMarca">
+    <input type="hidden" asp-for="MarcaId" />
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Codigo" class="form-label">
+                @Html.DisplayNameFor(m => m.Codigo)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Codigo" class="form-control" placeholder="Ej: TOY, HND, KIA" required />
+            <span asp-validation-for="Codigo" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Nombre" class="form-label">
+                @Html.DisplayNameFor(m => m.Nombre)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Nombre" class="form-control" placeholder="Ej: Toyota, Honda, Kia" required />
+            <span asp-validation-for="Nombre" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="PaisOrigen" class="form-label">
+                @Html.DisplayNameFor(m => m.PaisOrigen)
+            </label>
+            <input asp-for="PaisOrigen" class="form-control" placeholder="Ej: Japón, Alemania, Estados Unidos" />
+            <span asp-validation-for="PaisOrigen" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="EsMarcaPropia" class="form-label">
+                @Html.DisplayNameFor(m => m.EsMarcaPropia)
+            </label>
+            <div class="form-check form-switch mt-2">
+                <input asp-for="EsMarcaPropia" class="form-check-input" type="checkbox" />
+                <label class="form-check-label" for="EsMarcaPropia">Sí, es marca propia</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-3">
+            <label asp-for="LogoUrl" class="form-label">
+                @Html.DisplayNameFor(m => m.LogoUrl)
+            </label>
+            <input asp-for="LogoUrl" class="form-control" placeholder="https://ejemplo.com/logos/toyota.png" />
+            <span asp-validation-for="LogoUrl" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-3">
+            <label asp-for="Observaciones" class="form-label">
+                @Html.DisplayNameFor(m => m.Observaciones)
+            </label>
+            <textarea asp-for="Observaciones" class="form-control" rows="3"
+                      placeholder="Ej: Marca japonesa especializada en vehículos sedán y SUV"></textarea>
+            <span asp-validation-for="Observaciones" class="text-danger"></span>
+        </div>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" id="btnEditarMarca" class="btn btn-warning" onclick="actualizarMarca()">
+        <i class="fas fa-edit me-1"></i> Actualizar
+    </button>
+</div>

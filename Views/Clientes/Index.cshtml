@@ -1,0 +1,350 @@
+@{
+    ViewData["Title"] = "Administración de Clientes";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-users me-2"></i>@ViewData["Title"]</h1>
+        <button class="btn btn-primary" id="btnNuevo">
+            <i class="fas fa-plus me-2"></i>Nuevo Cliente
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Filtros -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Tipo de Cliente</label>
+                    <select class="form-select form-select-sm" id="filtroTipo">
+                        <option value="">Todos</option>
+                        <option value="1">Natural</option>
+                        <option value="2">Juridica</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="loading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando clientes...</p>
+            </div>
+
+            <table class="table table-hover table-sm d-none" id="tabla" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Teléfono</th>
+                        <th>Email</th>
+                        <th>Ciudad</th>
+                        <th>Vehículos</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const URLS = {
+        getAll: '@Url.Action("GetAll")',
+        search: '@Url.Action("Search")',
+        getDetail: '@Url.Action("DetailPartial")',
+        createPartial: '@Url.Action("CreatePartial")',
+        editPartial: '@Url.Action("EditPartial")',
+        deletePartial: '@Url.Action("DeletePartial")',
+        create: '@Url.Action("Create")',
+        edit: '@Url.Action("Edit")',
+        delete: '@Url.Action("Delete")'
+    };
+
+    let dataTable = null;
+    let datosOriginales = [];
+
+    $(document).ready(function () {
+        cargarDatos();
+        $('#btnNuevo').on('click', abrirModalCrear);
+        $('#filtroTipo').on('change', aplicarFiltros);
+    });
+
+    function cargarDatos() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    datosOriginales = response.data;
+                    inicializarDataTable(response.data);
+                } else {
+                    Toast.error('Error al cargar clientes');
+                    $('#loading').addClass('d-none');
+                }
+            },
+            error: function () {
+                Toast.error('Error al conectar con el servidor');
+                $('#loading').addClass('d-none');
+            }
+        });
+    }
+
+    function inicializarDataTable(datos) {
+        if (dataTable) dataTable.destroy();
+
+        dataTable = $('#tabla').DataTable({
+            data: datos,
+            columns: [
+                {
+                    data: 'nombreCompleto',
+                    render: function (data, type, row) {
+                        let html = `<strong>${data}</strong>`;
+                        if (row.tieneAlertaNoShow) {
+                            html += ` <span class="badge bg-danger" title="Alerta: ${row.noShowCount} inasistencias"><i class="fas fa-exclamation-triangle"></i> ${row.noShowCount}</span>`;
+                        }
+                        return html;
+                    }
+                },
+                {
+                    data: 'tipoCliente',
+                    render: data => data === 1
+                        ? '<span class="badge bg-info">Natural</span>'
+                        : '<span class="badge bg-primary">Jurídica</span>'
+                },
+                { data: 'telefono' },
+                {
+                    data: 'email',
+                    render: data => data || '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: 'ciudad',
+                    render: data => data || '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: 'cantidadVehiculos',
+                    render: data => `<span class="badge bg-secondary">${data}</span>`
+                },
+                {
+                    data: 'clienteId',
+                    orderable: false,
+                    className: 'text-center',
+                    render: (data) => `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" onclick="abrirModalDetalle(${data})" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="abrirModalEliminar(${data})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `
+                }
+            ],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            order: [[0, 'asc']],
+            responsive: true
+        });
+
+        $('#loading').addClass('d-none');
+        $('#tabla').removeClass('d-none');
+    }
+
+    function aplicarFiltros() {
+        const tipo = $('#filtroTipo').val();
+        let datosFiltrados = [...datosOriginales];
+
+        if (tipo) {
+            datosFiltrados = datosFiltrados.filter(c => c.tipoCliente == tipo);
+        }
+
+        inicializarDataTable(datosFiltrados);
+    }
+
+    function recargarTabla() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    datosOriginales = response.data;
+                    $('#filtroTipo').val('');
+                    inicializarDataTable(response.data);
+                }
+            }
+        });
+    }
+
+    // Modales
+    function abrirModalCrear() {
+        AppModal.open({
+            title: '<i class="fas fa-user-plus me-2"></i>Nuevo Cliente',
+            url: URLS.createPartial,
+            size: 'lg'
+        });
+    }
+
+    function abrirModalDetalle(id) {
+        AppModal.open({
+            title: '<i class="fas fa-eye me-2"></i>Detalle del Cliente',
+            url: URLS.getDetail,
+            data: { id: id },
+            size: 'lg'
+        });
+    }
+
+    function abrirModalEditar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-pencil me-2"></i>Editar Cliente',
+            url: URLS.editPartial,
+            data: { id: id },
+            size: 'lg'
+        });
+    }
+
+    function abrirModalEliminar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-trash me-2"></i>Eliminar Cliente',
+            url: URLS.deletePartial,
+            data: { id: id },
+            size: 'sm'
+        });
+    }
+
+    // CRUD
+    function guardarCliente() {
+        const form = document.getElementById('formCrearCliente');
+        const btn = document.getElementById('btnGuardarCliente');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+        if (!validarDocumentos()) return;
+
+        const data = {
+            tipoCliente: parseInt($('#TipoCliente').val()),
+            nombre: $('#Nombre').val().trim(),
+            apellidos: $('#Apellidos').val()?.trim() || null,
+            dni: $('#DNI').val()?.replace(/\D/g, '') || null,
+            rtn: $('#RTN').val()?.trim() || null,
+            telefono: $('#Telefono').val().trim(),
+            telefonoSecundario: $('#TelefonoSecundario').val()?.trim() || null,
+            email: $('#Email').val()?.trim() || null,
+            direccion: $('#Direccion').val()?.trim() || null,
+            ciudad: $('#Ciudad').val()?.trim() || null
+        };
+
+        $.ajax({
+            url: URLS.create,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Cliente creado exitosamente');
+                } else {
+                    Toast.error(response.message || 'Error al guardar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al guardar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function actualizarCliente() {
+        const form = document.getElementById('formEditarCliente');
+        const btn = document.getElementById('btnActualizarCliente');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+        if (!validarDocumentos()) return;
+
+        const data = {
+            clienteId: parseInt($('#ClienteId').val()),
+            tipoCliente: parseInt($('#TipoCliente').val()),
+            nombre: $('#Nombre').val().trim(),
+            apellidos: $('#Apellidos').val()?.trim() || null,
+            dni: $('#DNI').val()?.replace(/\D/g, '') || null,
+            rtn: $('#RTN').val()?.trim() || null,
+            telefono: $('#Telefono').val().trim(),
+            telefonoSecundario: $('#TelefonoSecundario').val()?.trim() || null,
+            email: $('#Email').val()?.trim() || null,
+            direccion: $('#Direccion').val()?.trim() || null,
+            ciudad: $('#Ciudad').val()?.trim() || null
+        };
+
+        $.ajax({
+            url: URLS.edit,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Cliente actualizado exitosamente');
+                } else {
+                    Toast.error(response.message || 'Error al actualizar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al actualizar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function validarDocumentos() {
+        const dni = $('#DNI').val()?.replace(/\D/g, '') || '';
+        const rtn = $('#RTN').val()?.trim() || '';
+
+        if (dni && dni.length !== 13) {
+            Toast.error('El DNI debe tener exactamente 13 dígitos');
+            $('#DNI').focus();
+            return false;
+        }
+        if (rtn && rtn.length !== 14) {
+            Toast.error('El RTN debe tener exactamente 14 dígitos');
+            $('#RTN').focus();
+            return false;
+        }
+        return true;
+    }
+
+    function confirmarEliminar() {
+        const id = parseInt($('#deleteId').val());
+        const btn = document.getElementById('btnEliminarCliente');
+        const btnOriginal = btn.innerHTML;
+
+        $.ajax({
+            url: URLS.delete,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(id),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Eliminando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Cliente eliminado');
+                } else {
+                    Toast.error(response.message || 'Error al eliminar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al eliminar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+</script>
+}

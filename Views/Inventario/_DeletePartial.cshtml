@@ -1,0 +1,16 @@
+<div class="text-center py-3">
+    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+    <h5>¿Está seguro?</h5>
+    <p class="text-muted">Esta acción no se puede deshacer.</p>
+    <p class="small text-danger">No se puede eliminar un vehículo vendido o con órdenes de servicio activas.</p>
+    <input type="hidden" id="deleteId" value="@ViewBag.VehiculoId" />
+</div>
+
+<div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-danger" id="btnEliminarVehiculo" onclick="confirmarEliminar()">
+        <i class="fas fa-trash me-1"></i> Eliminar
+    </button>
+</div>

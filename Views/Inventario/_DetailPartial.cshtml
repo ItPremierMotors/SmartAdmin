@@ -1,0 +1,430 @@
+@model SmartAdmin.Models.Vehiculo.VehiculoDetalleViewModel
+
+@{
+    var transiciones = ViewBag.TransicionesValidas as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var nombresEstado = ViewBag.NombresEstado as Dictionary<int, string> ?? new Dictionary<int, string>();
+
+    var estadoColors = new Dictionary<int, string>
+    {
+        { 1, "secondary" }, { 2, "warning text-dark" }, { 3, "info" },
+        { 4, "primary" }, { 5, "purple" }
+    };
+    var combustibleNames = new Dictionary<int, string>
+    {
+        { 1, "Gasolina" }, { 2, "Diésel" }, { 3, "Híbrido" },
+        { 4, "Eléctrico" }, { 5, "Gas Natural" }, { 6, "GLP" }
+    };
+    var transmisionNames = new Dictionary<int, string>
+    {
+        { 0, "Manual" }, { 1, "Automática" }, { 2, "CVT" },
+        { 3, "Dual Clutch" }, { 4, "Semiautomática" }
+    };
+
+    var estadoColor = estadoColors.ContainsKey(Model.Estado) ? estadoColors[Model.Estado] : "secondary";
+    var estadoNombre = nombresEstado.ContainsKey(Model.Estado) ? nombresEstado[Model.Estado] : Model.Estado.ToString();
+}
+
+<!-- Encabezado -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h5 class="mb-0">@Model.DescripcionCompleta</h5>
+        <small class="text-muted">@Model.Identificador</small>
+    </div>
+    <span class="badge bg-@estadoColor fs-6">@estadoNombre</span>
+</div>
+
+<!-- Identificación -->
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="fas fa-fingerprint me-2"></i>Identificación</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    <tr>
+                        <td class="text-muted fw-bold" style="width:40%">VIN:</td>
+                        <td>@Model.Vin</td>
+                    </tr>
+                    @if (!string.IsNullOrEmpty(Model.Placa))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">Placa:</td>
+                            <td>@Model.Placa</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    @if (!string.IsNullOrEmpty(Model.NumeroMotor))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold" style="width:40%">Motor:</td>
+                            <td>@Model.NumeroMotor</td>
+                        </tr>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.NumeroChasis))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">Chasis:</td>
+                            <td>@Model.NumeroChasis</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Catálogo -->
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="fas fa-car me-2"></i>Catálogo</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    <tr>
+                        <td class="text-muted fw-bold" style="width:40%">Marca:</td>
+                        <td>@Model.MarcaNombre</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">Modelo:</td>
+                        <td>@Model.ModeloNombre</td>
+                    </tr>
+                    @if (!string.IsNullOrEmpty(Model.VersionNombre))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">Versión:</td>
+                            <td>@Model.VersionNombre</td>
+                        </tr>
+                    }
+                    <tr>
+                        <td class="text-muted fw-bold">Año:</td>
+                        <td>@Model.Anio</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    @if (!string.IsNullOrEmpty(Model.Color))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold" style="width:40%">Color:</td>
+                            <td>@Model.Color</td>
+                        </tr>
+                    }
+                    <tr>
+                        <td class="text-muted fw-bold">Combustible:</td>
+                        <td>@(combustibleNames.ContainsKey(Model.TipoCombustible) ? combustibleNames[Model.TipoCombustible] : "N/A")</td>
+                    </tr>
+                    @if (Model.Transmision.HasValue)
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">Transmisión:</td>
+                            <td>@(transmisionNames.ContainsKey(Model.Transmision.Value) ? transmisionNames[Model.Transmision.Value] : "N/A")</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estado y Ubicación -->
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Estado y Ubicación</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    <tr>
+                        <td class="text-muted fw-bold" style="width:40%">Estado:</td>
+                        <td><span class="badge bg-@estadoColor">@estadoNombre</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">Procedencia:</td>
+                        <td>@(Model.Procedencia == 2 ? "Importado" : "Local")</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    @if (!string.IsNullOrEmpty(Model.SucursalNombre))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold" style="width:40%">Sucursal:</td>
+                            <td>@Model.SucursalNombre</td>
+                        </tr>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.UbicacionNombre))
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">Ubicación:</td>
+                            <td>@Model.UbicacionNombre</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+
+        @if (Model.Estado == 5)
+        {
+            <!-- Vehículo Reservado: mostrar botón Procesar Venta -->
+            <hr />
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-success" onclick="abrirModalVenta(@Model.VehiculoId)">
+                    <i class="fas fa-handshake me-1"></i> Procesar Venta
+                </button>
+                <span class="text-muted small">o</span>
+                <input type="hidden" id="stateChangeVehiculoId" value="@Model.VehiculoId" />
+                <input type="hidden" id="nuevoEstado" value="4" />
+                <button class="btn btn-sm btn-outline-warning" id="btnConfirmarEstado" onclick="confirmarCambioEstado()">
+                    <i class="fas fa-undo me-1"></i> Cancelar Reserva
+                </button>
+            </div>
+        }
+        else if (transiciones.Count > 0)
+        {
+            <hr />
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Cambiar estado a:</span>
+                <select class="form-select form-select-sm" id="nuevoEstado" style="width:auto;">
+                    @foreach (var t in transiciones)
+                    {
+                        <option value="@t.Key">@t.Value</option>
+                    }
+                </select>
+                <input type="hidden" id="stateChangeVehiculoId" value="@Model.VehiculoId" />
+                <button class="btn btn-sm btn-warning" id="btnConfirmarEstado" onclick="confirmarCambioEstado()">
+                    <i class="fas fa-exchange-alt me-1"></i> Cambiar
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Importación (solo si Importado) -->
+@if (Model.Procedencia == 2)
+{
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="fas fa-ship me-2"></i>Importación</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-borderless table-sm mb-0">
+                        @if (!string.IsNullOrEmpty(Model.NumeroImportacion))
+                        {
+                            <tr>
+                                <td class="text-muted fw-bold" style="width:40%">N° Importación:</td>
+                                <td>@Model.NumeroImportacion</td>
+                            </tr>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.NumeroPoliza))
+                        {
+                            <tr>
+                                <td class="text-muted fw-bold">N° Póliza:</td>
+                                <td>@Model.NumeroPoliza</td>
+                            </tr>
+                        }
+                        @if (Model.CostoImportacion.HasValue)
+                        {
+                            <tr>
+                                <td class="text-muted fw-bold">Costo:</td>
+                                <td>L @Model.CostoImportacion.Value.ToString("N2")</td>
+                            </tr>
+                        }
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-borderless table-sm mb-0">
+                        @if (Model.FechaIngresoPais.HasValue)
+                        {
+                            <tr>
+                                <td class="text-muted fw-bold" style="width:40%">Ingreso al país:</td>
+                                <td>@Model.FechaIngresoPais.Value.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                        @if (Model.FechaRecepcion.HasValue)
+                        {
+                            <tr>
+                                <td class="text-muted fw-bold">Recepción:</td>
+                                <td>@Model.FechaRecepcion.Value.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Comercial -->
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="fas fa-dollar-sign me-2"></i>Comercial</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    @if (Model.PrecioLista.HasValue)
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold" style="width:40%">Precio Lista:</td>
+                            <td>L @Model.PrecioLista.Value.ToString("N2")</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    <tr>
+                        <td class="text-muted fw-bold" style="width:40%">Cliente:</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(Model.ClienteNombre))
+                            {
+                                @Model.ClienteNombre
+                            }
+                            else
+                            {
+                                <span class="text-muted">Sin asignar</span>
+                            }
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Taller -->
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="fas fa-wrench me-2"></i>Taller</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    <tr>
+                        <td class="text-muted fw-bold" style="width:40%">Kilometraje:</td>
+                        <td>
+                            <span id="kmDisplay">@Model.KilometrajeActual.ToString("N0") km</span>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" id="btnEditarKm" onclick="toggleEditarKm()">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <span id="kmEditor" class="d-none">
+                                <div class="input-group input-group-sm d-inline-flex" style="width:auto;">
+                                    <input type="number" class="form-control" id="nuevoKm" value="@Model.KilometrajeActual" min="0" style="width:120px;" />
+                                    <button class="btn btn-success" onclick="actualizarKilometraje(@Model.VehiculoId)"><i class="fas fa-check"></i></button>
+                                    <button class="btn btn-secondary" onclick="cancelarEditarKm()"><i class="fas fa-times"></i></button>
+                                </div>
+                            </span>
+                        </td>
+                    </tr>
+                    @if (Model.FechaPrimeraMatricula.HasValue)
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">Primera Matrícula:</td>
+                            <td>@Model.FechaPrimeraMatricula.Value.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-borderless table-sm mb-0">
+                    @if (Model.GarantiaHasta.HasValue)
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold" style="width:40%">Garantía Hasta:</td>
+                            <td>
+                                @Model.GarantiaHasta.Value.ToString("dd/MM/yyyy")
+                                @if (Model.EnGarantia)
+                                {
+                                    <span class="badge bg-success ms-1">Vigente</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger ms-1">Vencida</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    <tr>
+                        <td class="text-muted fw-bold">Servicios:</td>
+                        <td>@Model.CantidadServicios</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Observaciones -->
+@if (!string.IsNullOrEmpty(Model.Observaciones))
+{
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="fas fa-sticky-note me-2"></i>Observaciones</h6>
+        </div>
+        <div class="card-body">
+            <p class="mb-0">@Model.Observaciones</p>
+        </div>
+    </div>
+}
+
+<!-- Registro -->
+<div class="text-muted small text-end">
+    Registrado: @Model.FechaRegistro.ToString("dd/MM/yyyy HH:mm")
+</div>
+
+<div class="d-flex justify-content-end mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cerrar
+    </button>
+</div>
+
+<script>
+    function toggleEditarKm() {
+        $('#kmDisplay, #btnEditarKm').addClass('d-none');
+        $('#kmEditor').removeClass('d-none');
+    }
+
+    function cancelarEditarKm() {
+        $('#kmEditor').addClass('d-none');
+        $('#kmDisplay, #btnEditarKm').removeClass('d-none');
+    }
+
+    function actualizarKilometraje(vehiculoId) {
+        const nuevoKm = parseInt($('#nuevoKm').val());
+        if (isNaN(nuevoKm) || nuevoKm < 0) {
+            Toast.error('Ingrese un kilometraje válido');
+            return;
+        }
+        $.ajax({
+            url: '@Url.Action("ActualizarKilometraje", "Inventario")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ vehiculoId: vehiculoId, nuevoKilometraje: nuevoKm }),
+            success: function (response) {
+                if (response.success) {
+                    $('#kmDisplay').text(nuevoKm.toLocaleString() + ' km');
+                    cancelarEditarKm();
+                    Toast.success('Kilometraje actualizado');
+                } else {
+                    Toast.error(response.message || 'Error al actualizar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al actualizar');
+            }
+        });
+    }
+</script>

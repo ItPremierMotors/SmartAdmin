@@ -1,0 +1,158 @@
+﻿@{
+    ViewData["Title"] = "Test de Modales";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="panel">
+            <div class="panel-hdr">
+                <h2>Test de Modales</h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100" onclick="testBasicModal()">
+                                <i class="fal fa-window me-2"></i>Modal Básico
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-success w-100" onclick="testFormModal()">
+                                <i class="fal fa-edit me-2"></i>Modal Formulario
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-warning w-100" onclick="testConfirmModal()">
+                                <i class="fal fa-question-circle me-2"></i>Confirmar
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-danger w-100" onclick="testDeleteModal()">
+                                <i class="fal fa-trash me-2"></i>Confirmar Eliminar
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-info w-100" onclick="testAlertSuccess()">
+                                <i class="fal fa-check me-2"></i>Alert Success
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-danger w-100" onclick="testAlertError()">
+                                <i class="fal fa-times me-2"></i>Alert Error
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-secondary w-100" onclick="testLargeForm()">
+                                <i class="fal fa-user-plus me-2"></i>Formulario Grande
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-dark w-100" onclick="testEditModal()">
+                                <i class="fal fa-user-edit me-2"></i>Editar con Datos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/core/modal.js"></script>
+    <script>
+        function testBasicModal() {
+            Modal.show({
+                title: 'Modal Básico',
+                icon: 'fa-info-circle',
+                body: '<p>Este es un modal básico con contenido simple.</p><p>Puedes poner cualquier HTML aquí.</p>'
+            });
+        }
+
+        function testFormModal() {
+            Modal.form({
+                title: 'Formulario Simple',
+                icon: 'fa-edit',
+                fields: [
+                    { name: 'nombre', label: 'Nombre', type: 'text', required: true },
+                    { name: 'email', label: 'Email', type: 'email', required: true }
+                ],
+                onSubmit: async (data, id) => {
+                    console.log('Datos:', data);
+                    alert('Datos: ' + JSON.stringify(data));
+                    Modal.close(id);
+                }
+            });
+        }
+
+        async function testConfirmModal() {
+            const result = await Modal.confirm('¿Está seguro de realizar esta acción?');
+            alert(result ? 'Confirmado' : 'Cancelado');
+        }
+
+        async function testDeleteModal() {
+            const result = await Modal.confirmDelete('¿Está seguro de eliminar este registro?');
+            alert(result ? 'Eliminado' : 'Cancelado');
+        }
+
+        function testAlertSuccess() {
+            Modal.alert('La operación se completó exitosamente.', 'success');
+        }
+
+        function testAlertError() {
+            Modal.alert('Ocurrió un error al procesar la solicitud.', 'error');
+        }
+
+        function testLargeForm() {
+            Modal.form({
+                title: 'Crear Usuario',
+                icon: 'fa-user-plus',
+                size: 'lg',
+                headerClass: 'bg-primary',
+                fields: [
+                    { name: 'nombreCompleto', label: 'Nombre Completo', type: 'text', required: true, col: 6 },
+                    { name: 'email', label: 'Email', type: 'email', required: true, col: 6 },
+                    { name: 'password', label: 'Contraseña', type: 'password', required: true, col: 6 },
+                    { name: 'cargo', label: 'Cargo', type: 'text', col: 6 },
+                    { name: 'departamento', label: 'Departamento', type: 'select',
+                      options: ['TI', 'RRHH', 'Ventas', 'Contabilidad'], col: 6 },
+                    { name: 'roles', label: 'Roles', type: 'select', multiple: true,
+                      options: ['Admin', 'User', 'Manager'], col: 6 },
+                    { name: 'activo', label: 'Usuario Activo', type: 'checkbox', checked: true, col: 6 },
+                    { name: 'notas', label: 'Notas', type: 'textarea', col: 12, rows: 2 }
+                ],
+                onSubmit: async (data, id) => {
+                    console.log('Usuario:', data);
+                    alert('Usuario creado: ' + JSON.stringify(data, null, 2));
+                    Modal.close(id);
+                }
+            });
+        }
+
+        function testEditModal() {
+            Modal.form({
+                title: 'Editar Usuario',
+                icon: 'fa-user-edit',
+                size: 'lg',
+                headerClass: 'bg-warning',
+                fields: [
+                    { name: 'id', type: 'hidden', value: 'user-123' },
+                    { name: 'nombreCompleto', label: 'Nombre Completo', type: 'text', value: 'Juan Pérez', col: 6 },
+                    { name: 'email', label: 'Email', type: 'email', value: 'juan@test.com', col: 6, readonly: true },
+                    { name: 'cargo', label: 'Cargo', type: 'text', value: 'Desarrollador', col: 6 },
+                    { name: 'roles', label: 'Roles', type: 'select', multiple: true,
+                      options: ['Admin', 'User', 'Manager'], value: ['User', 'Manager'], col: 6 },
+                    { name: 'activo', label: 'Usuario Activo', type: 'checkbox', checked: true, col: 12 }
+                ],
+                confirmText: 'Actualizar',
+                confirmClass: 'btn-warning',
+                confirmIcon: 'fa-save',
+                onSubmit: async (data, id) => {
+                    console.log('Actualizar:', data);
+                    alert('Usuario actualizado: ' + JSON.stringify(data, null, 2));
+                    Modal.close(id);
+                }
+            });
+        }
+    </script>
+}

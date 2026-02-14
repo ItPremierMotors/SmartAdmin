@@ -1,0 +1,139 @@
+@model SmartAdmin.Models.Catalogo.Modelo.CreateModeloViewModel
+
+<form id="formCrearModelo">
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="MarcaId" class="form-label">
+                @Html.DisplayNameFor(m => m.MarcaId)<span class="text-danger">*</span>
+            </label>
+            <select asp-for="MarcaId" class="form-select" required>
+                <option value="">Seleccione una marca...</option>
+            </select>
+            <span asp-validation-for="MarcaId" class="text-danger"></span>
+            <small class="form-text text-muted">Seleccione la marca del vehículo</small>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Codigo" class="form-label">
+                @Html.DisplayNameFor(m => m.Codigo)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Codigo" class="form-control" placeholder="Ej: Asv, H6, Tk500" required />
+            <span asp-validation-for="Codigo" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Nombre" class="form-label">
+                @Html.DisplayNameFor(m => m.Nombre)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Nombre" class="form-control" placeholder="Ej: Alsvin, H6, TANK500" required />
+            <span asp-validation-for="Nombre" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Segmento" class="form-label">
+                @Html.DisplayNameFor(m => m.Segmento)<span class="text-danger">*</span>
+            </label>
+            <select asp-for="Segmento"
+                    asp-items="Html.GetEnumSelectList<SmartAdmin.Models.Enums.SegmentoVehiculo>()"
+                    class="form-select select2-segmento" required>
+                <option value="">Seleccione un segmento...</option>
+            </select>
+            <span asp-validation-for="Segmento" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="AnioInicio" class="form-label">
+                @Html.DisplayNameFor(m => m.AnioInicio)
+            </label>
+            <input asp-for="AnioInicio" class="form-control" type="number" min="1900" max="2100" placeholder="Ej: 2020" />
+            <span asp-validation-for="AnioInicio" class="text-danger"></span>
+            <small class="form-text text-muted">Año de inicio de producción</small>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="AnioFin" class="form-label">
+                @Html.DisplayNameFor(m => m.AnioFin)
+            </label>
+            <input asp-for="AnioFin" class="form-control" type="number" min="1900" max="2100" placeholder="Dejar vacío si está en producción" />
+            <span asp-validation-for="AnioFin" class="text-danger"></span>
+            <small class="form-text text-muted">Dejar vacío si el modelo sigue en producción</small>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-3">
+            <label asp-for="ImagenUrl" class="form-label">
+                @Html.DisplayNameFor(m => m.ImagenUrl)
+            </label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-image"></i></span>
+                <input asp-for="ImagenUrl" class="form-control" placeholder="https://ejemplo.com/imagenes/changan.jpg" />
+            </div>
+            <span asp-validation-for="ImagenUrl" class="text-danger"></span>
+            <small class="form-text text-muted">URL de la imagen del modelo</small>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-3">
+            <label asp-for="Descripcion" class="form-label">
+                @Html.DisplayNameFor(m => m.Descripcion)
+            </label>
+            <textarea asp-for="Descripcion" class="form-control" rows="3"
+                      placeholder="Ej: Sedán compacto, versátil y eficiente, ideal para ciudad y carretera"></textarea>
+            <span asp-validation-for="Descripcion" class="text-danger"></span>
+        </div>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnGuardarModelo" onclick="guardarModelo()">
+        <i class="fas fa-save me-1"></i> Guardar
+    </button>
+</div>
+
+<script>
+    // Cargar marcas al abrir el modal
+    $(document).ready(function() {
+        cargarMarcas();
+        $('.select2-segmento').select2({
+            dropdownParent: $('.modal'), // importante si está dentro de un modal
+            theme: 'bootstrap-5',
+            placeholder: 'Seleccione un segmento...',
+            allowClear: true,
+            @* minimumResultsForSearch: Infinity // oculta búsqueda si son pocos items *@
+        });
+    });
+
+    function cargarMarcas() {
+        $.ajax({
+            url: '@Url.Action("GetAll", "Marca")',
+            type: 'GET',
+            success: function(response) {
+                if (response.success && response.data) {
+                    const select = $('#MarcaId');
+                    select.empty();
+                    select.append('<option value="">Seleccione una marca...</option>');
+
+                    response.data.forEach(marca => {
+                        select.append(`<option value="${marca.marcaId}">${marca.nombre}</option>`);
+                    });
+                     // Inicializar Select2 DESPUÉS de cargar las opciones
+                    select.select2({
+                        dropdownParent: $('.modal'),
+                        theme: 'bootstrap-5',
+                        placeholder: 'Seleccione una marca...',
+                        allowClear: true
+                    });
+                }
+            },
+            error: function() {
+                Toast.error('Error al cargar las marcas');
+            }
+        });
+    }
+</script>

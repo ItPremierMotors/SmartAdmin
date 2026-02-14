@@ -1,0 +1,499 @@
+@{
+    ViewData["Title"] = "Inventario de Vehículos";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-warehouse me-2"></i>@ViewData["Title"]</h1>
+        <button class="btn btn-primary" id="btnNuevo">
+            <i class="fas fa-plus me-2"></i>Nuevo Vehículo
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Estado</label>
+                    <select class="form-select form-select-sm" id="filtroEstado">
+                        <option value="">Todos</option>
+                        <option value="1">En Tránsito</option>
+                        <option value="2">En Aduana</option>
+                        <option value="3">En Bodega</option>
+                        <option value="4">En Exhibición</option>
+                        <option value="5">Reservado</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Marca</label>
+                    <select class="form-select form-select-sm" id="filtroMarca">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Sucursal</label>
+                    <select class="form-select form-select-sm" id="filtroSucursal">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="limpiarFiltros()">
+                        <i class="fas fa-eraser me-1"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando vehículos...</p>
+            </div>
+
+            <table class="table table-hover table-sm d-none" id="tablaInventario" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>Identificador</th>
+                        <th>Descripción</th>
+                        <th>Color</th>
+                        <th>Estado</th>
+                        <th>Sucursal</th>
+                        <th>Km</th>
+                        <th>Precio Lista</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const URLS = {
+        getAll: '@Url.Action("GetAll", "Inventario")',
+        getMarcas: '@Url.Action("GetMarcas", "Inventario")',
+        getSucursales: '@Url.Action("GetSucursales", "Inventario")',
+        getDetail: '@Url.Action("DetailPartial", "Inventario")',
+        createPartial: '@Url.Action("CreatePartial", "Inventario")',
+        editPartial: '@Url.Action("EditPartial", "Inventario")',
+        deletePartial: '@Url.Action("DeletePartial", "Inventario")',
+        ventaPartial: '@Url.Action("VentaPartial", "Inventario")',
+        create: '@Url.Action("Create", "Inventario")',
+        edit: '@Url.Action("Edit", "Inventario")',
+        delete: '@Url.Action("Delete", "Inventario")',
+        cambiarEstado: '@Url.Action("CambiarEstado", "Inventario")',
+        actualizarKm: '@Url.Action("ActualizarKilometraje", "Inventario")',
+        procesarVenta: '@Url.Action("ProcesarVenta", "Inventario")'
+    };
+
+    const estadoColors = {
+        1: 'secondary', 2: 'warning text-dark', 3: 'info',
+        4: 'primary', 5: 'dark'
+    };
+    const estadoNames = {
+        1: 'En Tránsito', 2: 'En Aduana', 3: 'En Bodega',
+        4: 'En Exhibición', 5: 'Reservado'
+    };
+
+    const ESTADOS_INVENTARIO = [1, 2, 3, 4, 5];
+
+    let dtInventario = null;
+    let datosOriginales = [];
+
+    $(document).ready(function () {
+        cargarDatos();
+        cargarMarcasFiltro();
+        cargarSucursalesFiltro();
+        $('#btnNuevo').on('click', abrirModalCrear);
+
+        // Select2 en filtros
+        $('#filtroEstado').select2({ theme: 'bootstrap-5', allowClear: true, placeholder: 'Todos', width: '100%' });
+        $('#filtroMarca').select2({ theme: 'bootstrap-5', allowClear: true, placeholder: 'Todas', width: '100%' });
+        $('#filtroSucursal').select2({ theme: 'bootstrap-5', allowClear: true, placeholder: 'Todas', width: '100%' });
+
+        $('#filtroEstado, #filtroMarca, #filtroSucursal').on('change', aplicarFiltros);
+    });
+
+    function cargarDatos() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    datosOriginales = response.data.filter(v => ESTADOS_INVENTARIO.includes(v.estado));
+                    renderizarTabla(datosOriginales);
+                } else {
+                    Toast.error('Error al cargar vehículos');
+                }
+                $('#loading').addClass('d-none');
+            },
+            error: function () {
+                Toast.error('Error al conectar con el servidor');
+                $('#loading').addClass('d-none');
+            }
+        });
+    }
+
+    function cargarMarcasFiltro() {
+        $.ajax({
+            url: URLS.getMarcas,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    response.data.forEach(m => {
+                        $('#filtroMarca').append(`<option value="${m.nombre}">${m.nombre}</option>`);
+                    });
+                }
+            }
+        });
+    }
+
+    function cargarSucursalesFiltro() {
+        $.ajax({
+            url: URLS.getSucursales,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    response.data.forEach(s => {
+                        $('#filtroSucursal').append(`<option value="${s.nombre}">${s.nombre}</option>`);
+                    });
+                }
+            }
+        });
+    }
+
+    function renderizarTabla(datos) {
+        if (dtInventario) dtInventario.destroy();
+
+        dtInventario = $('#tablaInventario').DataTable({
+            data: datos,
+            columns: [
+                {
+                    data: 'identificador',
+                    render: data => `<strong>${data}</strong>`
+                },
+                {
+                    data: 'descripcionCompleta',
+                    render: data => data || 'N/A'
+                },
+                {
+                    data: 'color',
+                    render: data => data || '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: 'estado',
+                    render: data => {
+                        const color = estadoColors[data] || 'secondary';
+                        const name = estadoNames[data] || data;
+                        return `<span class="badge bg-${color}">${name}</span>`;
+                    }
+                },
+                {
+                    data: null,
+                    render: (data, type, row) => row.sucursalNombre || '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: 'kilometrajeActual',
+                    render: data => data ? data.toLocaleString() + ' km' : '0 km'
+                },
+                {
+                    data: null,
+                    render: (data, type, row) => row.precioLista ? 'L ' + row.precioLista.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: 'vehiculoId',
+                    orderable: false,
+                    className: 'text-center',
+                    render: data => `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" onclick="abrirModalDetalle(${data})" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="abrirModalEliminar(${data})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `
+                }
+            ],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            order: [[0, 'asc']],
+            responsive: true
+        });
+
+        $('#tablaInventario').removeClass('d-none');
+    }
+
+    function aplicarFiltros() {
+        const estadoFiltro = $('#filtroEstado').val();
+        const marcaFiltro = $('#filtroMarca').val();
+        const sucursalFiltro = $('#filtroSucursal').val();
+
+        let datos = [...datosOriginales];
+
+        if (estadoFiltro) datos = datos.filter(v => v.estado == estadoFiltro);
+        if (marcaFiltro) datos = datos.filter(v => v.marcaNombre === marcaFiltro);
+        if (sucursalFiltro) datos = datos.filter(v => v.sucursalNombre === sucursalFiltro);
+
+        renderizarTabla(datos);
+    }
+
+    function limpiarFiltros() {
+        $('#filtroEstado').val('').trigger('change.select2');
+        $('#filtroMarca').val('').trigger('change.select2');
+        $('#filtroSucursal').val('').trigger('change.select2');
+        renderizarTabla(datosOriginales);
+    }
+
+    function recargarTabla() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    datosOriginales = response.data.filter(v => ESTADOS_INVENTARIO.includes(v.estado));
+                    limpiarFiltros();
+                }
+            }
+        });
+    }
+
+    // Modales
+    function abrirModalCrear() {
+        AppModal.open({
+            title: '<i class="fas fa-car me-2"></i>Nuevo Vehículo',
+            url: URLS.createPartial,
+            size: 'xl'
+        });
+    }
+
+    function abrirModalDetalle(id) {
+        AppModal.open({
+            title: '<i class="fas fa-eye me-2"></i>Detalle del Vehículo',
+            url: URLS.getDetail,
+            data: { id: id },
+            size: 'xl'
+        });
+    }
+
+    function abrirModalEditar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-pencil me-2"></i>Editar Vehículo',
+            url: URLS.editPartial,
+            data: { id: id },
+            size: 'xl'
+        });
+    }
+
+    function abrirModalEliminar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-trash me-2"></i>Eliminar Vehículo',
+            url: URLS.deletePartial,
+            data: { id: id },
+            size: 'sm'
+        });
+    }
+
+    function abrirModalVenta(id) {
+        AppModal.open({
+            title: '<i class="fas fa-handshake me-2"></i>Procesar Venta',
+            url: URLS.ventaPartial,
+            data: { id: id },
+            size: 'md'
+        });
+    }
+
+    // CRUD
+    function guardarVehiculo() {
+        const form = document.getElementById('formCrearVehiculo');
+        const btn = document.getElementById('btnGuardarVehiculo');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = recogerDatosFormulario('formCrearVehiculo');
+
+        $.ajax({
+            url: URLS.create,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Vehículo creado exitosamente');
+                } else {
+                    Toast.error(response.message || 'Error al guardar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al guardar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function actualizarVehiculo() {
+        const form = document.getElementById('formEditarVehiculo');
+        const btn = document.getElementById('btnActualizarVehiculo');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = recogerDatosFormulario('formEditarVehiculo');
+        data.vehiculoId = parseInt($('#VehiculoId').val());
+
+        $.ajax({
+            url: URLS.edit,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Vehículo actualizado exitosamente');
+                } else {
+                    Toast.error(response.message || 'Error al actualizar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al actualizar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function confirmarEliminar() {
+        const id = parseInt($('#deleteId').val());
+        const btn = document.getElementById('btnEliminarVehiculo');
+        const btnOriginal = btn.innerHTML;
+
+        $.ajax({
+            url: URLS.delete,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(id),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Eliminando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Vehículo eliminado');
+                } else {
+                    Toast.error(response.message || 'Error al eliminar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al eliminar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function confirmarCambioEstado() {
+        const vehiculoId = parseInt($('#stateChangeVehiculoId').val());
+        const nuevoEstado = parseInt($('#nuevoEstado').val());
+        const btn = document.getElementById('btnConfirmarEstado');
+        const btnOriginal = btn.innerHTML;
+
+        $.ajax({
+            url: URLS.cambiarEstado,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ vehiculoId: vehiculoId, nuevoEstado: nuevoEstado }),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cambiando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Estado actualizado');
+                } else {
+                    Toast.error(response.message || 'Error al cambiar estado');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al cambiar estado');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function confirmarProcesarVenta() {
+        const form = document.getElementById('formProcesarVenta');
+        const btn = document.getElementById('btnProcesarVenta');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            vehiculoId: parseInt($('#VentaVehiculoId').val()),
+            clienteId: parseInt($('#VentaClienteId').val()),
+            precioVenta: parseFloat($('#PrecioVenta').val()),
+            fechaVenta: $('#FechaVenta').val()
+        };
+
+        if (!data.clienteId) { Toast.error('Seleccione un cliente'); return; }
+        if (!data.precioVenta || data.precioVenta <= 0) { Toast.error('Ingrese un precio de venta válido'); return; }
+
+        $.ajax({
+            url: URLS.procesarVenta,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Venta procesada exitosamente');
+                } else {
+                    Toast.error(response.message || 'Error al procesar la venta');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al procesar la venta');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    // Helpers
+    function recogerDatosFormulario(formId) {
+        return {
+            vin: $('#Vin').val().trim(),
+            placa: $('#Placa').val()?.trim() || null,
+            numeroMotor: $('#NumeroMotor').val()?.trim() || null,
+            numeroChasis: $('#NumeroChasis').val()?.trim() || null,
+            marcaId: parseInt($('#MarcaId').val()),
+            modeloId: parseInt($('#ModeloId').val()),
+            versionId: $('#VersionId').val() ? parseInt($('#VersionId').val()) : null,
+            anio: parseInt($('#Anio').val()),
+            color: $('#Color').val()?.trim() || null,
+            tipoCombustible: parseInt($('#TipoCombustible').val()),
+            transmision: $('#Transmision').val() ? parseInt($('#Transmision').val()) : null,
+            estado: parseInt($('#Estado').val()),
+            sucursalId: $('#SucursalId').val() ? parseInt($('#SucursalId').val()) : null,
+            procedencia: parseInt($('#Procedencia').val()),
+            numeroImportacion: $('#NumeroImportacion').val()?.trim() || null,
+            numeroPoliza: $('#NumeroPoliza').val()?.trim() || null,
+            fechaIngresoPais: $('#FechaIngresoPais').val() || null,
+            fechaRecepcion: $('#FechaRecepcion').val() || null,
+            costoImportacion: $('#CostoImportacion').val() ? parseFloat($('#CostoImportacion').val()) : null,
+            clienteId: $('#ClienteId').val() ? parseInt($('#ClienteId').val()) : null,
+            precioLista: $('#PrecioLista').val() ? parseFloat($('#PrecioLista').val()) : null,
+            kilometrajeActual: parseInt($('#KilometrajeActual').val()) || 0,
+            fechaPrimeraMatricula: $('#FechaPrimeraMatricula').val() || null,
+            garantiaHasta: $('#GarantiaHasta').val() || null,
+            observaciones: $('#Observaciones').val()?.trim() || null
+        };
+    }
+</script>
+}

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Centro - círculo sólido -->
+  <circle cx="16" cy="16" r="3.5" fill="#c41e3a"/>
+  
+  <!-- Elipse vertical (como el logo original de PM) -->
+  <ellipse cx="16" cy="16" rx="7" ry="14" fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+  
+  <!-- Elipse diagonal izquierda -->
+  <ellipse cx="16" cy="16" rx="7" ry="14" fill="none" stroke="#c41e3a" stroke-width="1.5" transform="rotate(-60 16 16)"/>
+  
+  <!-- Elipse diagonal derecha -->
+  <ellipse cx="16" cy="16" rx="7" ry="14" fill="none" stroke="#1a1a1a" stroke-width="1.5" transform="rotate(60 16 16)"/>
+</svg>

@@ -1,0 +1,91 @@
+@{
+    var vehiculoInfo = ViewBag.VehiculoInfo as string;
+    var precioLista = ViewBag.PrecioLista as decimal?;
+}
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-1"></i>
+    Al procesar la venta, el vehículo pasará a estado <strong>Vendido</strong> y se moverá al módulo de Ventas.
+</div>
+
+@if (!string.IsNullOrEmpty(vehiculoInfo))
+{
+    <div class="mb-3">
+        <label class="form-label text-muted small">Vehículo</label>
+        <div class="form-control-plaintext fw-bold">@vehiculoInfo</div>
+    </div>
+}
+
+@if (precioLista.HasValue)
+{
+    <div class="mb-3">
+        <label class="form-label text-muted small">Precio de Lista</label>
+        <div class="form-control-plaintext">L @precioLista.Value.ToString("N2")</div>
+    </div>
+}
+
+<form id="formProcesarVenta">
+    <input type="hidden" id="VentaVehiculoId" value="@ViewBag.VehiculoId" />
+
+    <div class="mb-3">
+        <label class="form-label">Cliente <span class="text-danger">*</span></label>
+        <select class="form-select" id="VentaClienteId" required>
+            <option value="">Buscar cliente...</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Precio de Venta <span class="text-danger">*</span></label>
+        <div class="input-group">
+            <span class="input-group-text">L</span>
+            <input type="number" class="form-control" id="PrecioVenta" step="0.01" min="0.01"
+                   value="@(precioLista.HasValue ? precioLista.Value.ToString("F2") : "")" required />
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha de Venta <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" id="FechaVenta" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-success" id="btnProcesarVenta" onclick="confirmarProcesarVenta()">
+        <i class="fas fa-handshake me-1"></i> Procesar Venta
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#VentaClienteId').select2({
+            dropdownParent: $('.modal'),
+            theme: 'bootstrap-5',
+            placeholder: 'Buscar cliente...',
+            allowClear: true,
+            minimumInputLength: 2,
+            language: { inputTooShort: () => 'Escriba al menos 2 caracteres...' },
+            ajax: {
+                url: '@Url.Action("Search", "Clientes")',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) {
+                    return { term: params.term };
+                },
+                processResults: function (data) {
+                    if (data.success && data.data) {
+                        return {
+                            results: data.data.map(c => ({
+                                id: c.clienteId,
+                                text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono) + ')'
+                            }))
+                        };
+                    }
+                    return { results: [] };
+                }
+            }
+        });
+    });
+</script>

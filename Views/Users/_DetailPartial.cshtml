@@ -1,0 +1,40 @@
+﻿@model SmartAdmin.Models.UserRole.UserViewModels.UserViewModel
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title mb-3">@Model.NombreCompleto</h5>
+
+        <p class="mb-1"><strong>Email:</strong> @Model.Email</p>
+        <p class="mb-1"><strong>Cargo:</strong> @(Model.Cargo ?? "N/A")</p>
+        <p class="mb-1">
+            <strong>Roles:</strong>
+            @if (Model.Roles != null && Model.Roles.Any())
+            {
+                @foreach (var rol in Model.Roles)
+                {
+                    var color = rol == "Admin" ? "danger" : "info";
+                    <span class="badge bg-@color me-1">@rol</span>
+                }
+            }
+            else
+            {
+                <span class="text-muted">Sin roles asignados</span>
+            }
+        </p>
+        <p class="mb-3">
+            <strong>Estado:</strong>
+            @if (Model.Activo)
+            {
+                <span class="badge bg-success">Activo</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">Inactivo</span>
+            }
+        </p>
+
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+    </div>
+</div>

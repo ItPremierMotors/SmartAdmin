@@ -1,0 +1,382 @@
+@{
+    ViewData["Title"] = "Gestión de Ventas";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-handshake me-2"></i>@ViewData["Title"]</h1>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Estado</label>
+                    <select class="form-select form-select-sm" id="filtroEstado">
+                        <option value="">Todos</option>
+                        <option value="6">Vendido</option>
+                        <option value="7">Entregado</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small text-muted">Cliente</label>
+                    <select class="form-select form-select-sm" id="filtroCliente">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="limpiarFiltros()">
+                        <i class="fas fa-eraser me-1"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando ventas...</p>
+            </div>
+
+            <table class="table table-hover table-sm d-none" id="tablaVentas" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>Identificador</th>
+                        <th>Descripción</th>
+                        <th>Cliente</th>
+                        <th>Precio Venta</th>
+                        <th>Fecha Venta</th>
+                        <th>Estado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const URLS = {
+        getAll: '@Url.Action("GetAll", "Ventas")',
+        getDetail: '@Url.Action("DetailPartial", "Ventas")',
+        editPartial: '@Url.Action("EditPartial", "Ventas")',
+        entregaPartial: '@Url.Action("EntregaPartial", "Ventas")',
+        edit: '@Url.Action("Edit", "Ventas")',
+        cambiarEstado: '@Url.Action("CambiarEstado", "Ventas")',
+        actualizarKm: '@Url.Action("ActualizarKilometraje", "Ventas")',
+        procesarEntrega: '@Url.Action("ProcesarEntrega", "Ventas")'
+    };
+
+    const estadoColors = { 6: 'success', 7: 'dark' };
+    const estadoNames = { 6: 'Vendido', 7: 'Entregado' };
+    const ESTADOS_VENTAS = [6, 7];
+
+    let dtVentas = null;
+    let datosOriginales = [];
+
+    $(document).ready(function () {
+        cargarDatos();
+
+        // Select2 en filtros
+        $('#filtroEstado').select2({ theme: 'bootstrap-5', allowClear: true, placeholder: 'Todos', width: '100%' });
+        $('#filtroCliente').select2({
+            theme: 'bootstrap-5',
+            allowClear: true,
+            placeholder: 'Buscar cliente...',
+            width: '100%',
+            minimumInputLength: 2,
+            language: { inputTooShort: () => 'Escriba al menos 2 caracteres...' },
+            ajax: {
+                url: '@Url.Action("Search", "Clientes")',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) { return { term: params.term }; },
+                processResults: function (data) {
+                    if (data.success && data.data) {
+                        return {
+                            results: data.data.map(c => ({
+                                id: c.nombreCompleto,
+                                text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono) + ')'
+                            }))
+                        };
+                    }
+                    return { results: [] };
+                }
+            }
+        });
+
+        $('#filtroEstado, #filtroCliente').on('change', aplicarFiltros);
+    });
+
+    function cargarDatos() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    datosOriginales = response.data.filter(v => ESTADOS_VENTAS.includes(v.estado));
+                    renderizarTabla(datosOriginales);
+                } else {
+                    Toast.error('Error al cargar ventas');
+                }
+                $('#loading').addClass('d-none');
+            },
+            error: function () {
+                Toast.error('Error al conectar con el servidor');
+                $('#loading').addClass('d-none');
+            }
+        });
+    }
+
+    function renderizarTabla(datos) {
+        if (dtVentas) dtVentas.destroy();
+
+        dtVentas = $('#tablaVentas').DataTable({
+            data: datos,
+            columns: [
+                {
+                    data: 'identificador',
+                    render: data => `<strong>${data}</strong>`
+                },
+                {
+                    data: 'descripcionCompleta',
+                    render: data => data || 'N/A'
+                },
+                {
+                    data: 'clienteNombre',
+                    render: data => data || '<span class="text-muted">Sin asignar</span>'
+                },
+                {
+                    data: null,
+                    render: (data, type, row) => row.precioVenta ? 'L ' + row.precioVenta.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: null,
+                    render: (data, type, row) => {
+                        if (row.fechaVenta) {
+                            const d = new Date(row.fechaVenta);
+                            return d.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                        return '<span class="text-muted">N/A</span>';
+                    }
+                },
+                {
+                    data: 'estado',
+                    render: data => {
+                        const color = estadoColors[data] || 'secondary';
+                        const name = estadoNames[data] || data;
+                        return `<span class="badge bg-${color}">${name}</span>`;
+                    }
+                },
+                {
+                    data: 'vehiculoId',
+                    orderable: false,
+                    className: 'text-center',
+                    render: data => `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" onclick="abrirModalDetalle(${data})" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    `
+                }
+            ],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            order: [[4, 'desc']],
+            responsive: true
+        });
+
+        $('#tablaVentas').removeClass('d-none');
+    }
+
+    function aplicarFiltros() {
+        const estadoFiltro = $('#filtroEstado').val();
+        const clienteFiltro = $('#filtroCliente').val();
+
+        let datos = [...datosOriginales];
+
+        if (estadoFiltro) datos = datos.filter(v => v.estado == estadoFiltro);
+        if (clienteFiltro) datos = datos.filter(v => v.clienteNombre === clienteFiltro);
+
+        renderizarTabla(datos);
+    }
+
+    function limpiarFiltros() {
+        $('#filtroEstado').val('').trigger('change.select2');
+        $('#filtroCliente').val('').trigger('change.select2');
+        renderizarTabla(datosOriginales);
+    }
+
+    function recargarTabla() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    datosOriginales = response.data.filter(v => ESTADOS_VENTAS.includes(v.estado));
+                    limpiarFiltros();
+                }
+            }
+        });
+    }
+
+    // Modales
+    function abrirModalDetalle(id) {
+        AppModal.open({
+            title: '<i class="fas fa-eye me-2"></i>Detalle de Venta',
+            url: URLS.getDetail,
+            data: { id: id },
+            size: 'xl'
+        });
+    }
+
+    function abrirModalEditar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-pencil me-2"></i>Editar Datos de Venta',
+            url: URLS.editPartial,
+            data: { id: id },
+            size: 'md'
+        });
+    }
+
+    function abrirModalEntrega(id) {
+        AppModal.open({
+            title: '<i class="fas fa-truck me-2"></i>Procesar Entrega',
+            url: URLS.entregaPartial,
+            data: { id: id },
+            size: 'md'
+        });
+    }
+
+    // CRUD
+    function actualizarVenta() {
+        const form = document.getElementById('formEditarVenta');
+        const btn = document.getElementById('btnActualizarVenta');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        // Build full model from hidden fields + editable fields
+        const data = {
+            vehiculoId: parseInt($('#VehiculoId').val()),
+            vin: $('#h_Vin').val(),
+            placa: $('#h_Placa').val() || null,
+            numeroMotor: $('#h_NumeroMotor').val() || null,
+            numeroChasis: $('#h_NumeroChasis').val() || null,
+            marcaId: parseInt($('#h_MarcaId').val()),
+            modeloId: parseInt($('#h_ModeloId').val()),
+            versionId: $('#h_VersionId').val() ? parseInt($('#h_VersionId').val()) : null,
+            anio: parseInt($('#h_Anio').val()),
+            color: $('#h_Color').val() || null,
+            tipoCombustible: parseInt($('#h_TipoCombustible').val()),
+            transmision: $('#h_Transmision').val() ? parseInt($('#h_Transmision').val()) : null,
+            estado: parseInt($('#h_Estado').val()),
+            sucursalId: $('#h_SucursalId').val() ? parseInt($('#h_SucursalId').val()) : null,
+            procedencia: parseInt($('#h_Procedencia').val()),
+            numeroImportacion: $('#h_NumeroImportacion').val() || null,
+            numeroPoliza: $('#h_NumeroPoliza').val() || null,
+            fechaIngresoPais: $('#h_FechaIngresoPais').val() || null,
+            fechaRecepcion: $('#h_FechaRecepcion').val() || null,
+            costoImportacion: $('#h_CostoImportacion').val() ? parseFloat($('#h_CostoImportacion').val()) : null,
+            precioLista: $('#h_PrecioLista').val() ? parseFloat($('#h_PrecioLista').val()) : null,
+            kilometrajeActual: parseInt($('#h_KilometrajeActual').val()) || 0,
+            fechaPrimeraMatricula: $('#h_FechaPrimeraMatricula').val() || null,
+            // Editable fields
+            clienteId: $('#ClienteId').val() ? parseInt($('#ClienteId').val()) : null,
+            precioVenta: $('#PrecioVenta').val() ? parseFloat($('#PrecioVenta').val()) : null,
+            fechaVenta: $('#FechaVenta').val() || null,
+            fechaEntrega: $('#FechaEntrega').val() || null,
+            vendedorId: $('#VendedorId').val()?.trim() || null,
+            garantiaHasta: $('#GarantiaHasta').val() || null,
+            observaciones: $('#Observaciones').val()?.trim() || null
+        };
+
+        $.ajax({
+            url: URLS.edit,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Datos de venta actualizados');
+                } else {
+                    Toast.error(response.message || 'Error al actualizar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al actualizar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function confirmarCambioEstado() {
+        const vehiculoId = parseInt($('#stateChangeVehiculoId').val());
+        const nuevoEstado = parseInt($('#nuevoEstado').val());
+        const btn = document.getElementById('btnConfirmarEstado');
+        const btnOriginal = btn.innerHTML;
+
+        $.ajax({
+            url: URLS.cambiarEstado,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ vehiculoId: vehiculoId, nuevoEstado: nuevoEstado }),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cambiando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Estado actualizado');
+                } else {
+                    Toast.error(response.message || 'Error al cambiar estado');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al cambiar estado');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function confirmarProcesarEntrega() {
+        const form = document.getElementById('formProcesarEntrega');
+        const btn = document.getElementById('btnProcesarEntrega');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            vehiculoId: parseInt($('#EntregaVehiculoId').val()),
+            fechaEntrega: $('#EntregaFecha').val()
+        };
+
+        $.ajax({
+            url: URLS.procesarEntrega,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Entrega procesada exitosamente');
+                } else {
+                    Toast.error(response.message || 'Error al procesar la entrega');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al procesar la entrega');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+</script>
+}

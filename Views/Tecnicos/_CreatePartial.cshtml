@@ -1,0 +1,79 @@
+@model SmartAdmin.Models.Catalogo.Tecnico.CreateTecnicoViewModel
+
+<form id="formCrearTecnico">
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="Codigo" class="form-label">
+                @Html.DisplayNameFor(m => m.Codigo)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Codigo" class="form-control text-uppercase" placeholder="Ej: TEC-001" required />
+            <span asp-validation-for="Codigo" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Nombre" class="form-label">
+                @Html.DisplayNameFor(m => m.Nombre)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Nombre" class="form-control" placeholder="Nombre" required />
+            <span asp-validation-for="Nombre" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Apellidos" class="form-label">
+                @Html.DisplayNameFor(m => m.Apellidos)<span class="text-danger">*</span>
+            </label>
+            <input asp-for="Apellidos" class="form-control" placeholder="Apellidos" required />
+            <span asp-validation-for="Apellidos" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Especialidad" class="form-label">
+                @Html.DisplayNameFor(m => m.Especialidad)
+            </label>
+            <input asp-for="Especialidad" class="form-control" placeholder="Ej: Mecánica General, Electricidad, Pintura" />
+            <span asp-validation-for="Especialidad" class="text-danger"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label asp-for="BahiaAsignada" class="form-label">
+                @Html.DisplayNameFor(m => m.BahiaAsignada)
+            </label>
+            <input asp-for="BahiaAsignada" class="form-control" type="number" min="1" max="100" placeholder="Ej: 1" />
+            <span asp-validation-for="BahiaAsignada" class="text-danger"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label asp-for="SucursalId" class="form-label">
+                @Html.DisplayNameFor(m => m.SucursalId)
+            </label>
+            <select asp-for="SucursalId" class="form-select" id="SucursalId">
+                <option value="">Seleccione sucursal...</option>
+            </select>
+            <span asp-validation-for="SucursalId" class="text-danger"></span>
+        </div>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnGuardarTecnico" onclick="guardarTecnico()">
+        <i class="fas fa-save me-1"></i> Guardar
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            url: '@Url.Action("GetSucursales", "Tecnicos")',
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    const select = $('#SucursalId');
+                    response.data.forEach(s => {
+                        select.append(`<option value="${s.id}">${s.nombre}</option>`);
+                    });
+                }
+            }
+        });
+    });
+</script>

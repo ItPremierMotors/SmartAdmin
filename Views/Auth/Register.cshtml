@@ -1,0 +1,107 @@
+﻿@model SmartAdmin.Models.Account.RegisterViewModel
+@{
+    ViewBag.Title = "Register";
+    Layout = "~/Views/Shared/_BaseLayout.cshtml";
+}
+
+@section styles
+{
+
+}
+
+<nav class="navbar navbar-expand-lg navbar-dark position-fixed w-100 py-3" style="z-index: 1000;">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <img alt="logo" src="~/img/logo-light.svg" />
+        </a>
+        <div class="ms-auto d-flex gap-2">
+            <a class="btn btn-link text-white border-0 text-decoration-none" href=@Url.Action("Login", "Auth")>Login</a>
+            <a class="btn btn-link text-white border-0 text-decoration-none" href=@Url.Action("Register", "Auth")>Register</a>
+        </div>
+    </div>
+</nav>
+<!-- Login Page -->
+<section class="hero-section position-relative overflow-hidden">
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="row justify-content-center">
+            <div class="col-11 col-md-8 col-lg-6 col-xl-4">
+                <div class="login-card p-4 p-md-6 bg-dark bg-opacity-50 translucent-dark rounded-4">
+                    <h2 class="text-center mb-4">Registro</h2>
+                    <p class="text-center text-white opacity-50 mb-4">
+                        ¡No te pierdas las oportunidades de descubrir más sobre nuestra marca!
+                    </p>
+                    <form asp-action="Register" asp-controller="Auth" method="post">
+
+                        @* Errores generales (usuario/clave incorrectos, etc.) *@
+                        <div class="text-center mb-3">
+                            @Html.ValidationSummary(true, null, new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="Email"></label>
+                            <input asp-for="Email"
+                                   class="form-control form-control-lg text-white bg-dark border-light border-opacity-25 bg-opacity-25"
+                                   type="email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="FullName"></label>
+                            <input asp-for="FullName"
+                                   class="form-control form-control-lg text-white bg-dark border-light border-opacity-25 bg-opacity-25"
+                                   type="text" />
+                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="Password"></label>
+                            <div class="input-group">
+                                <input asp-for="Password"
+                                       class="form-control form-control-lg text-white bg-dark border-light border-opacity-25 bg-opacity-25"
+                                       type="password" />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="ConfirmPassword"></label>
+                            <div class="input-group">
+                                <input asp-for="ConfirmPassword"
+                                       class="form-control form-control-lg text-white bg-dark border-light border-opacity-25 bg-opacity-25"
+                                       type="password" />
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3 d-grid">
+                            <button class="btn btn-primary btn-lg bg-primary bg-opacity-75" type="submit">
+                                Registrar
+                            </button>
+                        </div>
+
+                        <div class="opacity-75">
+                            ¿Ya tienes una cuenta?
+                            <a class="text-decoration-underline text-white fw-500" asp-action="Login" asp-controller="Auth">
+                                Login aquí
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="net"></div>
+</section>
+
+<!-- Animation Plugin -->
+
+@section scripts
+{
+    <script src="~/plugins/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="~/plugins/three/three.min.js"></script>
+    <script src="~/plugins/vanta/vanta.halo.min.js"></script>
+    <script src="~/plugins/vanta/vanta.net.min.js"></script>
+    <script src="~/scripts/pages/auth-animation.js"></script>
+
+    
+}

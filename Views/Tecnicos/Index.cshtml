@@ -1,0 +1,368 @@
+@{
+    ViewData["Title"] = "Administración de Técnicos";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-user-cog me-2"></i>@ViewData["Title"]</h1>
+        <button class="btn btn-primary" id="btnNuevo">
+            <i class="fas fa-plus me-2"></i>Nuevo Técnico
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Filtros -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-5">
+                    <label class="form-label small text-muted">Especialidad</label>
+                    <select class="form-select form-select-sm" id="filtroEspecialidad">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small text-muted">Sucursal</label>
+                    <select class="form-select form-select-sm" id="filtroSucursal">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-secondary btn-sm w-100" onclick="limpiarFiltros()">
+                        <i class="fas fa-times me-1"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando técnicos...</p>
+            </div>
+
+            <table class="table table-hover table-sm d-none" id="tabla" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre Completo</th>
+                        <th>Especialidad</th>
+                        <th>Bahía</th>
+                        <th>Sucursal</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const URLS = {
+        getAll: '@Url.Action("GetAll")',
+        getDetail: '@Url.Action("DetailPartial")',
+        createPartial: '@Url.Action("CreatePartial")',
+        editPartial: '@Url.Action("EditPartial")',
+        deletePartial: '@Url.Action("DeletePartial")',
+        create: '@Url.Action("Create")',
+        edit: '@Url.Action("Edit")',
+        delete: '@Url.Action("Delete")'
+    };
+
+    let dataTable = null;
+    let datosOriginales = [];
+
+    $(document).ready(function () {
+        cargarDatos();
+        $('#btnNuevo').on('click', abrirModalCrear);
+    });
+
+    function cargarDatos() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    datosOriginales = response.data;
+                    cargarFiltrosDinamicos(response.data);
+                    inicializarDataTable(response.data);
+                } else {
+                    Toast.error('Error al cargar técnicos');
+                    $('#loading').addClass('d-none');
+                }
+            },
+            error: function () {
+                Toast.error('Error al conectar con el servidor');
+                $('#loading').addClass('d-none');
+            }
+        });
+    }
+
+    function cargarFiltrosDinamicos(datos) {
+        // Extraer especialidades únicas
+        const especialidades = [...new Set(datos.map(t => t.especialidad).filter(e => e))];
+        especialidades.sort().forEach(esp => {
+            $('#filtroEspecialidad').append(`<option value="${esp}">${esp}</option>`);
+        });
+
+        // Extraer sucursales únicas
+        const sucursales = [...new Set(datos.map(t => t.sucursalNombre).filter(s => s))];
+        sucursales.sort().forEach(suc => {
+            $('#filtroSucursal').append(`<option value="${suc}">${suc}</option>`);
+        });
+
+        // Inicializar Select2
+        $('#filtroEspecialidad').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Todas las especialidades',
+            allowClear: true,
+            width: '100%'
+        });
+
+        $('#filtroSucursal').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Todas las sucursales',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Filtrar al cambiar selección
+        $('#filtroEspecialidad, #filtroSucursal').on('change', function() {
+            aplicarFiltros();
+        });
+    }
+
+    function inicializarDataTable(datos) {
+        dataTable = $('#tabla').DataTable({
+            data: datos,
+            columns: [
+                {
+                    data: 'codigo',
+                    render: data => `<span class="badge bg-secondary">${data || 'N/A'}</span>`
+                },
+                {
+                    data: 'nombreCompleto',
+                    render: (data, type, row) => `<strong>${data}</strong>`
+                },
+                {
+                    data: 'especialidad',
+                    render: data => data
+                        ? `<span class="badge bg-info">${data}</span>`
+                        : '<span class="text-muted">Sin asignar</span>'
+                },
+                {
+                    data: 'bahiaAsignada',
+                    render: data => data
+                        ? `<span class="badge bg-primary">Bahía ${data}</span>`
+                        : '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: 'sucursalNombre',
+                    render: data => data || '<span class="text-muted">Sin asignar</span>'
+                },
+                {
+                    data: 'tecnicoId',
+                    orderable: false,
+                    className: 'text-center',
+                    render: (data) => `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" onclick="abrirModalDetalle(${data})" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="abrirModalEliminar(${data})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `
+                }
+            ],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            order: [[1, 'asc']],
+            responsive: true
+        });
+
+        $('#loading').addClass('d-none');
+        $('#tabla').removeClass('d-none');
+    }
+
+    function aplicarFiltros() {
+        const especialidad = $('#filtroEspecialidad').val();
+        const sucursal = $('#filtroSucursal').val();
+
+        let datosFiltrados = [...datosOriginales];
+
+        if (especialidad) {
+            datosFiltrados = datosFiltrados.filter(t => t.especialidad === especialidad);
+        }
+        if (sucursal) {
+            datosFiltrados = datosFiltrados.filter(t => t.sucursalNombre === sucursal);
+        }
+
+        if (dataTable) dataTable.destroy();
+        inicializarDataTable(datosFiltrados);
+    }
+
+    function limpiarFiltros() {
+        $('#filtroEspecialidad').val('').trigger('change.select2');
+        $('#filtroSucursal').val('').trigger('change.select2');
+        if (dataTable) dataTable.destroy();
+        inicializarDataTable(datosOriginales);
+    }
+
+    function recargarTabla() {
+        if (dataTable) dataTable.destroy();
+        // Limpiar filtros dinámicos antes de recargar
+        if ($('#filtroEspecialidad').hasClass('select2-hidden-accessible')) {
+            $('#filtroEspecialidad').select2('destroy');
+        }
+        if ($('#filtroSucursal').hasClass('select2-hidden-accessible')) {
+            $('#filtroSucursal').select2('destroy');
+        }
+        $('#filtroEspecialidad').html('<option value="">Todas</option>');
+        $('#filtroSucursal').html('<option value="">Todas</option>');
+        cargarDatos();
+    }
+
+    // Modales
+    function abrirModalCrear() {
+        AppModal.open({
+            title: '<i class="fas fa-user-cog me-2"></i>Nuevo Técnico',
+            url: URLS.createPartial,
+            size: 'lg'
+        });
+    }
+
+    function abrirModalDetalle(id) {
+        AppModal.open({
+            title: '<i class="fas fa-eye me-2"></i>Detalle del Técnico',
+            url: URLS.getDetail,
+            data: { id: id },
+            size: 'md'
+        });
+    }
+
+    function abrirModalEditar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-pencil me-2"></i>Editar Técnico',
+            url: URLS.editPartial,
+            data: { id: id },
+            size: 'lg'
+        });
+    }
+
+    function abrirModalEliminar(id) {
+        AppModal.open({
+            title: '<i class="fas fa-trash me-2"></i>Eliminar Técnico',
+            url: URLS.deletePartial,
+            data: { id: id },
+            size: 'sm'
+        });
+    }
+
+    // CRUD
+    function guardarTecnico() {
+        const form = document.getElementById('formCrearTecnico');
+        const btn = document.getElementById('btnGuardarTecnico');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            codigo: $('#Codigo').val().trim(),
+            nombre: $('#Nombre').val().trim(),
+            apellidos: $('#Apellidos').val().trim(),
+            especialidad: $('#Especialidad').val().trim() || null,
+            bahiaAsignada: $('#BahiaAsignada').val() ? parseInt($('#BahiaAsignada').val()) : null,
+            usuarioId: $('#UsuarioId').val()?.trim() || null,
+            sucursalId: $('#SucursalId').val() ? parseInt($('#SucursalId').val()) : null
+        };
+
+        $.ajax({
+            url: URLS.create,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Técnico creado exitosamente');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al guardar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function actualizarTecnico() {
+        const form = document.getElementById('formEditarTecnico');
+        const btn = document.getElementById('btnActualizarTecnico');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            tecnicoId: parseInt($('#TecnicoId').val()),
+            codigo: $('#Codigo').val().trim(),
+            nombre: $('#Nombre').val().trim(),
+            apellidos: $('#Apellidos').val().trim(),
+            especialidad: $('#Especialidad').val().trim() || null,
+            bahiaAsignada: $('#BahiaAsignada').val() ? parseInt($('#BahiaAsignada').val()) : null,
+            usuarioId: $('#UsuarioId').val()?.trim() || null,
+            sucursalId: $('#SucursalIdEdit').val() ? parseInt($('#SucursalIdEdit').val()) : null
+        };
+
+        $.ajax({
+            url: URLS.edit,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Técnico actualizado exitosamente');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al actualizar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function confirmarEliminar() {
+        const id = parseInt($('#deleteId').val());
+        const btn = document.getElementById('btnEliminarTecnico');
+        const btnOriginal = btn.innerHTML;
+
+        $.ajax({
+            url: URLS.delete,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(id),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Eliminando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Técnico eliminado');
+                } else {
+                    Toast.error(response.message || 'Error al eliminar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al eliminar');
+            },
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+</script>
+}
