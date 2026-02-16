@@ -1,9 +1,9 @@
 @{
-    ViewData["Title"] = "Gestión de Ventas";
+    ViewData["Title"] = "Flota - Vehículos Entregados";
 }
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0"><i class="fas fa-handshake me-2"></i>@ViewData["Title"]</h1>
+        <h1 class="h3 mb-0"><i class="fas fa-car-side me-2"></i>@ViewData["Title"]</h1>
     </div>
 
     <div class="card shadow-sm">
@@ -15,6 +15,10 @@
                         <option value="">Todos</option>
                     </select>
                 </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Buscar</label>
+                    <input type="text" class="form-control form-control-sm" id="filtroBuscar" placeholder="VIN, Placa, Descripción..." />
+                </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <button class="btn btn-outline-secondary btn-sm" onclick="limpiarFiltros()">
                         <i class="fas fa-eraser me-1"></i> Limpiar
@@ -24,18 +28,18 @@
 
             <div id="loading" class="text-center py-4">
                 <div class="spinner-border text-primary"></div>
-                <p class="mt-2 text-muted">Cargando ventas...</p>
+                <p class="mt-2 text-muted">Cargando flota...</p>
             </div>
 
-            <table class="table table-hover table-sm d-none" id="tablaVentas" style="width:100%">
+            <table class="table table-hover table-sm d-none" id="tablaFlota" style="width:100%">
                 <thead class="table-light">
                     <tr>
-                        <th>Identificador</th>
+                        <th>Placa</th>
                         <th>Descripción</th>
                         <th>Cliente</th>
-                        <th>Precio Venta</th>
-                        <th>Fecha Venta</th>
-                        <th>Vendedor</th>
+                        <th>Fecha Entrega</th>
+                        <th>Kilometraje</th>
+                        <th>Garantía</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
@@ -48,19 +52,16 @@
 @section Scripts {
 <script>
     const URLS = {
-        getAll: '@Url.Action("GetAll", "Ventas")',
-        getDetail: '@Url.Action("DetailPartial", "Ventas")',
-        editPartial: '@Url.Action("EditPartial", "Ventas")',
-        entregaPartial: '@Url.Action("EntregaPartial", "Ventas")',
-        edit: '@Url.Action("Edit", "Ventas")',
-        cambiarEstado: '@Url.Action("CambiarEstado", "Ventas")',
-        actualizarKm: '@Url.Action("ActualizarKilometraje", "Ventas")',
-        procesarEntrega: '@Url.Action("ProcesarEntrega", "Ventas")'
+        getAll: '@Url.Action("GetAll", "Flota")',
+        getDetail: '@Url.Action("DetailPartial", "Flota")',
+        editPartial: '@Url.Action("EditPartial", "Flota")',
+        edit: '@Url.Action("Edit", "Flota")',
+        actualizarKm: '@Url.Action("ActualizarKilometraje", "Flota")'
     };
 
-    const ESTADO_VENDIDO = 6;
+    const ESTADO_ENTREGADO = 7;
 
-    let dtVentas = null;
+    let dtFlota = null;
     let datosOriginales = [];
 
     $(document).ready(function () {
@@ -101,10 +102,10 @@
             type: 'GET',
             success: function (response) {
                 if (response.success && response.data) {
-                    datosOriginales = response.data.filter(v => v.estado === ESTADO_VENDIDO);
+                    datosOriginales = response.data.filter(v => v.estado === ESTADO_ENTREGADO);
                     renderizarTabla(datosOriginales);
                 } else {
-                    Toast.error('Error al cargar ventas');
+                    Toast.error('Error al cargar flota');
                 }
                 $('#loading').addClass('d-none');
             },
@@ -116,9 +117,9 @@
     }
 
     function renderizarTabla(datos) {
-        if (dtVentas) dtVentas.destroy();
+        if (dtFlota) dtFlota.destroy();
 
-        dtVentas = $('#tablaVentas').DataTable({
+        dtFlota = $('#tablaFlota').DataTable({
             data: datos,
             columns: [
                 {
@@ -134,11 +135,7 @@
                     render: data => data || '<span class="text-muted">Sin asignar</span>'
                 },
                 {
-                    data: 'precioVenta',
-                    render: data => data ? '$ ' + data.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '<span class="text-muted">N/A</span>'
-                },
-                {
-                    data: 'fechaVenta',
+                    data: 'fechaEntrega',
                     render: data => {
                         if (data) {
                             const d = new Date(data);
@@ -148,8 +145,22 @@
                     }
                 },
                 {
-                    data: 'vendedorNombre',
-                    render: data => data || '<span class="text-muted">N/A</span>'
+                    data: 'kilometrajeActual',
+                    render: data => data ? data.toLocaleString() + ' km' : '0 km'
+                },
+                {
+                    data: null,
+                    render: (data, type, row) => {
+                        if (row.garantiaHasta) {
+                            const fecha = new Date(row.garantiaHasta);
+                            const hoy = new Date();
+                            const vigente = fecha > hoy;
+                            const color = vigente ? 'success' : 'danger';
+                            const texto = vigente ? 'Vigente' : 'Vencida';
+                            return `<span class="badge bg-${color}">${texto}</span> <small class="text-muted">${fecha.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</small>`;
+                        }
+                        return '<span class="text-muted">N/A</span>';
+                    }
                 },
                 {
                     data: 'vehiculoId',
@@ -163,9 +174,6 @@
                             <button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-outline-dark" onclick="abrirModalEntrega(${data})" title="Procesar Entrega">
-                                <i class="fas fa-truck"></i>
-                            </button>
                         </div>
                     `
                 }
@@ -173,11 +181,11 @@
             language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
             pageLength: 10,
             lengthMenu: [5, 10, 25, 50],
-            order: [[4, 'desc']],
+            order: [[3, 'desc']],
             responsive: true
         });
 
-        $('#tablaVentas').removeClass('d-none');
+        $('#tablaFlota').removeClass('d-none');
     }
 
     function aplicarFiltros() {
@@ -198,7 +206,7 @@
             type: 'GET',
             success: function (response) {
                 if (response.success && response.data) {
-                    datosOriginales = response.data.filter(v => v.estado === ESTADO_VENDIDO);
+                    datosOriginales = response.data.filter(v => v.estado === ESTADO_ENTREGADO);
                     limpiarFiltros();
                 }
             }
@@ -208,7 +216,7 @@
     // Modales
     function abrirModalDetalle(id) {
         AppModal.open({
-            title: '<i class="fas fa-eye me-2"></i>Detalle de Venta',
+            title: '<i class="fas fa-eye me-2"></i>Detalle del Vehículo',
             url: URLS.getDetail,
             data: { id: id },
             size: 'xl'
@@ -217,26 +225,17 @@
 
     function abrirModalEditar(id) {
         AppModal.open({
-            title: '<i class="fas fa-pencil me-2"></i>Editar Datos de Venta',
+            title: '<i class="fas fa-pencil me-2"></i>Editar Vehículo',
             url: URLS.editPartial,
             data: { id: id },
             size: 'md'
         });
     }
 
-    function abrirModalEntrega(id) {
-        AppModal.open({
-            title: '<i class="fas fa-truck me-2"></i>Procesar Entrega',
-            url: URLS.entregaPartial,
-            data: { id: id },
-            size: 'md'
-        });
-    }
-
     // CRUD
-    function actualizarVenta() {
-        const form = document.getElementById('formEditarVenta');
-        const btn = document.getElementById('btnActualizarVenta');
+    function actualizarFlota() {
+        const form = document.getElementById('formEditarFlota');
+        const btn = document.getElementById('btnActualizarFlota');
         const btnOriginal = btn.innerHTML;
 
         if (!form.checkValidity()) { form.reportValidity(); return; }
@@ -263,13 +262,13 @@
             fechaRecepcion: $('#h_FechaRecepcion').val() || null,
             costoImportacion: $('#h_CostoImportacion').val() ? parseFloat($('#h_CostoImportacion').val()) : null,
             precioLista: $('#h_PrecioLista').val() ? parseFloat($('#h_PrecioLista').val()) : null,
-            kilometrajeActual: parseInt($('#h_KilometrajeActual').val()) || 0,
-            fechaPrimeraMatricula: $('#h_FechaPrimeraMatricula').val() || null,
-            clienteId: $('#ClienteId').val() ? parseInt($('#ClienteId').val()) : null,
-            precioVenta: $('#PrecioVenta').val() ? parseFloat($('#PrecioVenta').val()) : null,
-            fechaVenta: $('#FechaVenta').val() || null,
-            fechaEntrega: $('#FechaEntrega').val() || null,
-            vendedorId: $('#VendedorId').val()?.trim() || null,
+            kilometrajeActual: parseInt($('#KilometrajeActual').val()) || 0,
+            fechaPrimeraMatricula: $('#FechaPrimeraMatricula').val() || null,
+            clienteId: $('#h_ClienteId').val() ? parseInt($('#h_ClienteId').val()) : null,
+            precioVenta: $('#h_PrecioVenta').val() ? parseFloat($('#h_PrecioVenta').val()) : null,
+            fechaVenta: $('#h_FechaVenta').val() || null,
+            fechaEntrega: $('#h_FechaEntrega').val() || null,
+            vendedorId: $('#h_VendedorId').val() || null,
             garantiaHasta: $('#GarantiaHasta').val() || null,
             observaciones: $('#Observaciones').val()?.trim() || null
         };
@@ -284,75 +283,13 @@
                 if (response.success) {
                     AppModal.close();
                     recargarTabla();
-                    Toast.success(response.message || 'Datos de venta actualizados');
+                    Toast.success(response.message || 'Datos actualizados');
                 } else {
                     Toast.error(response.message || 'Error al actualizar');
                 }
             },
             error: function (xhr) {
                 Toast.error(xhr.responseJSON?.message || 'Error al actualizar');
-            },
-            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
-        });
-    }
-
-    function confirmarCambioEstado() {
-        const vehiculoId = parseInt($('#stateChangeVehiculoId').val());
-        const nuevoEstado = parseInt($('#nuevoEstado').val());
-        const btn = document.getElementById('btnConfirmarEstado');
-        const btnOriginal = btn.innerHTML;
-
-        $.ajax({
-            url: URLS.cambiarEstado,
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ vehiculoId: vehiculoId, nuevoEstado: nuevoEstado }),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cambiando...'),
-            success: function (response) {
-                if (response.success) {
-                    AppModal.close();
-                    recargarTabla();
-                    Toast.success(response.message || 'Estado actualizado');
-                } else {
-                    Toast.error(response.message || 'Error al cambiar estado');
-                }
-            },
-            error: function (xhr) {
-                Toast.error(xhr.responseJSON?.message || 'Error al cambiar estado');
-            },
-            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
-        });
-    }
-
-    function confirmarProcesarEntrega() {
-        const form = document.getElementById('formProcesarEntrega');
-        const btn = document.getElementById('btnProcesarEntrega');
-        const btnOriginal = btn.innerHTML;
-
-        if (!form.checkValidity()) { form.reportValidity(); return; }
-
-        const data = {
-            vehiculoId: parseInt($('#EntregaVehiculoId').val()),
-            fechaEntrega: $('#EntregaFecha').val()
-        };
-
-        $.ajax({
-            url: URLS.procesarEntrega,
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...'),
-            success: function (response) {
-                if (response.success) {
-                    AppModal.close();
-                    recargarTabla();
-                    Toast.success(response.message || 'Entrega procesada exitosamente');
-                } else {
-                    Toast.error(response.message || 'Error al procesar la entrega');
-                }
-            },
-            error: function (xhr) {
-                Toast.error(xhr.responseJSON?.message || 'Error al procesar la entrega');
             },
             complete: () => $(btn).prop('disabled', false).html(btnOriginal)
         });

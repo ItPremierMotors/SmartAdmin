@@ -3,6 +3,7 @@
 @{
     var transiciones = ViewBag.TransicionesValidas as Dictionary<int, string> ?? new Dictionary<int, string>();
     var nombresEstado = ViewBag.NombresEstado as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var esJefe = (bool)(ViewBag.EsJefe ?? false);
 
     var estadoColors = new Dictionary<int, string>
     {
@@ -194,8 +195,12 @@
             <div class="d-flex align-items-center gap-2">
                 <span class="text-muted small">Cambiar estado a:</span>
                 <select class="form-select form-select-sm" id="nuevoEstado" style="width:auto;">
-                    @foreach (var t in transiciones)
+                    @{
+                        var roles = (List<string>)ViewBag.RolesUsuario;
+                    }
+                    @foreach (KeyValuePair<int, string> t in transiciones)
                     {
+                        if (t.Key == 5 && !roles.Contains("JefeVentas")) { continue; }
                         <option value="@t.Key">@t.Value</option>
                     }
                 </select>
@@ -207,6 +212,57 @@
         }
     </div>
 </div>
+
+<!-- Reserva (solo si estado Reservado) -->
+@if (Model.Estado == 5)
+{
+    <div class="card mb-3 border-warning">
+        <div class="card-header bg-warning bg-opacity-25">
+            <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Información de Reserva</h6>
+        </div>
+        <div class="card-body">
+            <table class="table table-borderless table-sm mb-0">
+                <tr>
+                    <td class="text-muted fw-bold" style="width:30%">Reservado por:</td>
+                    <td>@(Model.ReservadoPorNombre ?? "N/A")</td>
+                </tr>
+                <tr>
+                    <td class="text-muted fw-bold">Fecha Reserva:</td>
+                    <td>@(Model.FechaReserva?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</td>
+                </tr>
+                <tr>
+                    <td class="text-muted fw-bold">Fecha Límite:</td>
+                    <td>
+                        @if (Model.FechaLimiteReserva.HasValue)
+                        {
+                            var diasRestantes = (Model.FechaLimiteReserva.Value - DateTime.Now).Days;
+                            @Model.FechaLimiteReserva.Value.ToString("dd/MM/yyyy")
+                            if (diasRestantes <= 2 && diasRestantes >= 0)
+                            {
+                                <span class="badge bg-danger ms-1">@diasRestantes días</span>
+                            }
+                            else if (diasRestantes > 2)
+                            {
+                                <span class="badge bg-success ms-1">@diasRestantes días</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger ms-1">Vencida</span>
+                            }
+                        }
+                    </td>
+                </tr>
+                @if (Model.ClienteId.HasValue)
+                {
+                    <tr>
+                        <td class="text-muted fw-bold">Cliente:</td>
+                        <td>@(Model.ClienteNombre ?? "Sin nombre")</td>
+                    </tr>
+                }
+            </table>
+        </div>
+    </div>
+}
 
 <!-- Importación (solo si Importado) -->
 @if (Model.Procedencia == 2)
@@ -237,7 +293,7 @@
                         {
                             <tr>
                                 <td class="text-muted fw-bold">Costo:</td>
-                                <td>L @Model.CostoImportacion.Value.ToString("N2")</td>
+                                <td>$ @Model.CostoImportacion.Value.ToString("N2")</td>
                             </tr>
                         }
                     </table>
@@ -278,7 +334,7 @@
                     {
                         <tr>
                             <td class="text-muted fw-bold" style="width:40%">Precio Lista:</td>
-                            <td>L @Model.PrecioLista.Value.ToString("N2")</td>
+                            <td>$ @Model.PrecioLista.Value.ToString("N2")</td>
                         </tr>
                     }
                 </table>

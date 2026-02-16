@@ -82,7 +82,9 @@
         delete: '@Url.Action("Delete", "Inventario")',
         cambiarEstado: '@Url.Action("CambiarEstado", "Inventario")',
         actualizarKm: '@Url.Action("ActualizarKilometraje", "Inventario")',
-        procesarVenta: '@Url.Action("ProcesarVenta", "Inventario")'
+        procesarVenta: '@Url.Action("ProcesarVenta", "Inventario")',
+        cancelarVencidas: '@Url.Action("CancelarReservasVencidas", "Inventario")',
+        reservarPartial: '@Url.Action("ReservarPartial", "Inventario")'
     };
 
     const estadoColors = {
@@ -100,6 +102,7 @@
     let datosOriginales = [];
 
     $(document).ready(function () {
+        cancelarReservasVencidas();
         cargarDatos();
         cargarMarcasFiltro();
         cargarSucursalesFiltro();
@@ -197,7 +200,7 @@
                 },
                 {
                     data: null,
-                    render: (data, type, row) => row.precioLista ? 'L ' + row.precioLista.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '<span class="text-muted">N/A</span>'
+                    render: (data, type, row) => row.precioLista ? '$ ' + row.precioLista.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '<span class="text-muted">N/A</span>'
                 },
                 {
                     data: 'vehiculoId',
@@ -401,15 +404,34 @@
     function confirmarCambioEstado() {
         const vehiculoId = parseInt($('#stateChangeVehiculoId').val());
         const nuevoEstado = parseInt($('#nuevoEstado').val());
+
+        if (nuevoEstado === 5) {
+            abrirModalReservar(vehiculoId);
+            return;
+        }
+
+        ejecutarCambioEstado(vehiculoId, nuevoEstado, null);
+    }
+
+    function abrirModalReservar(vehiculoId) {
+        AppModal.open({
+            title: '<i class="fas fa-bookmark me-2"></i>Reservar Vehículo',
+            url: URLS.reservarPartial,
+            data: { id: vehiculoId },
+            size: 'md'
+        });
+    }
+
+    function ejecutarCambioEstado(vehiculoId, nuevoEstado, clienteId) {
         const btn = document.getElementById('btnConfirmarEstado');
-        const btnOriginal = btn.innerHTML;
+        const btnOriginal = btn ? btn.innerHTML : '';
 
         $.ajax({
             url: URLS.cambiarEstado,
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ vehiculoId: vehiculoId, nuevoEstado: nuevoEstado }),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cambiando...'),
+            data: JSON.stringify({ vehiculoId: vehiculoId, nuevoEstado: nuevoEstado, clienteId: clienteId }),
+            beforeSend: () => { if (btn) $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cambiando...'); },
             success: function (response) {
                 if (response.success) {
                     AppModal.close();
@@ -422,7 +444,51 @@
             error: function (xhr) {
                 Toast.error(xhr.responseJSON?.message || 'Error al cambiar estado');
             },
+            complete: () => { if (btn) $(btn).prop('disabled', false).html(btnOriginal); }
+        });
+    }
+
+    function confirmarReservar() {
+        const vehiculoId = parseInt($('#ReservaVehiculoId').val());
+        const vendedorId = $('#ReservaVendedorId').val() || null;
+        const clienteId = $('#ReservaClienteId').val() ? parseInt($('#ReservaClienteId').val()) : null;
+        const btn = document.getElementById('btnReservar');
+        const btnOriginal = btn.innerHTML;
+
+        if (!vendedorId) {
+            Toast.error('Debe seleccionar un vendedor');
+            return;
+        }
+
+        $.ajax({
+            url: URLS.cambiarEstado,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ vehiculoId: vehiculoId, nuevoEstado: 5, clienteId: clienteId, vendedorId: vendedorId }),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Reservando...'),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    recargarTabla();
+                    Toast.success(response.message || 'Vehículo reservado exitosamente');
+                } else {
+                    Toast.error(response.message || 'Error al reservar');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al reservar');
+            },
             complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function cancelarReservasVencidas() {
+        $.post(URLS.cancelarVencidas, function (response) {
+            if (response.success && response.data > 0) {
+                Toast.info(response.data + ' reserva(s) vencida(s) cancelada(s)');
+            }
+        }).fail(function () {
+            console.warn('No se pudo verificar reservas vencidas');
         });
     }
 

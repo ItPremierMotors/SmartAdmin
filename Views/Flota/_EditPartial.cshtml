@@ -1,0 +1,74 @@
+@model SmartAdmin.Models.Vehiculo.EditVehiculoViewModel
+
+<form id="formEditarFlota">
+    <input type="hidden" id="VehiculoId" value="@Model.VehiculoId" />
+
+    <!-- Hidden fields for non-editable data -->
+    <input type="hidden" id="h_Vin" value="@Model.Vin" />
+    <input type="hidden" id="h_Placa" value="@Model.Placa" />
+    <input type="hidden" id="h_NumeroMotor" value="@Model.NumeroMotor" />
+    <input type="hidden" id="h_NumeroChasis" value="@Model.NumeroChasis" />
+    <input type="hidden" id="h_MarcaId" value="@Model.MarcaId" />
+    <input type="hidden" id="h_ModeloId" value="@Model.ModeloId" />
+    <input type="hidden" id="h_VersionId" value="@Model.VersionId" />
+    <input type="hidden" id="h_Anio" value="@Model.Anio" />
+    <input type="hidden" id="h_Color" value="@Model.Color" />
+    <input type="hidden" id="h_TipoCombustible" value="@Model.TipoCombustible" />
+    <input type="hidden" id="h_Transmision" value="@Model.Transmision" />
+    <input type="hidden" id="h_Estado" value="@Model.Estado" />
+    <input type="hidden" id="h_SucursalId" value="@Model.SucursalId" />
+    <input type="hidden" id="h_Procedencia" value="@Model.Procedencia" />
+    <input type="hidden" id="h_NumeroImportacion" value="@Model.NumeroImportacion" />
+    <input type="hidden" id="h_NumeroPoliza" value="@Model.NumeroPoliza" />
+    <input type="hidden" id="h_FechaIngresoPais" value="@(Model.FechaIngresoPais?.ToString("yyyy-MM-dd"))" />
+    <input type="hidden" id="h_FechaRecepcion" value="@(Model.FechaRecepcion?.ToString("yyyy-MM-dd"))" />
+    <input type="hidden" id="h_CostoImportacion" value="@Model.CostoImportacion" />
+    <input type="hidden" id="h_PrecioLista" value="@Model.PrecioLista" />
+    <input type="hidden" id="h_ClienteId" value="@Model.ClienteId" />
+    <input type="hidden" id="h_PrecioVenta" value="@Model.PrecioVenta" />
+    <input type="hidden" id="h_FechaVenta" value="@(Model.FechaVenta?.ToString("yyyy-MM-dd"))" />
+    <input type="hidden" id="h_FechaEntrega" value="@(Model.FechaEntrega?.ToString("yyyy-MM-dd"))" />
+    <input type="hidden" id="h_VendedorId" value="@Model.VendedorId" />
+
+    <!-- Taller / Postventa -->
+    <h6 class="text-primary border-bottom pb-2 mb-3"><i class="fas fa-wrench me-2"></i>Taller / Postventa</h6>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Kilometraje Actual</label>
+            <input type="number" class="form-control" id="KilometrajeActual" min="0"
+                   value="@Model.KilometrajeActual" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Fecha Primera Matrícula</label>
+            <input type="date" class="form-control" id="FechaPrimeraMatricula"
+                   value="@(Model.FechaPrimeraMatricula?.ToString("yyyy-MM-dd"))" />
+        </div>
+    </div>
+
+    <!-- Garantía -->
+    <h6 class="text-primary border-bottom pb-2 mb-3 mt-2"><i class="fas fa-shield-alt me-2"></i>Garantía</h6>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Garantía Hasta</label>
+            <input type="date" class="form-control" id="GarantiaHasta"
+                   value="@(Model.GarantiaHasta?.ToString("yyyy-MM-dd"))" />
+        </div>
+    </div>
+
+    <!-- Observaciones -->
+    <h6 class="text-primary border-bottom pb-2 mb-3 mt-2"><i class="fas fa-sticky-note me-2"></i>Observaciones</h6>
+    <div class="row">
+        <div class="col-12 mb-3">
+            <textarea class="form-control" id="Observaciones" rows="2">@Model.Observaciones</textarea>
+        </div>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnActualizarFlota" onclick="actualizarFlota()">
+        <i class="fas fa-save me-1"></i> Actualizar
+    </button>
+</div>

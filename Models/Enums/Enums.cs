@@ -54,11 +54,17 @@ namespace SmartAdmin.Models.Enums
     /// </summary>
     public enum TipoCombustible
     {
+        [Display(Name = "Gasolina")]
         Gasolina = 1,
+        [Display(Name = "Diésel")]
         Diesel = 2,
+        [Display(Name = "Híbrido")]
         Hibrido = 3,
+        [Display(Name = "Eléctrico")]
         Electrico = 4,
+        [Display(Name = "Gas Natural")]
         GasNatural = 5,
+        [Display(Name = "GLP")]
         Glp = 6
     }
 
@@ -67,7 +73,9 @@ namespace SmartAdmin.Models.Enums
     /// </summary>
     public enum ProcedenciaVehiculo
     {
+        [Display(Name = "Local")]
         Local = 1,
+        [Display(Name = "Importado")]
         Importado = 2
     }
 
@@ -166,13 +174,20 @@ namespace SmartAdmin.Models.Enums
     /// </summary>
     public enum EstadoVehiculo
     {
-        EnTransito = 1,        // Viene en camino (importación)
-        EnAduana = 2,          // En proceso de nacionalización
-        EnBodega = 3,          // Recibido, en inventario
-        EnExhibicion = 4,      // En showroom para venta
-        Reservado = 5,         // Cliente lo apartó
-        Vendido = 6,           // Ya tiene dueño
-        Entregado = 7          // Entregado al cliente
+        [Display(Name = "En Tránsito")]
+        EnTransito = 1,
+        [Display(Name = "En Aduana")]
+        EnAduana = 2,
+        [Display(Name = "En Bodega")]
+        EnBodega = 3,
+        [Display(Name = "En Exhibición")]
+        EnExhibicion = 4,
+        [Display(Name = "Reservado")]
+        Reservado = 5,
+        [Display(Name = "Vendido")]
+        Vendido = 6,
+        [Display(Name = "Entregado")]
+        Entregado = 7
     }
 
     /// <summary>
@@ -180,10 +195,15 @@ namespace SmartAdmin.Models.Enums
     /// </summary>
     public enum TipoTransmision
     {
+        [Display(Name = "Manual")]
         Manual = 1,
+        [Display(Name = "Automática")]
         Automatica = 2,
+        [Display(Name = "CVT")]
         CVT = 3,
+        [Display(Name = "Dual Clutch")]
         DualClutch = 4,
+        [Display(Name = "Semiautomática")]
         Semiautomatica = 5
     }
 }

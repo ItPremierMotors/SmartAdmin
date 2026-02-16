@@ -39,7 +39,7 @@
         <div class="col-md-6 mb-3">
             <label class="form-label">Precio de Venta</label>
             <div class="input-group">
-                <span class="input-group-text">L</span>
+                <span class="input-group-text">$</span>
                 <input type="number" class="form-control" id="PrecioVenta" step="0.01" min="0"
                        value="@(Model.PrecioVenta?.ToString("F2"))" />
             </div>
@@ -120,7 +120,7 @@
 
         @if (Model.ClienteId.HasValue)
         {
-            @:var option = new Option('@ViewBag.ClienteNombre', '@Model.ClienteId', true, true);
+            @:var option = new Option(@Html.Raw(Json.Serialize((string)ViewBag.ClienteNombre)), '@Model.ClienteId', true, true);
             @:$('#ClienteId').append(option).trigger('change');
         }
     });

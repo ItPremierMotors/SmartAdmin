@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using SmartAdmin.Interfaces;
 using SmartAdmin.Models.Vehiculo;
@@ -9,6 +10,8 @@ namespace SmartAdmin.Controllers
         private readonly IVehiculo vehiculoServices;
         private readonly IMarca marcaServices;
         private readonly ISucursal sucursalServices;
+        private readonly IAuth authServices;
+        private readonly IApiClient apiClient;
 
         // Transiciones pre-venta (5->6 se maneja via ProcesarVenta)
         private static readonly Dictionary<int, int[]> TransicionesPreVenta = new()
@@ -26,11 +29,13 @@ namespace SmartAdmin.Controllers
             { 4, "En Exhibición" }, { 5, "Reservado" }, { 6, "Vendido" }, { 7, "Entregado" }
         };
 
-        public InventarioController(IVehiculo vehiculoServices, IMarca marcaServices, ISucursal sucursalServices)
+        public InventarioController(IVehiculo vehiculoServices, IMarca marcaServices, ISucursal sucursalServices, IAuth authServices, IApiClient apiClient)
         {
             this.vehiculoServices = vehiculoServices;
             this.marcaServices = marcaServices;
             this.sucursalServices = sucursalServices;
+            this.authServices = authServices;
+            this.apiClient = apiClient;
         }
 
         public IActionResult Index() => View();
@@ -91,6 +96,13 @@ namespace SmartAdmin.Controllers
             {
                 ViewBag.TransicionesValidas = GetTransicionesValidas(response.Data.Estado);
                 ViewBag.NombresEstado = NombresEstado;
+               
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userId != null)
+                {
+                    var responseUser = await authServices.GetByUserIdAsync(userId);
+                    ViewBag.RolesUsuario = responseUser.Data ?? new List<string>();
+                }
                 return PartialView("_DetailPartial", response.Data);
             }
             return Content("<div class='alert alert-danger'>Vehículo no encontrado</div>");
@@ -114,11 +126,24 @@ namespace SmartAdmin.Controllers
                     VehiculoId = id,
                     FechaVenta = DateTime.Now
                 };
+                ViewBag.VehiculoId = id;
                 ViewBag.VehiculoInfo = $"{response.Data.DescripcionCompleta} - {response.Data.Identificador}";
                 ViewBag.PrecioLista = response.Data.PrecioLista;
                 return PartialView("_VentaPartial", model);
             }
             return Content("<div class='alert alert-danger'>El vehículo debe estar en estado Reservado para procesar la venta</div>");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReservarPartial(int id)
+        {
+            var detalle = await vehiculoServices.GetDetalleAsync(id);
+            if (!detalle.Success || detalle.Data == null)
+                return Content("<div class='alert alert-danger'>Vehículo no encontrado</div>");
+
+            ViewBag.VehiculoId = id;
+            ViewBag.VehiculoInfo = detalle.Data.DescripcionCompleta;
+            return PartialView("_ReservarPartial");
         }
 
         // Data endpoints
@@ -173,7 +198,7 @@ namespace SmartAdmin.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateVehiculoViewModel model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(new { success = false, message = ObtenerErroresValidacion() });
             var response = await vehiculoServices.CreateAsync(model);
             return StatusCode(response.StatusCode, response);
         }
@@ -181,7 +206,7 @@ namespace SmartAdmin.Controllers
         [HttpPost]
         public async Task<IActionResult> Edit([FromBody] EditVehiculoViewModel model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(new { success = false, message = ObtenerErroresValidacion() });
             var response = await vehiculoServices.EditAsync(model);
             return StatusCode(response.StatusCode, response);
         }
@@ -196,9 +221,27 @@ namespace SmartAdmin.Controllers
         [HttpPost]
         public async Task<IActionResult> CambiarEstado([FromBody] CambiarEstadoRequest request)
         {
-            if (!NombresEstado.TryGetValue(request.NuevoEstado, out var estadoStr))
+            if (!NombresEstado.ContainsKey(request.NuevoEstado))
                 return BadRequest(new { success = false, message = "Estado no válido" });
-            var response = await vehiculoServices.CambiarEstadoAsync(request.VehiculoId, estadoStr);
+
+            if (request.NuevoEstado == 5 && !User.IsInRole("JefeVentas"))
+                return StatusCode(403, new { success = false, message = "Solo el rol 'Jefe Ventas' puede reservar vehículos." });
+
+            var response = await vehiculoServices.CambiarEstadoAsync(request.VehiculoId, request.NuevoEstado, request.ClienteId, request.VendedorId);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetVendedores()
+        {
+            var response = await apiClient.GetAsync<List<Models.UserRole.UserViewModels.UserViewModel>>("api/Auth/GetByDepartment/Ventas");
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CancelarReservasVencidas()
+        {
+            var response = await vehiculoServices.CancelarReservasVencidasAsync();
             return StatusCode(response.StatusCode, response);
         }
 
@@ -212,7 +255,7 @@ namespace SmartAdmin.Controllers
         [HttpPost]
         public async Task<IActionResult> ProcesarVenta([FromBody] ProcesarVentaViewModel model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(new { success = false, message = ObtenerErroresValidacion() });
 
             // 1. Obtener detalle actual
             var detalle = await vehiculoServices.GetDetalleAsync(model.VehiculoId);
@@ -251,6 +294,7 @@ namespace SmartAdmin.Controllers
                 FechaPrimeraMatricula = d.FechaPrimeraMatricula,
                 GarantiaHasta = d.GarantiaHasta,
                 Observaciones = d.Observaciones,
+                VendedorId = d.VendedorId,
                 // Datos de venta
                 ClienteId = model.ClienteId,
                 PrecioVenta = model.PrecioVenta,
@@ -262,11 +306,18 @@ namespace SmartAdmin.Controllers
                 return StatusCode(editResult.StatusCode, editResult);
 
             // 3. Cambiar estado a Vendido
-            var estadoResult = await vehiculoServices.CambiarEstadoAsync(model.VehiculoId, "Vendido");
+            var estadoResult = await vehiculoServices.CambiarEstadoAsync(model.VehiculoId, 6);
             if (!estadoResult.Success)
                 return StatusCode(estadoResult.StatusCode, new { success = false, message = "Los datos de venta se guardaron pero hubo un error al cambiar el estado. Intente cambiar el estado manualmente." });
 
             return Ok(new { success = true, message = "Venta procesada exitosamente" });
+        }
+
+        private string ObtenerErroresValidacion()
+        {
+            return string.Join(" | ", ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage));
         }
 
         private Dictionary<int, string> GetTransicionesValidas(int estadoActual)

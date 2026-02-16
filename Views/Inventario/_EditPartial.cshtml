@@ -1,4 +1,5 @@
 @model SmartAdmin.Models.Vehiculo.EditVehiculoViewModel
+@using SmartAdmin.Models.Enums
 
 <form id="formEditarVehiculo">
     <input type="hidden" asp-for="VehiculoId" />
@@ -42,8 +43,8 @@
             </select>
         </div>
         <div class="col-md-4 mb-3">
-            <label asp-for="VersionId" class="form-label">@Html.DisplayNameFor(m => m.VersionId)</label>
-            <select asp-for="VersionId" class="form-select" id="VersionId">
+            <label asp-for="VersionId" class="form-label">@Html.DisplayNameFor(m => m.VersionId)<span class="text-danger">*</span></label>
+            <select asp-for="VersionId" class="form-select" id="VersionId" required>
                 <option value="">Seleccione versión...</option>
             </select>
         </div>
@@ -54,29 +55,19 @@
             <input asp-for="Anio" class="form-control" type="number" min="1900" max="2100" required />
         </div>
         <div class="col-md-3 mb-3">
-            <label asp-for="Color" class="form-label">@Html.DisplayNameFor(m => m.Color)</label>
-            <input asp-for="Color" class="form-control" />
+            <label asp-for="Color" class="form-label">@Html.DisplayNameFor(m => m.Color)<span class="text-danger">*</span></label>
+            <input asp-for="Color" class="form-control" required />
         </div>
         <div class="col-md-3 mb-3">
-            <label asp-for="TipoCombustible" class="form-label">@Html.DisplayNameFor(m => m.TipoCombustible)</label>
-            <select asp-for="TipoCombustible" class="form-select" id="TipoCombustible">
-                <option value="1">Gasolina</option>
-                <option value="2">Diésel</option>
-                <option value="3">Híbrido</option>
-                <option value="4">Eléctrico</option>
-                <option value="5">Gas Natural</option>
-                <option value="6">GLP</option>
-            </select>
+            <label asp-for="TipoCombustible" class="form-label">@Html.DisplayNameFor(m => m.TipoCombustible)<span class="text-danger">*</span></label>
+            <select asp-for="TipoCombustible" class="form-select" id="TipoCombustible" required
+                    asp-items="Html.GetEnumSelectList<TipoCombustible>()"></select>
         </div>
         <div class="col-md-3 mb-3">
-            <label asp-for="Transmision" class="form-label">@Html.DisplayNameFor(m => m.Transmision)</label>
-            <select asp-for="Transmision" class="form-select" id="Transmision">
+            <label asp-for="Transmision" class="form-label">@Html.DisplayNameFor(m => m.Transmision)<span class="text-danger">*</span></label>
+            <select asp-for="Transmision" class="form-select" id="Transmision" required
+                    asp-items="Html.GetEnumSelectList<TipoTransmision>()">
                 <option value="">Seleccione...</option>
-                <option value="0">Manual</option>
-                <option value="1">Automática</option>
-                <option value="2">CVT</option>
-                <option value="3">Dual Clutch</option>
-                <option value="4">Semiautomática</option>
             </select>
         </div>
     </div>
@@ -86,13 +77,8 @@
     <div class="row">
         <div class="col-md-4 mb-3">
             <label asp-for="Estado" class="form-label">@Html.DisplayNameFor(m => m.Estado)</label>
-            <select asp-for="Estado" class="form-select" id="Estado" disabled>
-                <option value="1">En Tránsito</option>
-                <option value="2">En Aduana</option>
-                <option value="3">En Bodega</option>
-                <option value="4">En Exhibición</option>
-                <option value="5">Reservado</option>
-            </select>
+            <select asp-for="Estado" class="form-select" id="Estado" disabled
+                    asp-items="Html.GetEnumSelectList<EstadoVehiculo>()"></select>
             <small class="text-muted">Use "Cambiar Estado" desde el detalle</small>
         </div>
         <div class="col-md-4 mb-3">
@@ -103,10 +89,8 @@
         </div>
         <div class="col-md-4 mb-3">
             <label asp-for="Procedencia" class="form-label">@Html.DisplayNameFor(m => m.Procedencia)</label>
-            <select asp-for="Procedencia" class="form-select" id="Procedencia">
-                <option value="1">Local</option>
-                <option value="2">Importado</option>
-            </select>
+            <select asp-for="Procedencia" class="form-select" id="Procedencia"
+                    asp-items="Html.GetEnumSelectList<ProcedenciaVehiculo>()"></select>
         </div>
     </div>
 
@@ -124,7 +108,10 @@
             </div>
             <div class="col-md-4 mb-3">
                 <label asp-for="CostoImportacion" class="form-label">@Html.DisplayNameFor(m => m.CostoImportacion)</label>
-                <input asp-for="CostoImportacion" class="form-control" type="number" step="0.01" min="0" />
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input asp-for="CostoImportacion" class="form-control" type="number" step="0.01" min="0" />
+                </div>
             </div>
         </div>
         <div class="row">
@@ -144,9 +131,12 @@
     <div class="row">
         <div class="col-md-6 mb-3">
             <label asp-for="PrecioLista" class="form-label">@Html.DisplayNameFor(m => m.PrecioLista)</label>
-            <input asp-for="PrecioLista" class="form-control" type="number" step="0.01" min="0" />
+            <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input asp-for="PrecioLista" class="form-control" type="number" step="0.01" min="0" />
+            </div>
         </div>
-        <div class="col-md-6 mb-3">
+        <div class="col-md-6 mb-3 @(Model.Estado != 5 ? "d-none" : "")" id="seccionCliente">
             <label asp-for="ClienteId" class="form-label">@Html.DisplayNameFor(m => m.ClienteId)</label>
             <select asp-for="ClienteId" class="form-select" id="ClienteId">
                 <option value="">Sin asignar</option>
@@ -190,116 +180,151 @@
 </div>
 
 <script>
-    $(document).ready(function () {
-        cargarMarcasEdit(function () {
-            $('#MarcaId').val('@Model.MarcaId');
-            cargarModelosEdit('@Model.MarcaId', function () {
-                $('#ModeloId').val('@Model.ModeloId');
-                cargarVersionesEdit('@Model.ModeloId', function () {
-                    @if (Model.VersionId.HasValue)
-                    {
-                        @:$('#VersionId').val('@Model.VersionId');
-                    }
+    (function () {
+        var _preselect = {
+            marcaId: '@Model.MarcaId',
+            modeloId: '@Model.ModeloId',
+            versionId: '@(Model.VersionId.HasValue ? Model.VersionId.Value.ToString() : "")'
+        };
+        var _cargaInicial = true;
+
+        // Eventos de cascada
+        $('#MarcaId').off('change').on('change', function () {
+            if (_cargaInicial) return;
+            $('#ModeloId').empty().append('<option value="">Seleccione modelo...</option>');
+            $('#VersionId').empty().append('<option value="">Seleccione versión...</option>');
+            var marcaId = $(this).val();
+            if (marcaId) _cargarModelos(marcaId);
+        });
+
+        $('#ModeloId').off('change').on('change', function () {
+            if (_cargaInicial) return;
+            $('#VersionId').empty().append('<option value="">Seleccione versión...</option>');
+            var modeloId = $(this).val();
+            if (modeloId) _cargarVersiones(modeloId);
+        });
+
+        $('#VersionId').off('change').on('change', function () {
+            if (_cargaInicial) return;
+            var selected = $(this).find('option:selected');
+            var precio = selected.data('precio');
+            if (precio) $('#PrecioLista').val(precio);
+        });
+
+        // Carga secuencial con preselección
+        _cargarMarcas(_preselect.marcaId, function () {
+            if (!_preselect.marcaId || _preselect.marcaId === '0') { _cargaInicial = false; return; }
+            _cargarModelos(_preselect.marcaId, _preselect.modeloId, function () {
+                if (!_preselect.modeloId || _preselect.modeloId === '0') { _cargaInicial = false; return; }
+                _cargarVersiones(_preselect.modeloId, _preselect.versionId, function () {
+                    _cargaInicial = false;
                 });
             });
         });
 
-        cargarSucursalesEdit();
-        initClienteSelect2Edit();
+        _cargarSucursales();
+        _initClienteSelect2();
 
-        $('#Procedencia').on('change', function () {
+        $('#Procedencia').off('change').on('change', function () {
             $('#seccionImportacion').toggle($(this).val() === '2');
         });
         $('#Procedencia').trigger('change');
 
-        $('#MarcaId').on('change', function () {
-            $('#ModeloId').empty().append('<option value="">Seleccione modelo...</option>');
-            $('#VersionId').empty().append('<option value="">Seleccione versión...</option>');
-            const marcaId = $(this).val();
-            if (marcaId) cargarModelosEdit(marcaId);
-        });
-
-        $('#ModeloId').on('change', function () {
-            $('#VersionId').empty().append('<option value="">Seleccione versión...</option>');
-            const modeloId = $(this).val();
-            if (modeloId) cargarVersionesEdit(modeloId);
-        });
-    });
-
-    function cargarMarcasEdit(callback) {
-        $.get('@Url.Action("GetAll", "Marca")', function (res) {
-            if (res.success && res.data) {
-                const select = $('#MarcaId');
-                res.data.forEach(m => select.append(`<option value="${m.marcaId}">${m.nombre}</option>`));
-            }
-            if (callback) callback();
-        });
-    }
-
-    function cargarModelosEdit(marcaId, callback) {
-        $.get('@Url.Action("GetByMarca", "Modelos")?marcaId=' + marcaId, function (res) {
-            if (res.success && res.data) {
-                const select = $('#ModeloId');
-                res.data.forEach(m => select.append(`<option value="${m.modeloId}">${m.nombre}</option>`));
-            }
-            if (callback) callback();
-        });
-    }
-
-    function cargarVersionesEdit(modeloId, callback) {
-        $.get('@Url.Action("GetByModelo", "VersionesVehiculo")?modeloId=' + modeloId, function (res) {
-            if (res.success && res.data) {
-                const select = $('#VersionId');
-                res.data.forEach(v => select.append(`<option value="${v.versionId}">${v.nombre}</option>`));
-            }
-            if (callback) callback();
-        });
-    }
-
-    function cargarSucursalesEdit() {
-        $.get('@Url.Action("GetSucursales", "Inventario")', function (res) {
-            if (res.success && res.data) {
-                const select = $('#SucursalId');
-                const currentValue = @(Model.SucursalId.HasValue ? Model.SucursalId.Value.ToString() : "null");
-                res.data.forEach(s => {
-                    const selected = s.id == currentValue ? 'selected' : '';
-                    select.append(`<option value="${s.id}" ${selected}>${s.nombre}</option>`);
-                });
-            }
-        });
-    }
-
-    function initClienteSelect2Edit() {
-        $('#ClienteId').select2({
-            dropdownParent: $('.modal'),
-            theme: 'bootstrap-5',
-            placeholder: 'Buscar cliente...',
-            allowClear: true,
-            minimumInputLength: 2,
-            language: { inputTooShort: () => 'Escriba al menos 2 caracteres...' },
-            ajax: {
-                url: '@Url.Action("Search", "Clientes")',
-                dataType: 'json',
-                delay: 300,
-                data: function (params) { return { term: params.term }; },
-                processResults: function (data) {
-                    if (data.success && data.data) {
-                        return {
-                            results: data.data.map(c => ({
-                                id: c.clienteId,
-                                text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono) + ')'
-                            }))
-                        };
-                    }
-                    return { results: [] };
+        function _cargarMarcas(preselectId, callback) {
+            $.get('@Url.Action("GetAll", "Marca")', function (res) {
+                if (res.success && res.data) {
+                    var select = $('#MarcaId');
+                    res.data.forEach(function (m) {
+                        var sel = preselectId && String(m.marcaId) === String(preselectId) ? ' selected' : '';
+                        select.append('<option value="' + m.marcaId + '"' + sel + '>' + m.nombre + '</option>');
+                    });
                 }
-            }
-        });
-
-        @if (Model.ClienteId.HasValue)
-        {
-            @:var option = new Option('@ViewBag.ClienteNombre', '@Model.ClienteId', true, true);
-            @:$('#ClienteId').append(option).trigger('change');
+                if (callback) callback();
+            }).fail(function () {
+                console.error('Error cargando marcas');
+                if (callback) callback();
+            });
         }
-    }
+
+        function _cargarModelos(marcaId, preselectId, callback) {
+            if (typeof preselectId === 'function') { callback = preselectId; preselectId = null; }
+            $.get('@Url.Action("GetByMarca", "Modelos")?marcaId=' + marcaId, function (res) {
+                if (res.success && res.data) {
+                    var select = $('#ModeloId');
+                    res.data.forEach(function (m) {
+                        var sel = preselectId && String(m.modeloId) === String(preselectId) ? ' selected' : '';
+                        select.append('<option value="' + m.modeloId + '"' + sel + '>' + m.nombre + '</option>');
+                    });
+                }
+                if (callback) callback();
+            }).fail(function () {
+                console.error('Error cargando modelos para marca ' + marcaId);
+                if (callback) callback();
+            });
+        }
+
+        function _cargarVersiones(modeloId, preselectId, callback) {
+            if (typeof preselectId === 'function') { callback = preselectId; preselectId = null; }
+            $.get('@Url.Action("GetByModelo", "VersionesVehiculo")?modeloId=' + modeloId, function (res) {
+                if (res.success && res.data) {
+                    var select = $('#VersionId');
+                    res.data.forEach(function (v) {
+                        var sel = preselectId && String(v.versionId) === String(preselectId) ? ' selected' : '';
+                        var precioAttr = v.precioBase ? ' data-precio="' + v.precioBase + '"' : '';
+                        select.append('<option value="' + v.versionId + '"' + sel + precioAttr + '>' + v.nombre + '</option>');
+                    });
+                }
+                if (callback) callback();
+            }).fail(function () {
+                console.error('Error cargando versiones para modelo ' + modeloId);
+                if (callback) callback();
+            });
+        }
+
+        function _cargarSucursales() {
+            $.get('@Url.Action("GetSucursales", "Inventario")', function (res) {
+                if (res.success && res.data) {
+                    var select = $('#SucursalId');
+                    var currentValue = @(Model.SucursalId.HasValue ? Model.SucursalId.Value.ToString() : "null");
+                    res.data.forEach(function (s) {
+                        var selected = s.id == currentValue ? 'selected' : '';
+                        select.append('<option value="' + s.id + '" ' + selected + '>' + s.nombre + '</option>');
+                    });
+                }
+            });
+        }
+
+        function _initClienteSelect2() {
+            $('#ClienteId').select2({
+                dropdownParent: $('.modal'),
+                theme: 'bootstrap-5',
+                placeholder: 'Buscar cliente...',
+                allowClear: true,
+                minimumInputLength: 2,
+                language: { inputTooShort: function () { return 'Escriba al menos 2 caracteres...'; } },
+                ajax: {
+                    url: '@Url.Action("Search", "Clientes")',
+                    dataType: 'json',
+                    delay: 300,
+                    data: function (params) { return { term: params.term }; },
+                    processResults: function (data) {
+                        if (data.success && data.data) {
+                            return {
+                                results: data.data.map(function (c) {
+                                    return { id: c.clienteId, text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono) + ')' };
+                                })
+                            };
+                        }
+                        return { results: [] };
+                    }
+                }
+            });
+
+            @if (Model.ClienteId.HasValue)
+            {
+                @:var option = new Option(@Html.Raw(Json.Serialize((string)ViewBag.ClienteNombre)), '@Model.ClienteId', true, true);
+                @:$('#ClienteId').append(option).trigger('change');
+            }
+        }
+    })();
 </script>

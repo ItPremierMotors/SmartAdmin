@@ -58,14 +58,14 @@
                     {
                         <tr>
                             <td class="text-muted fw-bold">Precio Lista:</td>
-                            <td>L @Model.PrecioLista.Value.ToString("N2")</td>
+                            <td>$ @Model.PrecioLista.Value.ToString("N2")</td>
                         </tr>
                     }
                     @if (Model.PrecioVenta.HasValue)
                     {
                         <tr>
                             <td class="text-muted fw-bold">Precio Venta:</td>
-                            <td><strong>L @Model.PrecioVenta.Value.ToString("N2")</strong></td>
+                            <td><strong>$ @Model.PrecioVenta.Value.ToString("N2")</strong></td>
                         </tr>
                     }
                 </table>
@@ -205,7 +205,7 @@
                         {
                             <tr>
                                 <td class="text-muted fw-bold">Costo:</td>
-                                <td>L @Model.CostoImportacion.Value.ToString("N2")</td>
+                                <td>$ @Model.CostoImportacion.Value.ToString("N2")</td>
                             </tr>
                         }
                     </table>

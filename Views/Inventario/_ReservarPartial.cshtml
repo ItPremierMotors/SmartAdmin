@@ -1,0 +1,86 @@
+@{
+    var vehiculoInfo = ViewBag.VehiculoInfo as string;
+}
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-1"></i>
+    Al reservar, el vehículo quedará apartado por <strong>10 días</strong>. Si no se concreta la venta en ese plazo, la reserva se cancelará automáticamente.
+</div>
+
+@if (!string.IsNullOrEmpty(vehiculoInfo))
+{
+    <div class="mb-3">
+        <label class="form-label text-muted small">Vehículo</label>
+        <div class="form-control-plaintext fw-bold">@vehiculoInfo</div>
+    </div>
+}
+
+<form id="formReservar">
+    <input type="hidden" id="ReservaVehiculoId" value="@ViewBag.VehiculoId" />
+
+    <div class="mb-3">
+        <label class="form-label">Vendedor Asignado <span class="text-danger">*</span></label>
+        <select class="form-select" id="ReservaVendedorId" required>
+            <option value="">Seleccione vendedor...</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cliente <span class="text-muted small">(opcional)</span></label>
+        <select class="form-select" id="ReservaClienteId">
+            <option value="">Buscar cliente...</option>
+        </select>
+        <small class="text-muted">Puede asignar un cliente ahora o dejarlo pendiente.</small>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-purple" id="btnReservar" onclick="confirmarReservar()">
+        <i class="fas fa-bookmark me-1"></i> Reservar
+    </button>
+</div>
+
+<script>
+    (function () {
+        var s2Opts = { dropdownParent: $('.modal'), theme: 'bootstrap-5', width: '100%' };
+
+        // Cargar vendedores del departamento de Ventas
+        $.get('@Url.Action("GetVendedores", "Inventario")', function (res) {
+            if (res.success && res.data) {
+                var select = $('#ReservaVendedorId');
+                res.data.forEach(function (v) {
+                    select.append('<option value="' + v.id + '">' + v.nombreCompleto + ' - ' + v.cargo + '</option>');
+                });
+            }
+            $('#ReservaVendedorId').select2($.extend({}, s2Opts, { placeholder: 'Seleccione vendedor...' }));
+        });
+
+        // Cliente con búsqueda AJAX
+        $('#ReservaClienteId').select2($.extend({}, s2Opts, {
+            placeholder: 'Buscar cliente...',
+            allowClear: true,
+            minimumInputLength: 2,
+            language: { inputTooShort: () => 'Escriba al menos 2 caracteres...' },
+            ajax: {
+                url: '@Url.Action("Search", "Clientes")',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) { return { term: params.term }; },
+                processResults: function (data) {
+                    if (data.success && data.data) {
+                        return {
+                            results: data.data.map(c => ({
+                                id: c.clienteId,
+                                text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono) + ')'
+                            }))
+                        };
+                    }
+                    return { results: [] };
+                }
+            }
+        }));
+    })();
+</script>

@@ -128,7 +128,7 @@ namespace SmartAdmin.Controllers
         [HttpPost]
         public async Task<IActionResult> Edit([FromBody] EditVehiculoViewModel model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(new { success = false, message = ObtenerErroresValidacion() });
             var response = await vehiculoServices.EditAsync(model);
             return StatusCode(response.StatusCode, response);
         }
@@ -136,9 +136,9 @@ namespace SmartAdmin.Controllers
         [HttpPost]
         public async Task<IActionResult> CambiarEstado([FromBody] CambiarEstadoRequest request)
         {
-            if (!NombresEstado.TryGetValue(request.NuevoEstado, out var estadoStr))
+            if (!NombresEstado.ContainsKey(request.NuevoEstado))
                 return BadRequest(new { success = false, message = "Estado no válido" });
-            var response = await vehiculoServices.CambiarEstadoAsync(request.VehiculoId, estadoStr);
+            var response = await vehiculoServices.CambiarEstadoAsync(request.VehiculoId, request.NuevoEstado);
             return StatusCode(response.StatusCode, response);
         }
 
@@ -152,7 +152,7 @@ namespace SmartAdmin.Controllers
         [HttpPost]
         public async Task<IActionResult> ProcesarEntrega([FromBody] ProcesarEntregaViewModel model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(new { success = false, message = ObtenerErroresValidacion() });
 
             // 1. Obtener detalle actual
             var detalle = await vehiculoServices.GetDetalleAsync(model.VehiculoId);
@@ -194,6 +194,7 @@ namespace SmartAdmin.Controllers
                 FechaPrimeraMatricula = d.FechaPrimeraMatricula,
                 GarantiaHasta = d.GarantiaHasta,
                 Observaciones = d.Observaciones,
+                VendedorId = d.VendedorId,
                 // Dato de entrega
                 FechaEntrega = model.FechaEntrega
             };
@@ -203,11 +204,18 @@ namespace SmartAdmin.Controllers
                 return StatusCode(editResult.StatusCode, editResult);
 
             // 3. Cambiar estado a Entregado
-            var estadoResult = await vehiculoServices.CambiarEstadoAsync(model.VehiculoId, "Entregado");
+            var estadoResult = await vehiculoServices.CambiarEstadoAsync(model.VehiculoId, 7);
             if (!estadoResult.Success)
                 return StatusCode(estadoResult.StatusCode, new { success = false, message = "La fecha de entrega se guardó pero hubo un error al cambiar el estado. Intente cambiar el estado manualmente." });
 
             return Ok(new { success = true, message = "Entrega procesada exitosamente" });
+        }
+
+        private string ObtenerErroresValidacion()
+        {
+            return string.Join(" | ", ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage));
         }
 
         private Dictionary<int, string> GetTransicionesValidas(int estadoActual)

@@ -63,6 +63,7 @@ builder.Services.AddHttpClient("PremierFlowApi", c =>
 
 //serivicios
 builder.Services.AddScoped<IApiClient, ApiClientServices>();
+builder.Services.AddScoped<IAuth, AuthServices>();
 builder.Services.AddScoped<IMarca, MarcaServices>();
 builder.Services.AddScoped<IModelo, ModeloServices>();
 builder.Services.AddScoped<IVersionVehiculo, VersionVehiculoServices>();

@@ -1,4 +1,14 @@
 @model SmartAdmin.Models.Vehiculo.CreateVehiculoViewModel
+@using SmartAdmin.Models.Enums
+
+@{
+    if (Model.TipoCombustible == 0) { Model.TipoCombustible = (int)TipoCombustible.Gasolina; }
+    if (Model.Estado == 0) { Model.Estado = (int)EstadoVehiculo.EnTransito; }
+    if (Model.Procedencia == 0) { Model.Procedencia = (int)ProcedenciaVehiculo.Importado; }
+
+    var estadoItems = Html.GetEnumSelectList<EstadoVehiculo>()
+        .Where(x => int.TryParse(x.Value, out var v) && v <= 4).ToList();
+}
 
 <form id="formCrearVehiculo">
     <!-- Sección 1: Identificación -->
@@ -42,8 +52,8 @@
             </select>
         </div>
         <div class="col-md-4 mb-3">
-            <label asp-for="VersionId" class="form-label">@Html.DisplayNameFor(m => m.VersionId)</label>
-            <select asp-for="VersionId" class="form-select" id="VersionId">
+            <label asp-for="VersionId" class="form-label">@Html.DisplayNameFor(m => m.VersionId)<span class="text-danger">*</span></label>
+            <select asp-for="VersionId" class="form-select" id="VersionId" required>
                 <option value="">Seleccione versión...</option>
             </select>
         </div>
@@ -54,29 +64,19 @@
             <input asp-for="Anio" class="form-control" type="number" min="1900" max="2100" placeholder="2025" required />
         </div>
         <div class="col-md-3 mb-3">
-            <label asp-for="Color" class="form-label">@Html.DisplayNameFor(m => m.Color)</label>
-            <input asp-for="Color" class="form-control" placeholder="Ej: Blanco" />
+            <label asp-for="Color" class="form-label">@Html.DisplayNameFor(m => m.Color)<span class="text-danger">*</span></label>
+            <input asp-for="Color" class="form-control" placeholder="Ej: Blanco" required />
         </div>
         <div class="col-md-3 mb-3">
-            <label asp-for="TipoCombustible" class="form-label">@Html.DisplayNameFor(m => m.TipoCombustible)</label>
-            <select asp-for="TipoCombustible" class="form-select" id="TipoCombustible">
-                <option value="1" selected>Gasolina</option>
-                <option value="2">Diésel</option>
-                <option value="3">Híbrido</option>
-                <option value="4">Eléctrico</option>
-                <option value="5">Gas Natural</option>
-                <option value="6">GLP</option>
-            </select>
+            <label asp-for="TipoCombustible" class="form-label">@Html.DisplayNameFor(m => m.TipoCombustible)<span class="text-danger">*</span></label>
+            <select asp-for="TipoCombustible" class="form-select" id="TipoCombustible" required
+                    asp-items="Html.GetEnumSelectList<TipoCombustible>()"></select>
         </div>
         <div class="col-md-3 mb-3">
-            <label asp-for="Transmision" class="form-label">@Html.DisplayNameFor(m => m.Transmision)</label>
-            <select asp-for="Transmision" class="form-select" id="Transmision">
+            <label asp-for="Transmision" class="form-label">@Html.DisplayNameFor(m => m.Transmision)<span class="text-danger">*</span></label>
+            <select asp-for="Transmision" class="form-select" id="Transmision" required
+                    asp-items="Html.GetEnumSelectList<TipoTransmision>()">
                 <option value="">Seleccione...</option>
-                <option value="0">Manual</option>
-                <option value="1">Automática</option>
-                <option value="2">CVT</option>
-                <option value="3">Dual Clutch</option>
-                <option value="4">Semiautomática</option>
             </select>
         </div>
     </div>
@@ -86,13 +86,8 @@
     <div class="row">
         <div class="col-md-4 mb-3">
             <label asp-for="Estado" class="form-label">@Html.DisplayNameFor(m => m.Estado)</label>
-            <select asp-for="Estado" class="form-select" id="Estado">
-                <option value="1" selected>En Tránsito</option>
-                <option value="2">En Aduana</option>
-                <option value="3">En Bodega</option>
-                <option value="4">En Exhibición</option>
-                <option value="5">Reservado</option>
-            </select>
+            <select asp-for="Estado" class="form-select" id="Estado"
+                    asp-items="@estadoItems"></select>
         </div>
         <div class="col-md-4 mb-3">
             <label asp-for="SucursalId" class="form-label">@Html.DisplayNameFor(m => m.SucursalId)</label>
@@ -102,10 +97,8 @@
         </div>
         <div class="col-md-4 mb-3">
             <label asp-for="Procedencia" class="form-label">@Html.DisplayNameFor(m => m.Procedencia)</label>
-            <select asp-for="Procedencia" class="form-select" id="Procedencia">
-                <option value="1">Local</option>
-                <option value="2" selected>Importado</option>
-            </select>
+            <select asp-for="Procedencia" class="form-select" id="Procedencia"
+                    asp-items="Html.GetEnumSelectList<ProcedenciaVehiculo>()"></select>
         </div>
     </div>
 
@@ -123,7 +116,10 @@
             </div>
             <div class="col-md-4 mb-3">
                 <label asp-for="CostoImportacion" class="form-label">@Html.DisplayNameFor(m => m.CostoImportacion)</label>
-                <input asp-for="CostoImportacion" class="form-control" type="number" step="0.01" min="0" />
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input asp-for="CostoImportacion" class="form-control" type="number" step="0.01" min="0" />
+                </div>
             </div>
         </div>
         <div class="row">
@@ -143,13 +139,10 @@
     <div class="row">
         <div class="col-md-6 mb-3">
             <label asp-for="PrecioLista" class="form-label">@Html.DisplayNameFor(m => m.PrecioLista)</label>
-            <input asp-for="PrecioLista" class="form-control" type="number" step="0.01" min="0" />
-        </div>
-        <div class="col-md-6 mb-3">
-            <label asp-for="ClienteId" class="form-label">@Html.DisplayNameFor(m => m.ClienteId)</label>
-            <select asp-for="ClienteId" class="form-select" id="ClienteId">
-                <option value="">Sin asignar</option>
-            </select>
+            <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input asp-for="PrecioLista" class="form-control" type="number" step="0.01" min="0" />
+            </div>
         </div>
     </div>
 
@@ -189,96 +182,91 @@
 </div>
 
 <script>
-    $(document).ready(function () {
-        cargarMarcas();
-        cargarSucursales();
-        initClienteSelect2();
+    (function () {
+        var s2Opts = { dropdownParent: $('.modal'), theme: 'bootstrap-5', width: '100%' };
 
-        $('#MarcaId').on('change', function () {
-            $('#ModeloId').empty().append('<option value="">Seleccione modelo...</option>');
-            $('#VersionId').empty().append('<option value="">Seleccione versión...</option>');
-            const marcaId = $(this).val();
-            if (marcaId) cargarModelos(marcaId);
+        function _initSelect2(selector, opts) {
+            var $el = $(selector);
+            if ($el.hasClass('select2-hidden-accessible')) $el.select2('destroy');
+            $el.select2($.extend({}, s2Opts, opts));
+        }
+
+        // Cascada Marca -> Modelo -> Versión
+        $('#MarcaId').off('change').on('change', function () {
+            var $modelo = $('#ModeloId'), $version = $('#VersionId');
+            if ($modelo.hasClass('select2-hidden-accessible')) $modelo.select2('destroy');
+            if ($version.hasClass('select2-hidden-accessible')) $version.select2('destroy');
+            $modelo.empty().append('<option value="">Seleccione modelo...</option>');
+            $version.empty().append('<option value="">Seleccione versión...</option>');
+            var marcaId = $(this).val();
+            if (marcaId) _cargarModelos(marcaId);
         });
 
-        $('#ModeloId').on('change', function () {
-            $('#VersionId').empty().append('<option value="">Seleccione versión...</option>');
-            const modeloId = $(this).val();
-            if (modeloId) cargarVersiones(modeloId);
+        $('#ModeloId').off('change').on('change', function () {
+            var $version = $('#VersionId');
+            if ($version.hasClass('select2-hidden-accessible')) $version.select2('destroy');
+            $version.empty().append('<option value="">Seleccione versión...</option>');
+            var modeloId = $(this).val();
+            if (modeloId) _cargarVersiones(modeloId);
         });
 
-        $('#Procedencia').on('change', function () {
+        $('#VersionId').off('change').on('change', function () {
+            var selected = $(this).find('option:selected');
+            var precio = selected.data('precio');
+            if (precio) $('#PrecioLista').val(precio);
+        });
+
+        $('#Procedencia').off('change').on('change', function () {
             $('#seccionImportacion').toggle($(this).val() === '2');
         });
         $('#Procedencia').trigger('change');
-    });
 
-    function cargarMarcas(callback) {
-        $.get('@Url.Action("GetAll", "Marca")', function (res) {
-            if (res.success && res.data) {
-                const select = $('#MarcaId');
-                res.data.forEach(m => select.append(`<option value="${m.marcaId}">${m.nombre}</option>`));
-            }
-            if (callback) callback();
+        // Cargar datos e inicializar Select2 DESPUÉS de poblar opciones
+        _cargarMarcas(function () {
+            _initSelect2('#MarcaId', { placeholder: 'Seleccione marca...' });
         });
-    }
+        _cargarSucursales();
 
-    function cargarModelos(marcaId, callback) {
-        $.get('@Url.Action("GetByMarca", "Modelos")?marcaId=' + marcaId, function (res) {
-            if (res.success && res.data) {
-                const select = $('#ModeloId');
-                res.data.forEach(m => select.append(`<option value="${m.modeloId}">${m.nombre}</option>`));
-            }
-            if (callback) callback();
-        });
-    }
-
-    function cargarVersiones(modeloId, callback) {
-        $.get('@Url.Action("GetByModelo", "VersionesVehiculo")?modeloId=' + modeloId, function (res) {
-            if (res.success && res.data) {
-                const select = $('#VersionId');
-                res.data.forEach(v => select.append(`<option value="${v.versionId}">${v.nombre}</option>`));
-            }
-            if (callback) callback();
-        });
-    }
-
-    function cargarSucursales() {
-        $.get('@Url.Action("GetSucursales", "Inventario")', function (res) {
-            if (res.success && res.data) {
-                const select = $('#SucursalId');
-                res.data.forEach(s => select.append(`<option value="${s.id}">${s.nombre}</option>`));
-            }
-        });
-    }
-
-    function initClienteSelect2() {
-        $('#ClienteId').select2({
-            dropdownParent: $('.modal'),
-            theme: 'bootstrap-5',
-            placeholder: 'Buscar cliente...',
-            allowClear: true,
-            minimumInputLength: 2,
-            language: { inputTooShort: () => 'Escriba al menos 2 caracteres...' },
-            ajax: {
-                url: '@Url.Action("Search", "Clientes")',
-                dataType: 'json',
-                delay: 300,
-                data: function (params) {
-                    return { term: params.term };
-                },
-                processResults: function (data) {
-                    if (data.success && data.data) {
-                        return {
-                            results: data.data.map(c => ({
-                                id: c.clienteId,
-                                text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono) + ')'
-                            }))
-                        };
-                    }
-                    return { results: [] };
+        function _cargarMarcas(callback) {
+            $.get('@Url.Action("GetAll", "Marca")', function (res) {
+                if (res.success && res.data) {
+                    var select = $('#MarcaId');
+                    res.data.forEach(function (m) { select.append('<option value="' + m.marcaId + '">' + m.nombre + '</option>'); });
                 }
-            }
-        });
-    }
+                if (callback) callback();
+            });
+        }
+
+        function _cargarModelos(marcaId) {
+            $.get('@Url.Action("GetByMarca", "Modelos")?marcaId=' + marcaId, function (res) {
+                if (res.success && res.data) {
+                    var select = $('#ModeloId');
+                    res.data.forEach(function (m) { select.append('<option value="' + m.modeloId + '">' + m.nombre + '</option>'); });
+                }
+                _initSelect2('#ModeloId', { placeholder: 'Seleccione modelo...' });
+            });
+        }
+
+        function _cargarVersiones(modeloId) {
+            $.get('@Url.Action("GetByModelo", "VersionesVehiculo")?modeloId=' + modeloId, function (res) {
+                if (res.success && res.data) {
+                    var select = $('#VersionId');
+                    res.data.forEach(function (v) {
+                        var precioAttr = v.precioBase ? ' data-precio="' + v.precioBase + '"' : '';
+                        select.append('<option value="' + v.versionId + '"' + precioAttr + '>' + v.nombre + '</option>');
+                    });
+                }
+                _initSelect2('#VersionId', { placeholder: 'Seleccione versión...' });
+            });
+        }
+
+        function _cargarSucursales() {
+            $.get('@Url.Action("GetSucursales", "Inventario")', function (res) {
+                if (res.success && res.data) {
+                    var select = $('#SucursalId');
+                    res.data.forEach(function (s) { select.append('<option value="' + s.id + '">' + s.nombre + '</option>'); });
+                }
+            });
+        }
+    })();
 </script>

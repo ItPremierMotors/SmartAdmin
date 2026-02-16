@@ -15,7 +15,18 @@ namespace SmartAdmin.Models.Vehiculo
         public int TipoCombustible { get; set; }
         public int? Transmision { get; set; }
         public int Estado { get; set; }
+        #region Estado y Ubicación
+       
+        public int? UbicacionId { get; set; }
+        public int? SucursalId { get; set; }
+        #endregion
         public int? ClienteId { get; set; }
+        public decimal? PrecioLista { get; set; }
+        public decimal? PrecioVenta { get; set; }
+        public DateTime? FechaVenta { get; set; }
+        public DateTime? FechaEntrega { get; set; }
+        public string? VendedorId { get; set; }
+        public string? VendedorNombre { get; set; }
         public int KilometrajeActual { get; set; }
         public DateTime? GarantiaHasta { get; set; }
 
@@ -28,7 +39,10 @@ namespace SmartAdmin.Models.Vehiculo
         public string DescripcionCompleta { get; set; } = null!;
         public bool EnGarantia { get; set; }
         public bool EstaVendido { get; set; }
-        public bool DisponibleParaVenta { get; set; }
+      
+        public string? UbicacionNombre { get; set; }
+        public string? SucursalNombre { get; set; }
+        public DateTime? FechaLimiteReserva { get; set; }
     }
 
     public class VehiculoDetalleViewModel
@@ -70,6 +84,7 @@ namespace SmartAdmin.Models.Vehiculo
         public DateTime? FechaVenta { get; set; }
         public DateTime? FechaEntrega { get; set; }
         public string? VendedorId { get; set; }
+        public string? VendedorNombre { get; set; }
 
         // Taller
         public int KilometrajeActual { get; set; }
@@ -93,6 +108,10 @@ namespace SmartAdmin.Models.Vehiculo
         public bool EstaVendido { get; set; }
         public bool DisponibleParaVenta { get; set; }
         public int CantidadServicios { get; set; }
+        public string? ReservadoPorId { get; set; }
+        public string? ReservadoPorNombre { get; set; }
+        public DateTime? FechaReserva { get; set; }
+        public DateTime? FechaLimiteReserva { get; set; }
     }
 
     public class CreateVehiculoViewModel
@@ -324,6 +343,8 @@ namespace SmartAdmin.Models.Vehiculo
     {
         public int VehiculoId { get; set; }
         public int NuevoEstado { get; set; }
+        public int? ClienteId { get; set; }
+        public string? VendedorId { get; set; }
     }
 
     public class ActualizarKilometrajeRequest

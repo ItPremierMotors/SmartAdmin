@@ -57,7 +57,17 @@ namespace SmartAdmin.Services
             try
             {
                 using var client = CreateClient();
-                var response = await client.PostAsJsonAsync(endpoint, data);
+                HttpResponseMessage response;
+                if (data != null)
+                {
+                    var json = JsonSerializer.Serialize(data, data.GetType(), _jsonOptions);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    response = await client.PostAsync(endpoint, content);
+                }
+                else
+                {
+                    response = await client.PostAsync(endpoint, null);
+                }
                 return await HandleResponse<T>(response);
 
             }
@@ -72,7 +82,9 @@ namespace SmartAdmin.Services
             try
             {
                 using var client = CreateClient();
-                var response = await client.PutAsJsonAsync(endpoint, data);
+                var json = JsonSerializer.Serialize(data, data.GetType(), _jsonOptions);
+                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                var response = await client.PutAsync(endpoint, content);
                 return await HandleResponse<T>(response);
 
             }
