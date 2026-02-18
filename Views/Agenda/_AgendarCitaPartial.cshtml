@@ -1,0 +1,196 @@
+@{
+    var fechaPreseleccionada = ViewBag.FechaPreseleccionada as string;
+    var sucursalId = ViewBag.SucursalId as int?;
+}
+
+<form id="formAgendarCita">
+    <input type="hidden" id="CitaSucursalId" value="@(sucursalId?.ToString() ?? "")" />
+    <div class="row">
+        <!-- Left column: Client & Vehicle -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Cliente <span class="text-danger">*</span></label>
+                <select class="form-select" id="CitaClienteId" required>
+                    <option value="">Buscar cliente...</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Vehiculo <span class="text-danger">*</span></label>
+                <select class="form-select" id="CitaVehiculoId" required>
+                    <option value="">Seleccione un cliente primero</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Tipo de Servicio <span class="text-danger">*</span></label>
+                <select class="form-select" id="CitaTipoServicioId" required>
+                    <option value="">Cargando...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Right column: Schedule -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Fecha <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="CitaFecha" value="@fechaPreseleccionada" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Bloque Horario</label>
+                <select class="form-select" id="CitaBloqueHorario">
+                    <option value="">Cargando bloques...</option>
+                </select>
+                <small class="text-muted">Si no hay bloques, ingrese hora manual</small>
+            </div>
+
+            <div class="mb-3" id="horaManualGroup" style="display:none;">
+                <label class="form-label">Hora Manual</label>
+                <input type="time" class="form-control" id="CitaHoraManual" value="08:00" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Tipo de Ingreso <span class="text-danger">*</span></label>
+                <select class="form-select" id="CitaTipoIngreso" required>
+                    <option value="1" selected>Cita</option>
+                    <option value="2">Walk-In</option>
+                    <option value="3">Garantia</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Motivo de Visita <span class="text-danger">*</span></label>
+        <textarea class="form-control" id="CitaMotivoVisita" rows="2" required
+                  placeholder="Describa el motivo de la visita..."></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Observaciones</label>
+        <textarea class="form-control" id="CitaObservaciones" rows="2"
+                  placeholder="Notas adicionales (opcional)"></textarea>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnAgendar" onclick="confirmarAgendar()">
+        <i class="fas fa-calendar-check me-1"></i> Agendar Cita
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        initClienteSelect();
+        cargarTiposServicio();
+        cargarBloquesDisponibles();
+
+        $('#CitaFecha').on('change', function () {
+            cargarBloquesDisponibles();
+        });
+
+        $('#CitaBloqueHorario').on('change', function () {
+            if ($(this).val() === '__manual__') {
+                $('#horaManualGroup').show();
+                $(this).val('');
+            } else {
+                $('#horaManualGroup').hide();
+            }
+        });
+    });
+
+    function initClienteSelect() {
+        $('#CitaClienteId').select2({
+            dropdownParent: $('.modal'),
+            theme: 'bootstrap-5',
+            placeholder: 'Buscar cliente...',
+            allowClear: true,
+            minimumInputLength: 2,
+            language: { inputTooShort: () => 'Escriba al menos 2 caracteres...' },
+            ajax: {
+                url: '@Url.Action("Search", "Clientes")',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) { return { term: params.term }; },
+                processResults: function (data) {
+                    if (data.success && data.data) {
+                        return {
+                            results: data.data.map(c => ({
+                                id: c.clienteId,
+                                text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono) + ')'
+                            }))
+                        };
+                    }
+                    return { results: [] };
+                }
+            }
+        }).on('change', function () {
+            cargarVehiculosCliente($(this).val());
+        });
+    }
+
+    function cargarVehiculosCliente(clienteId) {
+        const $sel = $('#CitaVehiculoId');
+        $sel.empty().append('<option value="">Cargando...</option>');
+
+        if (!clienteId) {
+            $sel.empty().append('<option value="">Seleccione un cliente primero</option>');
+            return;
+        }
+
+        $.get('@Url.Action("GetByCliente", "Inventario")', { clienteId: clienteId }, function (response) {
+            $sel.empty().append('<option value="">Seleccione vehiculo...</option>');
+            if (response.success && response.data && response.data.length > 0) {
+                response.data.forEach(v => {
+                    const desc = v.descripcionCompleta || (v.marcaNombre + ' ' + v.modeloNombre + ' ' + v.anio);
+                    const placa = v.placa ? ' (' + v.placa + ')' : '';
+                    $sel.append(`<option value="${v.vehiculoId}">${desc}${placa}</option>`);
+                });
+            } else {
+                $sel.empty().append('<option value="">No se encontraron vehiculos para este cliente</option>');
+            }
+        }).fail(function () {
+            $sel.empty().append('<option value="">Error al buscar vehiculos</option>');
+        });
+    }
+
+    function cargarTiposServicio() {
+        $.get('@Url.Action("GetAll", "TiposServicio")', function (response) {
+            const $sel = $('#CitaTipoServicioId');
+            $sel.empty().append('<option value="">Seleccione tipo de servicio...</option>');
+            if (response.success && response.data) {
+                response.data.forEach(ts => {
+                    $sel.append(`<option value="${ts.tipoServicioId}">${ts.nombre} (${ts.duracionFormateada})</option>`);
+                });
+            }
+        });
+    }
+
+    function cargarBloquesDisponibles() {
+        const fecha = $('#CitaFecha').val();
+        const params = { fecha: fecha };
+        const sId = $('#CitaSucursalId').val();
+        if (sId) params.sucursalId = sId;
+        $.get('@Url.Action("GetBloquesDisponibles", "Agenda")', params, function (response) {
+            const $sel = $('#CitaBloqueHorario');
+            $sel.empty();
+            if (response.success && response.data && response.data.length > 0) {
+                response.data.forEach(b => {
+                    const label = b.horaInicioFormateada + ' - ' + b.horaFinFormateada +
+                        ' (' + b.espaciosDisponibles + ' disponibles) [' + b.tipoBloqueNombre + ']';
+                    $sel.append(`<option value="${b.bloqueId}" data-hora="${b.horaInicio}">${label}</option>`);
+                });
+                $sel.append('<option value="__manual__">Ingresar hora manual...</option>');
+                $('#horaManualGroup').hide();
+            } else {
+                $sel.append('<option value="">Sin bloques configurados</option>');
+                $sel.append('<option value="__manual__">Ingresar hora manual...</option>');
+                $('#horaManualGroup').show();
+            }
+        });
+    }
+</script>

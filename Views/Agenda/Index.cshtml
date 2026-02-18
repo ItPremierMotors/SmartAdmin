@@ -1,0 +1,143 @@
+@{
+    ViewData["Title"] = "Agenda de Citas";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-calendar-check me-2"></i>@ViewData["Title"]</h1>
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <label class="form-label mb-0 text-muted small text-nowrap">Sucursal:</label>
+                <select class="form-select form-select-sm" id="filtroSucursal" style="width:200px">
+                    <option value="">Cargando...</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="abrirAgendarCita()">
+                <i class="fas fa-plus me-1"></i> Nueva Cita
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left: Date Picker + Stats -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <label class="form-label fw-bold">Seleccionar Fecha</label>
+                    <input type="date" class="form-control" id="fechaSeleccionada"
+                           value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                </div>
+            </div>
+
+            <!-- Stats del dia -->
+            <div class="card shadow-sm" id="statsCard">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Resumen del Dia</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Total citas:</span>
+                        <span class="fw-bold" id="statTotal">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Agendadas:</span>
+                        <span class="badge bg-primary" id="statAgendadas">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Confirmadas:</span>
+                        <span class="badge bg-info" id="statConfirmadas">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">En Proceso:</span>
+                        <span class="badge bg-warning text-dark" id="statEnProceso">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Completadas:</span>
+                        <span class="badge bg-success" id="statCompletadas">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Canceladas/NoShow:</span>
+                        <span class="badge bg-danger" id="statCanceladas">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Citas Table -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Citas del
+                        <span id="fechaTitulo" class="text-primary"></span>
+                    </h6>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-secondary active" onclick="filtrarEstado(null, this)">Todas</button>
+                        <button class="btn btn-outline-primary" onclick="filtrarEstado(1, this)">Agendadas</button>
+                        <button class="btn btn-outline-info" onclick="filtrarEstado(2, this)">Confirmadas</button>
+                        <button class="btn btn-outline-warning" onclick="filtrarEstado(3, this)">En Proceso</button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="loadingCitas" class="text-center py-4 d-none">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                        <span class="ms-2 text-muted">Cargando citas...</span>
+                    </div>
+                    <div id="sinCitas" class="text-center py-5 d-none">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No hay citas para este dia</p>
+                        <button class="btn btn-sm btn-primary" onclick="abrirAgendarCita()">
+                            <i class="fas fa-plus me-1"></i> Agendar Cita
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="tablaCitas">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Horario</th>
+                                    <th>Codigo</th>
+                                    <th>Cliente</th>
+                                    <th>Vehiculo</th>
+                                    <th>Servicio</th>
+                                    <th class="text-center">Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="citasBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+    .cita-row { cursor: pointer; transition: background-color 0.15s; }
+    .cita-row:hover { background-color: rgba(0,123,255,0.05); }
+    .badge-estado { font-size: 0.75rem; padding: 4px 8px; }
+</style>
+
+<script>
+    const URLS = {
+        getByFecha: '@Url.Action("GetByFecha", "Agenda")',
+        getRango: '@Url.Action("GetByRangoFechas", "Agenda")',
+        bloquesDisponibles: '@Url.Action("GetBloquesDisponibles", "Agenda")',
+        agendarPartial: '@Url.Action("AgendarPartial", "Agenda")',
+        detallePartial: '@Url.Action("DetalleCitaPartial", "Agenda")',
+        postAgendar: '@Url.Action("Agendar", "Agenda")',
+        postConfirmar: '@Url.Action("Confirmar", "Agenda")',
+        postCancelar: '@Url.Action("Cancelar", "Agenda")',
+        postNoShow: '@Url.Action("MarcarNoShow", "Agenda")',
+        postIniciar: '@Url.Action("IniciarAtencion", "Agenda")',
+        postCompletar: '@Url.Action("Completar", "Agenda")',
+        transferirPartial: '@Url.Action("TransferirPartial", "Agenda")',
+        postTransferir: '@Url.Action("Transferir", "Agenda")',
+        tiposServicio: '@Url.Action("GetAll", "TiposServicio")',
+        searchClientes: '@Url.Action("Search", "Clientes")',
+        searchVehiculos: '@Url.Action("Search", "Flota")',
+        getSucursales: '@Url.Action("GetSucursales", "Agenda")'
+    };
+</script>
+<script src="~/JS/pages/agenda.js"></script>
+}

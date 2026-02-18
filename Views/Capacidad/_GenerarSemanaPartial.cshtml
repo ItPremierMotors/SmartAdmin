@@ -1,0 +1,67 @@
+<div class="alert alert-info mb-3">
+    <i class="fas fa-info-circle me-1"></i>
+    Se generara capacidad para <strong>6 dias</strong> (lunes a sabado) a partir de la fecha seleccionada.
+</div>
+
+<form id="formGenerarSemana">
+    <div class="mb-3">
+        <label class="form-label">Fecha Inicio (Lunes) <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" id="SemanaFechaInicio" required />
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Turno <span class="text-danger">*</span></label>
+            <select class="form-select" id="SemanaTurno" required>
+                <option value="1">Manana</option>
+                <option value="2">Tarde</option>
+                <option value="3" selected>Completo</option>
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Tecnicos Disponibles <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="SemanaTecnicos" min="1" max="50" value="4" required />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Bahias Disponibles <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="SemanaBahias" min="1" max="50" value="4" required />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Minutos Disponibles <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="SemanaMinutos" min="60" max="1440" value="480" required />
+            <small class="text-muted">480 min = 8 horas</small>
+        </div>
+    </div>
+
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="SemanaPermiteSobretiempo" checked />
+        <label class="form-check-label" for="SemanaPermiteSobretiempo">
+            Permitir sobretiempo
+        </label>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnGenerarSemana" onclick="confirmarGenerarSemana()">
+        <i class="fas fa-bolt me-1"></i> Generar Semana
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Default to next Monday
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
+        const nextMonday = new Date(today);
+        nextMonday.setDate(today.getDate() + daysUntilMonday);
+        $('#SemanaFechaInicio').val(nextMonday.toISOString().split('T')[0]);
+        $('#SemanaFechaInicio').attr('min', today.toISOString().split('T')[0]);
+    });
+</script>

@@ -157,6 +157,7 @@ const AppModal = (function () {
         const {
             title = '',
             url = '',
+            html = '',
             size = 'md',
             data = null,
             onShown = null,
@@ -177,32 +178,26 @@ const AppModal = (function () {
         // Ocultar footer por defecto
         $('#globalModalFooter').hide();
 
-        // Mostrar loading
-        showLoading();
-
         // Mostrar modal
         modalInstance.show();
 
-        // Cargar vista parcial
+        // Si se proporciona HTML directo, usarlo sin AJAX
+        if (html) {
+            $('#globalModalBody').html(html);
+            _initSelect2IfNeeded(select2);
+            return _setupEvents(onShown, onHidden);
+        }
+
+        // Mostrar loading y cargar vista parcial via AJAX
+        showLoading();
+
         $.ajax({
             url: url,
             type: 'GET',
             data: data,
-            success: function (html) {
-                $('#globalModalBody').html(html);
-
-                // Inicializar Select2 si está configurado
-                if (select2) {
-                    if (select2 === true) {
-                        // Configuración por defecto
-                        initSelect2();
-                    } else if (typeof select2 === 'object') {
-                        // Configuración personalizada
-                        const selector = select2.selector || 'select';
-                        const options = select2.options || {};
-                        initSelect2(selector, options);
-                    }
-                }
+            success: function (responseHtml) {
+                $('#globalModalBody').html(responseHtml);
+                _initSelect2IfNeeded(select2);
             },
             error: function () {
                 $('#globalModalBody').html(`
@@ -214,7 +209,22 @@ const AppModal = (function () {
             }
         });
 
-        // Eventos
+        _setupEvents(onShown, onHidden);
+    }
+
+    function _initSelect2IfNeeded(select2) {
+        if (select2) {
+            if (select2 === true) {
+                initSelect2();
+            } else if (typeof select2 === 'object') {
+                const selector = select2.selector || 'select';
+                const options = select2.options || {};
+                initSelect2(selector, options);
+            }
+        }
+    }
+
+    function _setupEvents(onShown, onHidden) {
         const $modal = $('#globalModal');
         $modal.off('shown.bs.modal hidden.bs.modal');
 
@@ -224,12 +234,10 @@ const AppModal = (function () {
 
         if (onHidden) {
             $modal.on('hidden.bs.modal', function () {
-                // Destruir instancias de Select2 al cerrar
                 $('#globalModal').find('.select2-hidden-accessible').select2('destroy');
                 if (onHidden) onHidden();
             });
         } else {
-            // Destruir Select2 por defecto al cerrar
             $modal.on('hidden.bs.modal', function () {
                 $('#globalModal').find('.select2-hidden-accessible').select2('destroy');
             });
