@@ -232,17 +232,17 @@
             $('#horaManualGroup').hide();
             $warning.addClass('d-none');
             $('#btnAgendar').prop('disabled', false);
-        } else if (tipoIngreso === 1) {
-            // Cita sin bloques → no se puede agendar
+        } else if (tipoIngreso === 2) {
+            // Walk-In sin bloques → hora manual
+            $('#horaManualGroup').show();
+            $warning.addClass('d-none');
+            $('#btnAgendar').prop('disabled', false);
+        } else {
+            // Cita (1) o Garantia (3) sin bloques → no se puede agendar
             $('#horaManualGroup').hide();
             $warningText.text('No hay bloques configurados para esta fecha. Configure bloques o cambie a Walk-In.');
             $warning.removeClass('d-none');
             $('#btnAgendar').prop('disabled', true);
-        } else {
-            // Walk-In (2) o Garantia (3) sin bloques → hora manual
-            $('#horaManualGroup').show();
-            $warning.addClass('d-none');
-            $('#btnAgendar').prop('disabled', false);
         }
     }
 </script>
