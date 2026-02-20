@@ -137,6 +137,7 @@ function actualizarStats() {
     const enProceso = todasLasCitas.filter(c => c.estado === 3).length;
     const completadas = todasLasCitas.filter(c => c.estado === 4).length;
     const canceladas = todasLasCitas.filter(c => c.estado === 5 || c.estado === 6).length;
+    const transferidas = todasLasCitas.filter(c => c.estado === 7).length;
 
     $('#statTotal').text(total);
     $('#statAgendadas').text(agendadas);
@@ -144,6 +145,7 @@ function actualizarStats() {
     $('#statEnProceso').text(enProceso);
     $('#statCompletadas').text(completadas);
     $('#statCanceladas').text(canceladas);
+    $('#statTransferidas').text(transferidas);
 }
 
 function obtenerBadgeEstado(estado) {
@@ -154,6 +156,7 @@ function obtenerBadgeEstado(estado) {
         case 4: return 'bg-success';
         case 5: return 'bg-danger';
         case 6: return 'bg-dark';
+        case 7: return 'bg-secondary';
         default: return 'bg-secondary';
     }
 }
@@ -166,6 +169,7 @@ function obtenerNombreEstado(estado) {
         case 4: return 'Completada';
         case 5: return 'Cancelada';
         case 6: return 'No Show';
+        case 7: return 'Transferida';
         default: return 'Desconocido';
     }
 }

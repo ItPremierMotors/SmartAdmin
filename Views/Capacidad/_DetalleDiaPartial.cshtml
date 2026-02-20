@@ -230,24 +230,34 @@ else
     <!-- Action Buttons -->
     <div class="d-flex justify-content-between mt-3 pt-3 border-top">
         <div>
-            @if (Model.PermiteAgendamiento)
+            @if (!esFechaPasada)
             {
-                <button class="btn btn-sm btn-outline-danger" onclick="bloquearDia(@Model.CapacidadId)">
-                    <i class="fas fa-ban me-1"></i> Bloquear Dia
-                </button>
+                if (Model.PermiteAgendamiento)
+                {
+                    <button class="btn btn-sm btn-outline-danger" onclick="bloquearDia(@Model.CapacidadId)">
+                        <i class="fas fa-ban me-1"></i> Bloquear Dia
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-sm btn-outline-success" onclick="desbloquearDia(@Model.CapacidadId)">
+                        <i class="fas fa-check-circle me-1"></i> Desbloquear
+                    </button>
+                }
             }
             else
             {
-                <button class="btn btn-sm btn-outline-success" onclick="desbloquearDia(@Model.CapacidadId)">
-                    <i class="fas fa-check-circle me-1"></i> Desbloquear
-                </button>
+                <span class="badge bg-secondary"><i class="fas fa-lock me-1"></i>Fecha pasada - solo lectura</span>
             }
         </div>
         <div class="d-flex gap-2">
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
-            <button type="button" class="btn btn-primary btn-sm" onclick="abrirEditarCapacidad(@Model.CapacidadId)">
-                <i class="fas fa-edit me-1"></i> Editar
-            </button>
+            @if (!esFechaPasada)
+            {
+                <button type="button" class="btn btn-primary btn-sm" onclick="abrirEditarCapacidad(@Model.CapacidadId)">
+                    <i class="fas fa-edit me-1"></i> Editar
+                </button>
+            }
         </div>
     </div>
 }

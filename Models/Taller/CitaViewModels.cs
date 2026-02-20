@@ -29,6 +29,8 @@ namespace SmartAdmin.Models.Taller
         public int DuracionMinutos { get; set; }
         public int? MinutosTrabajados { get; set; }
         public int? CitaOrigenId { get; set; }
+        public int? CapacidadId { get; set; }
+        public int? BloqueHorarioId { get; set; }
         public bool EsTransferencia { get; set; }
         public string EstadoNombre => Estado.ToString();
         public bool EstaActiva { get; set; }
