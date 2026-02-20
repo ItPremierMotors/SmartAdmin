@@ -252,8 +252,6 @@
             versionId: $('#h_VersionId').val() ? parseInt($('#h_VersionId').val()) : null,
             anio: parseInt($('#h_Anio').val()),
             color: $('#h_Color').val() || null,
-            tipoCombustible: parseInt($('#h_TipoCombustible').val()),
-            transmision: $('#h_Transmision').val() ? parseInt($('#h_Transmision').val()) : null,
             estado: parseInt($('#h_Estado').val()),
             sucursalId: $('#h_SucursalId').val() ? parseInt($('#h_SucursalId').val()) : null,
             procedencia: parseInt($('#h_Procedencia').val()),
@@ -268,8 +266,8 @@
             clienteId: $('#ClienteId').val() ? parseInt($('#ClienteId').val()) : null,
             precioVenta: $('#PrecioVenta').val() ? parseFloat($('#PrecioVenta').val()) : null,
             fechaVenta: $('#FechaVenta').val() || null,
-            fechaEntrega: $('#FechaEntrega').val() || null,
-            vendedorId: $('#VendedorId').val()?.trim() || null,
+            fechaEntrega: $('#h_FechaEntrega').val() || null,
+            vendedorId: $('#h_VendedorId').val()?.trim() || null,
             garantiaHasta: $('#GarantiaHasta').val() || null,
             observaciones: $('#Observaciones').val()?.trim() || null
         };

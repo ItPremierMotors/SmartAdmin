@@ -62,4 +62,13 @@ namespace SmartAdmin.Models.Taller
         public int CitaId { get; set; }
         public int MinutosTrabajadosHoy { get; set; }
     }
+
+    public class ReprogramarCitaViewModel
+    {
+        public int CitaId { get; set; }
+        public DateTime FechaHoraInicio { get; set; }
+        public string MotivoVisita { get; set; } = null!;
+        public string? Observaciones { get; set; }
+        public int? BloqueHorarioId { get; set; }
+    }
 }

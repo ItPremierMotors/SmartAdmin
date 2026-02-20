@@ -20,5 +20,6 @@ namespace SmartAdmin.Interfaces
         Task<ApiResponse<bool>> IniciarAtencionAsync(int citaId);
         Task<ApiResponse<bool>> CompletarAsync(int citaId);
         Task<ApiResponse<CitaViewModel>> TransferirAsync(TransferirCitaViewModel model);
+        Task<ApiResponse<CitaViewModel>> ReprogramarAsync(ReprogramarCitaViewModel model);
     }
 }

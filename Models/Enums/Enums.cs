@@ -43,10 +43,14 @@ namespace SmartAdmin.Models.Enums
     /// </summary>
     public enum TipoTraccion
     {
-        Fwd = 1,  // Front-Wheel Drive
-        Rwd = 2,  // Rear-Wheel Drive
-        Awd = 3,  // All-Wheel Drive
-        FourWd = 4  // 4-Wheel Drive
+        [Display(Name = "Delantera (FWD)")]
+        Fwd = 1,
+        [Display(Name = "Trasera (RWD)")]
+        Rwd = 2,
+        [Display(Name = "Integral (AWD)")]
+        Awd = 3,
+        [Display(Name = "4x4 (4WD)")]
+        FourWd = 4
     }
 
     /// <summary>

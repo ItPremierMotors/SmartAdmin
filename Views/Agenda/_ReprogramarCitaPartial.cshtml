@@ -1,0 +1,120 @@
+@model SmartAdmin.Models.Taller.CitaViewModel
+
+<div class="alert alert-warning mb-3">
+    <i class="fas fa-exclamation-triangle me-1"></i>
+    La fecha original de esta cita ya paso. Seleccione una nueva fecha y horario disponible.
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <table class="table table-sm table-borderless mb-0">
+            <tr>
+                <td class="text-muted" style="width:40%">Cita:</td>
+                <td class="fw-bold"><code>@Model.CodigoCita</code></td>
+            </tr>
+            <tr>
+                <td class="text-muted">Cliente:</td>
+                <td>@Model.ClienteNombre</td>
+            </tr>
+            <tr>
+                <td class="text-muted">Vehiculo:</td>
+                <td>@Model.VehiculoDescripcion</td>
+            </tr>
+            <tr>
+                <td class="text-muted">Servicio:</td>
+                <td>@Model.TipoServicioNombre</td>
+            </tr>
+            <tr>
+                <td class="text-muted">Fecha Original:</td>
+                <td><span class="text-danger"><del>@Model.FechaFormateada @Model.HoraInicioFormateada</del></span></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<form id="formReprogramarCita">
+    <input type="hidden" id="ReprogramarCitaId" value="@Model.CitaId" />
+    <input type="hidden" id="ReprogramarMotivoVisita" value="@Model.MotivoVisita" />
+    <input type="hidden" id="ReprogramarSucursalId" value="@(Model.SucursalId?.ToString() ?? "")" />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nueva Fecha <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="ReprogramarFecha"
+                       min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                       value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Bloque Horario</label>
+                <select class="form-select" id="ReprogramarBloqueHorario">
+                    <option value="">Cargando bloques...</option>
+                </select>
+                <small class="text-muted">Si no hay bloques, ingrese hora manual</small>
+            </div>
+            <div class="mb-3" id="reprogramarHoraManualGroup" style="display:none;">
+                <label class="form-label">Hora Manual</label>
+                <input type="time" class="form-control" id="ReprogramarHoraManual" value="08:00" />
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Observaciones</label>
+        <textarea class="form-control" id="ReprogramarObservaciones" rows="2"
+                  placeholder="Motivo de reprogramacion (opcional)">@Model.Observaciones</textarea>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    <button type="button" class="btn btn-primary" id="btnReprogramar" onclick="confirmarReprogramar()">
+        <i class="fas fa-calendar-day me-1"></i> Reprogramar Cita
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        cargarBloquesReprogramar();
+
+        $('#ReprogramarFecha').on('change', function () {
+            cargarBloquesReprogramar();
+        });
+
+        $('#ReprogramarBloqueHorario').on('change', function () {
+            if ($(this).val() === '__manual__') {
+                $('#reprogramarHoraManualGroup').show();
+                $(this).val('');
+            } else {
+                $('#reprogramarHoraManualGroup').hide();
+            }
+        });
+    });
+
+    function cargarBloquesReprogramar() {
+        const fecha = $('#ReprogramarFecha').val();
+        const params = { fecha: fecha };
+        const sId = $('#ReprogramarSucursalId').val();
+        if (sId) params.sucursalId = sId;
+
+        $.get('@Url.Action("GetBloquesDisponibles", "Agenda")', params, function (response) {
+            const $sel = $('#ReprogramarBloqueHorario');
+            $sel.empty();
+            if (response.success && response.data && response.data.length > 0) {
+                response.data.forEach(b => {
+                    const label = b.horaInicioFormateada + ' - ' + b.horaFinFormateada +
+                        ' (' + b.espaciosDisponibles + ' disponibles) [' + b.tipoBloqueNombre + ']';
+                    $sel.append(`<option value="${b.bloqueId}" data-hora="${b.horaInicio}">${label}</option>`);
+                });
+                $sel.append('<option value="__manual__">Ingresar hora manual...</option>');
+                $('#reprogramarHoraManualGroup').hide();
+            } else {
+                $sel.append('<option value="">Sin bloques configurados</option>');
+                $sel.append('<option value="__manual__">Ingresar hora manual...</option>');
+                $('#reprogramarHoraManualGroup').show();
+            }
+        });
+    }
+</script>

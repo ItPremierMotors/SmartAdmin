@@ -2,7 +2,6 @@
 @using SmartAdmin.Models.Enums
 
 @{
-    if (Model.TipoCombustible == 0) { Model.TipoCombustible = (int)TipoCombustible.Gasolina; }
     if (Model.Estado == 0) { Model.Estado = (int)EstadoVehiculo.EnTransito; }
     if (Model.Procedencia == 0) { Model.Procedencia = (int)ProcedenciaVehiculo.Importado; }
 
@@ -66,18 +65,6 @@
         <div class="col-md-3 mb-3">
             <label asp-for="Color" class="form-label">@Html.DisplayNameFor(m => m.Color)<span class="text-danger">*</span></label>
             <input asp-for="Color" class="form-control" placeholder="Ej: Blanco" required />
-        </div>
-        <div class="col-md-3 mb-3">
-            <label asp-for="TipoCombustible" class="form-label">@Html.DisplayNameFor(m => m.TipoCombustible)<span class="text-danger">*</span></label>
-            <select asp-for="TipoCombustible" class="form-select" id="TipoCombustible" required
-                    asp-items="Html.GetEnumSelectList<TipoCombustible>()"></select>
-        </div>
-        <div class="col-md-3 mb-3">
-            <label asp-for="Transmision" class="form-label">@Html.DisplayNameFor(m => m.Transmision)<span class="text-danger">*</span></label>
-            <select asp-for="Transmision" class="form-select" id="Transmision" required
-                    asp-items="Html.GetEnumSelectList<TipoTransmision>()">
-                <option value="">Seleccione...</option>
-            </select>
         </div>
     </div>
 

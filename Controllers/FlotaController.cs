@@ -44,8 +44,6 @@ namespace SmartAdmin.Controllers
                     VersionId = d.VersionId,
                     Anio = d.Anio,
                     Color = d.Color,
-                    TipoCombustible = d.TipoCombustible,
-                    Transmision = d.Transmision,
                     Estado = d.Estado,
                     SucursalId = d.SucursalId,
                     Procedencia = d.Procedencia,

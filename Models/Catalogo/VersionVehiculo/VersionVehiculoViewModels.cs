@@ -13,7 +13,7 @@ namespace SmartAdmin.Models.Catalogo.VersionVehiculo
         public string Codigo { get; set; } = null!;
         public string Nombre { get; set; } = null!;
         public string? Motor { get; set; }
-        public string? Transmision { get; set; }
+        public TipoTransmision? Transmision { get; set; }
         public TipoTraccion? Traccion { get; set; }
         public int? NumPuertas { get; set; }
         public int? NumPasajeros { get; set; }
@@ -31,6 +31,7 @@ namespace SmartAdmin.Models.Catalogo.VersionVehiculo
         public string DescripcionCompleta { get; set; } = null!;
 
         // Propiedades calculadas
+        public string TransmisionNombre => Transmision?.ToString() ?? "N/A";
         public string TraccionNombre => Traccion?.ToString() ?? "N/A";
         public string TipoCombustibleNombre => TipoCombustible.ToString();
         public string MarcaModelo => $"{MarcaNombre} {ModeloNombre}";
@@ -60,8 +61,7 @@ namespace SmartAdmin.Models.Catalogo.VersionVehiculo
         public string? Motor { get; set; }
 
         [Display(Name = "Transmisión")]
-        [StringLength(50, ErrorMessage = "La transmisión no puede exceder 50 caracteres")]
-        public string? Transmision { get; set; }
+        public TipoTransmision? Transmision { get; set; }
 
         [Display(Name = "Tracción")]
         public TipoTraccion? Traccion { get; set; }
@@ -129,8 +129,7 @@ namespace SmartAdmin.Models.Catalogo.VersionVehiculo
         public string? Motor { get; set; }
 
         [Display(Name = "Transmisión")]
-        [StringLength(50, ErrorMessage = "La transmisión no puede exceder 50 caracteres")]
-        public string? Transmision { get; set; }
+        public TipoTransmision? Transmision { get; set; }
 
         [Display(Name = "Tracción")]
         public TipoTraccion? Traccion { get; set; }

@@ -88,5 +88,10 @@ namespace SmartAdmin.Services
         {
             return await apiClient.PostAsync<CitaViewModel>("api/Citas/Transferir", model);
         }
+
+        public async Task<ApiResponse<CitaViewModel>> ReprogramarAsync(ReprogramarCitaViewModel model)
+        {
+            return await apiClient.PutAsync<CitaViewModel>("api/Citas/Update", model);
+        }
     }
 }

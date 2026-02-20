@@ -160,37 +160,64 @@
 }
 
 <!-- Action Buttons -->
+@{
+    var esFechaPasada = Model.FechaHoraInicio.Date < DateTime.Today;
+}
 <div class="d-flex justify-content-between mt-3 pt-3 border-top">
     <div>
-        @switch (Model.Estado)
+        @if (esFechaPasada && (Model.Estado == SmartAdmin.Models.Enums.EstadoCita.Agendada
+            || Model.Estado == SmartAdmin.Models.Enums.EstadoCita.Confirmada
+            || Model.Estado == SmartAdmin.Models.Enums.EstadoCita.EnProceso))
         {
-            case SmartAdmin.Models.Enums.EstadoCita.Agendada:
-                <button class="btn btn-sm btn-info me-1" onclick="accionCita('confirmar', @Model.CitaId)">
-                    <i class="fas fa-check me-1"></i> Confirmar
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="cancelarCita(@Model.CitaId)">
-                    <i class="fas fa-times me-1"></i> Cancelar
-                </button>
-                break;
-            case SmartAdmin.Models.Enums.EstadoCita.Confirmada:
-                <button class="btn btn-sm btn-warning me-1" onclick="accionCita('iniciar', @Model.CitaId)">
-                    <i class="fas fa-play me-1"></i> Iniciar Atencion
-                </button>
-                <button class="btn btn-sm btn-dark me-1" onclick="accionCita('noshow', @Model.CitaId)">
-                    <i class="fas fa-user-slash me-1"></i> No Show
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="cancelarCita(@Model.CitaId)">
-                    <i class="fas fa-times me-1"></i> Cancelar
-                </button>
-                break;
-            case SmartAdmin.Models.Enums.EstadoCita.EnProceso:
-                <button class="btn btn-sm btn-success me-1" onclick="accionCita('completar', @Model.CitaId)">
-                    <i class="fas fa-check-double me-1"></i> Completar
-                </button>
-                <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(@Model.CitaId)">
+            <span class="badge bg-secondary me-2 align-middle"><i class="fas fa-exclamation-triangle me-1"></i>Fecha vencida</span>
+            @if (Model.Estado == SmartAdmin.Models.Enums.EstadoCita.EnProceso)
+            {
+                <button class="btn btn-sm btn-primary me-1" onclick="abrirTransferirCita(@Model.CitaId)">
                     <i class="fas fa-exchange-alt me-1"></i> Transferir a manana
                 </button>
-                break;
+            }
+            else
+            {
+                <button class="btn btn-sm btn-primary me-1" onclick="abrirReprogramarCita(@Model.CitaId)">
+                    <i class="fas fa-calendar-day me-1"></i> Reprogramar
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="cancelarCita(@Model.CitaId)">
+                    <i class="fas fa-times me-1"></i> Cancelar
+                </button>
+            }
+        }
+        else
+        {
+            @switch (Model.Estado)
+            {
+                case SmartAdmin.Models.Enums.EstadoCita.Agendada:
+                    <button class="btn btn-sm btn-info me-1" onclick="accionCita('confirmar', @Model.CitaId)">
+                        <i class="fas fa-check me-1"></i> Confirmar
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="cancelarCita(@Model.CitaId)">
+                        <i class="fas fa-times me-1"></i> Cancelar
+                    </button>
+                    break;
+                case SmartAdmin.Models.Enums.EstadoCita.Confirmada:
+                    <button class="btn btn-sm btn-warning me-1" onclick="accionCita('iniciar', @Model.CitaId)">
+                        <i class="fas fa-play me-1"></i> Iniciar Atencion
+                    </button>
+                    <button class="btn btn-sm btn-dark me-1" onclick="accionCita('noshow', @Model.CitaId)">
+                        <i class="fas fa-user-slash me-1"></i> No Show
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="cancelarCita(@Model.CitaId)">
+                        <i class="fas fa-times me-1"></i> Cancelar
+                    </button>
+                    break;
+                case SmartAdmin.Models.Enums.EstadoCita.EnProceso:
+                    <button class="btn btn-sm btn-success me-1" onclick="accionCita('completar', @Model.CitaId)">
+                        <i class="fas fa-check-double me-1"></i> Completar
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(@Model.CitaId)">
+                        <i class="fas fa-exchange-alt me-1"></i> Transferir a manana
+                    </button>
+                    break;
+            }
         }
     </div>
     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>

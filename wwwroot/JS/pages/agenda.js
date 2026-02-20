@@ -172,36 +172,71 @@ function obtenerNombreEstado(estado) {
 
 function obtenerAcciones(cita) {
     let btns = '';
+
+    // Verificar si la fecha de la cita ya paso
+    const fechaCita = new Date(cita.fechaHoraInicio);
+    fechaCita.setHours(0, 0, 0, 0);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const esFechaPasada = fechaCita.getTime() < hoy.getTime();
+
     switch (cita.estado) {
         case 1: // Agendada
-            btns = `
-                <button class="btn btn-sm btn-outline-info" onclick="accionCita('confirmar', ${cita.citaId})" title="Confirmar">
-                    <i class="fas fa-check"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
-                    <i class="fas fa-times"></i>
-                </button>`;
+            if (esFechaPasada) {
+                btns = `
+                    <button class="btn btn-sm btn-outline-primary" onclick="abrirReprogramarCita(${cita.citaId})" title="Reprogramar">
+                        <i class="fas fa-calendar-day"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
+                        <i class="fas fa-times"></i>
+                    </button>`;
+            } else {
+                btns = `
+                    <button class="btn btn-sm btn-outline-info" onclick="accionCita('confirmar', ${cita.citaId})" title="Confirmar">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
+                        <i class="fas fa-times"></i>
+                    </button>`;
+            }
             break;
         case 2: // Confirmada
-            btns = `
-                <button class="btn btn-sm btn-outline-warning" onclick="accionCita('iniciar', ${cita.citaId})" title="Iniciar Atencion">
-                    <i class="fas fa-play"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-dark" onclick="accionCita('noshow', ${cita.citaId})" title="No Show">
-                    <i class="fas fa-user-slash"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
-                    <i class="fas fa-times"></i>
-                </button>`;
+            if (esFechaPasada) {
+                btns = `
+                    <button class="btn btn-sm btn-outline-primary" onclick="abrirReprogramarCita(${cita.citaId})" title="Reprogramar">
+                        <i class="fas fa-calendar-day"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
+                        <i class="fas fa-times"></i>
+                    </button>`;
+            } else {
+                btns = `
+                    <button class="btn btn-sm btn-outline-warning" onclick="accionCita('iniciar', ${cita.citaId})" title="Iniciar Atencion">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-dark" onclick="accionCita('noshow', ${cita.citaId})" title="No Show">
+                        <i class="fas fa-user-slash"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
+                        <i class="fas fa-times"></i>
+                    </button>`;
+            }
             break;
         case 3: // En Proceso
-            btns = `
-                <button class="btn btn-sm btn-outline-success" onclick="accionCita('completar', ${cita.citaId})" title="Completar">
-                    <i class="fas fa-check-double"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(${cita.citaId})" title="Transferir a manana">
-                    <i class="fas fa-exchange-alt"></i>
-                </button>`;
+            if (esFechaPasada) {
+                btns = `
+                    <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(${cita.citaId})" title="Transferir a manana">
+                        <i class="fas fa-exchange-alt"></i>
+                    </button>`;
+            } else {
+                btns = `
+                    <button class="btn btn-sm btn-outline-success" onclick="accionCita('completar', ${cita.citaId})" title="Completar">
+                        <i class="fas fa-check-double"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(${cita.citaId})" title="Transferir a manana">
+                        <i class="fas fa-exchange-alt"></i>
+                    </button>`;
+            }
             break;
     }
 
@@ -303,10 +338,15 @@ function confirmarAgendar() {
 }
 
 function accionCita(accion, citaId) {
+    // Iniciar atencion redirige al wizard de recepcion
+    if (accion === 'iniciar') {
+        window.location.href = URLS.wizardRecepcion + '?citaId=' + citaId;
+        return;
+    }
+
     let url, msg;
     switch (accion) {
         case 'confirmar': url = URLS.postConfirmar; msg = 'Cita confirmada'; break;
-        case 'iniciar': url = URLS.postIniciar; msg = 'Atencion iniciada'; break;
         case 'completar': url = URLS.postCompletar; msg = 'Cita completada'; break;
         case 'noshow': url = URLS.postNoShow; msg = 'Marcada como No Show'; break;
         default: return;
@@ -354,6 +394,66 @@ function cancelarCita(citaId) {
                 error: function (xhr) { Toast.error(xhr.responseJSON?.message || 'Error al cancelar'); }
             });
         }
+    });
+}
+
+// ─── Reprogramar ───
+
+function abrirReprogramarCita(citaId) {
+    AppModal.open({
+        title: '<i class="fas fa-calendar-day me-2"></i>Reprogramar Cita',
+        url: URLS.reprogramarPartial,
+        data: { citaId: citaId },
+        size: 'lg'
+    });
+}
+
+function confirmarReprogramar() {
+    const form = document.getElementById('formReprogramarCita');
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+
+    const btn = document.getElementById('btnReprogramar');
+    const btnOriginal = btn.innerHTML;
+    const citaId = parseInt($('#ReprogramarCitaId').val());
+    const fecha = $('#ReprogramarFecha').val();
+    const $bloqueOption = $('#ReprogramarBloqueHorario option:selected');
+    const bloqueId = $('#ReprogramarBloqueHorario').val();
+    let fechaHoraInicio;
+    let bloqueHorarioId = null;
+
+    if (bloqueId && bloqueId !== '__manual__' && bloqueId !== '') {
+        const horaBloque = $bloqueOption.data('hora');
+        fechaHoraInicio = fecha + 'T' + horaBloque;
+        bloqueHorarioId = parseInt(bloqueId);
+    } else {
+        fechaHoraInicio = fecha + 'T' + ($('#ReprogramarHoraManual').val() || '08:00') + ':00';
+    }
+
+    const data = {
+        citaId: citaId,
+        fechaHoraInicio: fechaHoraInicio,
+        motivoVisita: $('#ReprogramarMotivoVisita').val(),
+        observaciones: $('#ReprogramarObservaciones').val() || null,
+        bloqueHorarioId: bloqueHorarioId
+    };
+
+    $.ajax({
+        url: URLS.postReprogramar,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Reprogramando...'),
+        success: function (response) {
+            if (response.success) {
+                AppModal.close();
+                cargarCitas();
+                Toast.success('Cita reprogramada exitosamente');
+            } else {
+                Toast.error(response.message || 'Error al reprogramar');
+            }
+        },
+        error: function (xhr) { Toast.error(xhr.responseJSON?.message || 'Error al reprogramar cita'); },
+        complete: () => $(btn).prop('disabled', false).html(btnOriginal)
     });
 }
 

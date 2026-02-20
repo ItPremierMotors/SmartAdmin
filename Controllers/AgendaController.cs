@@ -133,5 +133,21 @@ namespace SmartAdmin.Controllers
             var response = await citaServices.TransferirAsync(model);
             return StatusCode(response.StatusCode, response);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ReprogramarPartial(int citaId)
+        {
+            var response = await citaServices.GetByIdAsync(citaId);
+            if (!response.Success || response.Data == null)
+                return Content("<div class='alert alert-danger'>Cita no encontrada</div>");
+            return PartialView("_ReprogramarCitaPartial", response.Data);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Reprogramar([FromBody] ReprogramarCitaViewModel model)
+        {
+            var response = await citaServices.ReprogramarAsync(model);
+            return StatusCode(response.StatusCode, response);
+        }
     }
 }

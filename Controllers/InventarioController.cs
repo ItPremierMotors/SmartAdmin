@@ -65,8 +65,6 @@ namespace SmartAdmin.Controllers
                     VersionId = d.VersionId,
                     Anio = d.Anio,
                     Color = d.Color,
-                    TipoCombustible = d.TipoCombustible,
-                    Transmision = d.Transmision,
                     Estado = d.Estado,
                     SucursalId = d.SucursalId,
                     Procedencia = d.Procedencia,
@@ -129,6 +127,8 @@ namespace SmartAdmin.Controllers
                 ViewBag.VehiculoId = id;
                 ViewBag.VehiculoInfo = $"{response.Data.DescripcionCompleta} - {response.Data.Identificador}";
                 ViewBag.PrecioLista = response.Data.PrecioLista;
+                ViewBag.ClienteId = response.Data.ClienteId;
+                ViewBag.ClienteNombre = response.Data.ClienteNombre;
                 return PartialView("_VentaPartial", model);
             }
             return Content("<div class='alert alert-danger'>El vehículo debe estar en estado Reservado para procesar la venta</div>");
@@ -279,8 +279,6 @@ namespace SmartAdmin.Controllers
                 VersionId = d.VersionId,
                 Anio = d.Anio,
                 Color = d.Color,
-                TipoCombustible = d.TipoCombustible,
-                Transmision = d.Transmision,
                 Estado = d.Estado,
                 SucursalId = d.SucursalId,
                 Procedencia = d.Procedencia,
@@ -308,9 +306,25 @@ namespace SmartAdmin.Controllers
             // 3. Cambiar estado a Vendido
             var estadoResult = await vehiculoServices.CambiarEstadoAsync(model.VehiculoId, 6);
             if (!estadoResult.Success)
-                return StatusCode(estadoResult.StatusCode, new { success = false, message = "Los datos de venta se guardaron pero hubo un error al cambiar el estado. Intente cambiar el estado manualmente." });
+                return StatusCode(estadoResult.StatusCode, new { success = false, message = $"Los datos de venta se guardaron pero hubo un error al cambiar el estado: {estadoResult.Message}" });
 
             return Ok(new { success = true, message = "Venta procesada exitosamente" });
+        }
+
+        [HttpGet]
+        public IActionResult CargaMasivaPartial()
+        {
+            return PartialView("_CargaMasivaPartial");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CrearLote([FromBody] List<CreateVehiculoViewModel> vehiculos)
+        {
+            if (vehiculos == null || vehiculos.Count == 0)
+                return BadRequest(new { success = false, message = "La lista de vehículos está vacía." });
+
+            var response = await vehiculoServices.CrearLoteAsync(vehiculos);
+            return StatusCode(response.StatusCode, response);
         }
 
         private string ObtenerErroresValidacion()

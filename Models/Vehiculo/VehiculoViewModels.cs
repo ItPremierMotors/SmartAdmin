@@ -12,8 +12,6 @@ namespace SmartAdmin.Models.Vehiculo
         public int? VersionId { get; set; }
         public int Anio { get; set; }
         public string? Color { get; set; }
-        public int TipoCombustible { get; set; }
-        public int? Transmision { get; set; }
         public int Estado { get; set; }
         #region Estado y Ubicación
        
@@ -61,8 +59,6 @@ namespace SmartAdmin.Models.Vehiculo
         public int? VersionId { get; set; }
         public int Anio { get; set; }
         public string? Color { get; set; }
-        public int TipoCombustible { get; set; }
-        public int? Transmision { get; set; }
 
         // Estado
         public int Estado { get; set; }
@@ -153,12 +149,6 @@ namespace SmartAdmin.Models.Vehiculo
         [StringLength(50)]
         public string? Color { get; set; }
 
-        [Display(Name = "Tipo de Combustible")]
-        public int TipoCombustible { get; set; } = 1;
-
-        [Display(Name = "Transmisión")]
-        public int? Transmision { get; set; }
-
         [Display(Name = "Estado")]
         public int Estado { get; set; } = 1;
 
@@ -246,12 +236,6 @@ namespace SmartAdmin.Models.Vehiculo
         [Display(Name = "Color")]
         [StringLength(50)]
         public string? Color { get; set; }
-
-        [Display(Name = "Tipo de Combustible")]
-        public int TipoCombustible { get; set; }
-
-        [Display(Name = "Transmisión")]
-        public int? Transmision { get; set; }
 
         [Display(Name = "Estado")]
         public int Estado { get; set; }

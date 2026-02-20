@@ -87,7 +87,11 @@
                     <label asp-for="Transmision" class="form-label">
                         @Html.DisplayNameFor(m => m.Transmision)
                     </label>
-                    <input asp-for="Transmision" class="form-control" placeholder="Ej: Manual 5 velocidades" />
+                    <select asp-for="Transmision"
+                            asp-items="Html.GetEnumSelectList<SmartAdmin.Models.Enums.TipoTransmision>()"
+                            class="form-select" id="Transmision">
+                        <option value="">Seleccione...</option>
+                    </select>
                     <span asp-validation-for="Transmision" class="text-danger"></span>
                 </div>
             </div>

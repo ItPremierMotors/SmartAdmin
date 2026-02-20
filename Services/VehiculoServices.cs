@@ -93,5 +93,10 @@ namespace SmartAdmin.Services
         {
             return await apiClient.GetAsync<List<VehiculoViewModel>>("api/Vehiculos/GetDisponiblesParaVenta");
         }
+
+        public async Task<ApiResponse<ResultadoImportacionViewModel>> CrearLoteAsync(List<CreateVehiculoViewModel> vehiculos)
+        {
+            return await apiClient.PostAsync<ResultadoImportacionViewModel>("api/Vehiculos/CrearLote", vehiculos);
+        }
     }
 }

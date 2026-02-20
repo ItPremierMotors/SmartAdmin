@@ -83,6 +83,9 @@
         getModelos: '@Url.Action("GetByMarca", "Modelos")'
     };
 
+    const TRANSMISION_NOMBRES = { 1: 'Manual', 2: 'Automática', 3: 'CVT', 4: 'Dual Clutch', 5: 'Semiautomática' };
+    const TRACCION_NOMBRES = { 1: 'FWD', 2: 'RWD', 3: 'AWD', 4: '4WD' };
+
     let dataTable = null;
     let datosOriginales = [];
 
@@ -141,7 +144,7 @@
                 },
                 {
                     data: 'transmision',
-                    render: data => data || '<span class="text-muted">N/A</span>'
+                    render: data => data != null ? TRANSMISION_NOMBRES[data] || 'N/A' : '<span class="text-muted">N/A</span>'
                 },
                 {
                     data: null,
@@ -251,7 +254,7 @@
                                     </tr>
                                     <tr>
                                         <td class="text-muted">Transmisión:</td>
-                                        <td><strong>${d.transmision || 'N/A'}</strong></td>
+                                        <td><strong>${d.transmision != null ? TRANSMISION_NOMBRES[d.transmision] || 'N/A' : 'N/A'}</strong></td>
                                     </tr>
                                     <tr>
                                         <td class="text-muted">Año Versión:</td>
@@ -421,7 +424,7 @@
             codigo: $('#Codigo').val().trim(),
             nombre: $('#Nombre').val().trim(),
             motor: $('#Motor').val().trim() || null,
-            transmision: $('#Transmision').val().trim() || null,
+            transmision: $('#Transmision').val() ? parseInt($('#Transmision').val()) : null,
             traccion: $('#Traccion').val() ? parseInt($('#Traccion').val()) : null,
             numPuertas: $('#NumPuertas').val() ? parseInt($('#NumPuertas').val()) : null,
             numPasajeros: $('#NumPasajeros').val() ? parseInt($('#NumPasajeros').val()) : null,
@@ -476,7 +479,7 @@
             codigo: $('#Codigo').val().trim(),
             nombre: $('#Nombre').val().trim(),
             motor: $('#Motor').val().trim() || null,
-            transmision: $('#Transmision').val().trim() || null,
+            transmision: $('#TransmisionEdit').val() ? parseInt($('#TransmisionEdit').val()) : null,
             traccion: $('#TraccionEdit').val() ? parseInt($('#TraccionEdit').val()) : null,
             numPuertas: $('#NumPuertasEdit').val() ? parseInt($('#NumPuertasEdit').val()) : null,
             numPasajeros: $('#NumPasajerosEdit').val() ? parseInt($('#NumPasajerosEdit').val()) : null,

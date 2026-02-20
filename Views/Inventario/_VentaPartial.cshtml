@@ -1,6 +1,8 @@
 @{
     var vehiculoInfo = ViewBag.VehiculoInfo as string;
     var precioLista = ViewBag.PrecioLista as decimal?;
+    var clienteId = ViewBag.ClienteId as int?;
+    var clienteNombre = ViewBag.ClienteNombre as string;
 }
 
 <div class="alert alert-info">
@@ -30,7 +32,14 @@
     <div class="mb-3">
         <label class="form-label">Cliente <span class="text-danger">*</span></label>
         <select class="form-select" id="VentaClienteId" required>
-            <option value="">Buscar cliente...</option>
+            @if (clienteId.HasValue && !string.IsNullOrEmpty(clienteNombre))
+            {
+                <option value="@clienteId.Value" selected>@clienteNombre</option>
+            }
+            else
+            {
+                <option value="">Buscar cliente...</option>
+            }
         </select>
     </div>
 

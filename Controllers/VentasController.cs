@@ -59,8 +59,7 @@ namespace SmartAdmin.Controllers
                     VersionId = d.VersionId,
                     Anio = d.Anio,
                     Color = d.Color,
-                    TipoCombustible = d.TipoCombustible,
-                    Transmision = d.Transmision,
+
                     Estado = d.Estado,
                     SucursalId = d.SucursalId,
                     Procedencia = d.Procedencia,
@@ -81,6 +80,8 @@ namespace SmartAdmin.Controllers
                     Observaciones = d.Observaciones
                 };
                 ViewBag.ClienteNombre = d.ClienteNombre;
+                ViewBag.VendedorId = d.VendedorId;
+                ViewBag.VendedorNombre = d.VendedorNombre;
                 return PartialView("_EditPartial", editModel);
             }
             return Content("<div class='alert alert-danger'>Vehículo no encontrado</div>");
@@ -176,8 +177,6 @@ namespace SmartAdmin.Controllers
                 VersionId = d.VersionId,
                 Anio = d.Anio,
                 Color = d.Color,
-                TipoCombustible = d.TipoCombustible,
-                Transmision = d.Transmision,
                 Estado = d.Estado,
                 SucursalId = d.SucursalId,
                 Procedencia = d.Procedencia,
@@ -206,7 +205,7 @@ namespace SmartAdmin.Controllers
             // 3. Cambiar estado a Entregado
             var estadoResult = await vehiculoServices.CambiarEstadoAsync(model.VehiculoId, 7);
             if (!estadoResult.Success)
-                return StatusCode(estadoResult.StatusCode, new { success = false, message = "La fecha de entrega se guardó pero hubo un error al cambiar el estado. Intente cambiar el estado manualmente." });
+                return StatusCode(estadoResult.StatusCode, new { success = false, message = $"La fecha de entrega se guardó pero hubo un error al cambiar el estado: {estadoResult.Message}" });
 
             return Ok(new { success = true, message = "Entrega procesada exitosamente" });
         }

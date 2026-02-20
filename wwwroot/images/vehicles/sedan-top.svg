@@ -1,0 +1,38 @@
+<svg viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Body -->
+  <path d="M68,55 Q100,36 132,55 L152,100 Q160,150 160,200 Q160,250 152,300 L132,345 Q100,364 68,345 L48,300 Q40,250 40,200 Q40,150 48,100 Z" fill="#e9ecef" stroke="#adb5bd" stroke-width="1.5"/>
+
+  <!-- Windshield -->
+  <path d="M64,78 L136,78 L130,110 L70,110 Z" fill="#d0e7ff" stroke="#adb5bd" stroke-width="1"/>
+
+  <!-- Rear window -->
+  <path d="M70,292 L130,292 L136,322 L64,322 Z" fill="#d0e7ff" stroke="#adb5bd" stroke-width="1"/>
+
+  <!-- Roof -->
+  <rect x="67" y="113" width="66" height="176" rx="5" fill="#f8f9fa" stroke="#ced4da" stroke-width="1"/>
+
+  <!-- Side mirrors -->
+  <ellipse cx="33" cy="90" rx="5" ry="8" fill="#dee2e6" stroke="#adb5bd" stroke-width="1"/>
+  <ellipse cx="167" cy="90" rx="5" ry="8" fill="#dee2e6" stroke="#adb5bd" stroke-width="1"/>
+
+  <!-- Wheels front -->
+  <rect x="28" y="76" width="14" height="28" rx="4" fill="#6c757d"/>
+  <rect x="158" y="76" width="14" height="28" rx="4" fill="#6c757d"/>
+  <!-- Wheels rear -->
+  <rect x="28" y="296" width="14" height="28" rx="4" fill="#6c757d"/>
+  <rect x="158" y="296" width="14" height="28" rx="4" fill="#6c757d"/>
+
+  <!-- Headlights -->
+  <ellipse cx="78" cy="50" rx="8" ry="5" fill="#fff3cd" stroke="#adb5bd" stroke-width="0.5"/>
+  <ellipse cx="122" cy="50" rx="8" ry="5" fill="#fff3cd" stroke="#adb5bd" stroke-width="0.5"/>
+
+  <!-- Taillights -->
+  <ellipse cx="76" cy="350" rx="7" ry="4" fill="#f8d7da" stroke="#adb5bd" stroke-width="0.5"/>
+  <ellipse cx="124" cy="350" rx="7" ry="4" fill="#f8d7da" stroke="#adb5bd" stroke-width="0.5"/>
+
+  <!-- Labels -->
+  <text x="100" y="20" text-anchor="middle" font-size="12" fill="#adb5bd">FRENTE</text>
+  <text x="100" y="390" text-anchor="middle" font-size="12" fill="#adb5bd">TRASERA</text>
+  <text x="14" y="200" text-anchor="middle" font-size="10" fill="#adb5bd" transform="rotate(-90,14,200)">IZQ</text>
+  <text x="186" y="200" text-anchor="middle" font-size="10" fill="#adb5bd" transform="rotate(90,186,200)">DER</text>
+</svg>

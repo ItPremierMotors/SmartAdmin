@@ -13,8 +13,6 @@
     <input type="hidden" id="h_VersionId" value="@Model.VersionId" />
     <input type="hidden" id="h_Anio" value="@Model.Anio" />
     <input type="hidden" id="h_Color" value="@Model.Color" />
-    <input type="hidden" id="h_TipoCombustible" value="@Model.TipoCombustible" />
-    <input type="hidden" id="h_Transmision" value="@Model.Transmision" />
     <input type="hidden" id="h_Estado" value="@Model.Estado" />
     <input type="hidden" id="h_SucursalId" value="@Model.SucursalId" />
     <input type="hidden" id="h_Procedencia" value="@Model.Procedencia" />
@@ -53,12 +51,15 @@
         </div>
         <div class="col-md-4 mb-3">
             <label class="form-label">Fecha de Entrega</label>
-            <input type="date" class="form-control" id="FechaEntrega"
+            <input type="date" class="form-control" id="FechaEntrega" disabled
                    value="@(Model.FechaEntrega?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" id="h_FechaEntrega" value="@(Model.FechaEntrega?.ToString("yyyy-MM-dd"))" />
         </div>
         <div class="col-md-4 mb-3">
             <label class="form-label">Vendedor</label>
-            <input type="text" class="form-control" id="VendedorId" value="@Model.VendedorId" />
+            <input type="text" class="form-control" disabled
+                   value="@(ViewBag.VendedorNombre ?? "Sin asignar")" />
+            <input type="hidden" id="h_VendedorId" value="@Model.VendedorId" />
         </div>
     </div>
 
@@ -123,5 +124,6 @@
             @:var option = new Option(@Html.Raw(Json.Serialize((string)ViewBag.ClienteNombre)), '@Model.ClienteId', true, true);
             @:$('#ClienteId').append(option).trigger('change');
         }
+
     });
 </script>

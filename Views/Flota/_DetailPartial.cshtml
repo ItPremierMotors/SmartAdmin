@@ -1,16 +1,6 @@
 @model SmartAdmin.Models.Vehiculo.VehiculoDetalleViewModel
 
 @{
-    var combustibleNames = new Dictionary<int, string>
-    {
-        { 1, "Gasolina" }, { 2, "Diésel" }, { 3, "Híbrido" },
-        { 4, "Eléctrico" }, { 5, "Gas Natural" }, { 6, "GLP" }
-    };
-    var transmisionNames = new Dictionary<int, string>
-    {
-        { 0, "Manual" }, { 1, "Automática" }, { 2, "CVT" },
-        { 3, "Dual Clutch" }, { 4, "Semiautomática" }
-    };
 }
 
 <!-- Encabezado -->
@@ -60,11 +50,11 @@
                             <td>$ @Model.PrecioVenta.Value.ToString("N2")</td>
                         </tr>
                     }
-                    @if (!string.IsNullOrEmpty(Model.VendedorId))
+                    @if (!string.IsNullOrEmpty(Model.VendedorNombre))
                     {
                         <tr>
                             <td class="text-muted fw-bold">Vendedor:</td>
-                            <td>@Model.VendedorId</td>
+                            <td>@Model.VendedorNombre</td>
                         </tr>
                     }
                 </table>
@@ -184,17 +174,6 @@
                         <tr>
                             <td class="text-muted fw-bold">Color:</td>
                             <td>@Model.Color</td>
-                        </tr>
-                    }
-                    <tr>
-                        <td class="text-muted fw-bold">Combustible:</td>
-                        <td>@(combustibleNames.ContainsKey(Model.TipoCombustible) ? combustibleNames[Model.TipoCombustible] : "N/A")</td>
-                    </tr>
-                    @if (Model.Transmision.HasValue)
-                    {
-                        <tr>
-                            <td class="text-muted fw-bold">Transmisión:</td>
-                            <td>@(transmisionNames.ContainsKey(Model.Transmision.Value) ? transmisionNames[Model.Transmision.Value] : "N/A")</td>
                         </tr>
                     }
                 </table>

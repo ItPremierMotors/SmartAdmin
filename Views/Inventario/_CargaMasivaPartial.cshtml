@@ -1,0 +1,665 @@
+<div id="cargaMasivaContainer">
+    <!-- Paso 1: Upload -->
+    <div id="cmStep1">
+        <div class="alert alert-info mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Instrucciones:</strong> Suba un archivo Excel (.xlsx) con los datos de los vehículos.
+            Se detectan automáticamente columnas en español e inglés (ej: <strong>VIN NO., ENGINE NO., MODEL YEAR, COLOR</strong>).
+            Puede agregar columnas como <strong>Marca, Poliza</strong>. Los colores en inglés se traducen automáticamente.
+            Todos los vehículos serán creados con estado <strong>En Tránsito</strong>.
+        </div>
+
+        <div class="mb-3">
+            <div id="dropZone" class="border border-2 border-dashed rounded p-4 text-center"
+                 style="cursor: pointer; border-color: #dee2e6; transition: all 0.2s;">
+                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
+                <p class="mb-1 text-muted">Arrastre el archivo aquí o haga clic para seleccionar</p>
+                <small class="text-muted">Solo archivos .xlsx (máx 10 MB)</small>
+                <input type="file" id="archivoExcel" accept=".xlsx,.xls" class="d-none" />
+            </div>
+            <div id="fileInfo" class="mt-2 d-none">
+                <span class="badge bg-success fs-6" id="fileName"></span>
+                <button class="btn btn-link btn-sm text-danger" onclick="CM.limpiarArchivo()">
+                    <i class="fas fa-times"></i> Quitar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paso 2: Tabla editable -->
+    <div id="cmStep2" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <span class="badge bg-primary fs-6" id="cmContadorFilas">0 vehículos</span>
+            </div>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" onclick="CM.agregarFila()">
+                    <i class="fas fa-plus me-1"></i>Agregar Fila
+                </button>
+                <button class="btn btn-outline-secondary" onclick="CM.volverUpload()">
+                    <i class="fas fa-arrow-left me-1"></i>Cambiar Archivo
+                </button>
+            </div>
+        </div>
+
+        <div style="max-height: 450px; overflow: auto;">
+            <table class="table table-sm table-bordered" id="tablaCargaMasiva">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th style="width:40px">#</th>
+                        <th style="min-width:180px">VIN <span class="text-danger">*</span></th>
+                        <th style="min-width:140px">Marca <span class="text-danger">*</span></th>
+                        <th style="min-width:140px">Modelo <span class="text-danger">*</span></th>
+                        <th style="min-width:140px">Versión</th>
+                        <th style="width:80px">Año <span class="text-danger">*</span></th>
+                        <th style="min-width:100px">Color</th>
+                        <th style="min-width:150px">No. Motor</th>
+                        <th style="min-width:150px">No. Chasis</th>
+                        <th style="min-width:100px">Placa</th>
+                        <th style="min-width:150px">No. Póliza</th>
+                        <th style="min-width:120px">Procedencia</th>
+                        <th style="min-width:150px">Observaciones</th>
+                        <th style="width:40px"></th>
+                    </tr>
+                </thead>
+                <tbody id="cmTbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paso 3: Procesando -->
+    <div id="cmStep3" class="d-none">
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary mb-3"></div>
+            <p class="text-muted">Enviando vehículos, por favor espere...</p>
+            <div class="progress" style="height: 4px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paso 4: Resultados -->
+    <div id="cmStep4" class="d-none">
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <div class="card border-0 bg-light">
+                    <div class="card-body text-center py-2">
+                        <div class="h4 mb-0" id="resTotalFilas">0</div>
+                        <small class="text-muted">Total</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 bg-success bg-opacity-10">
+                    <div class="card-body text-center py-2">
+                        <div class="h4 mb-0 text-success" id="resExitosos">0</div>
+                        <small class="text-muted">Exitosos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 bg-danger bg-opacity-10">
+                    <div class="card-body text-center py-2">
+                        <div class="h4 mb-0 text-danger" id="resFallidos">0</div>
+                        <small class="text-muted">Con Errores</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="max-height: 350px; overflow-y: auto;">
+            <table class="table table-sm table-hover" id="tablaResultados">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th>Fila</th>
+                        <th>VIN</th>
+                        <th>Estado</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cerrar
+    </button>
+    <button type="button" class="btn btn-success d-none" id="btnEnviarLote" onclick="CM.enviarLote()">
+        <i class="fas fa-upload me-1"></i> Importar Vehículos
+    </button>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+var CM = (function () {
+    let marcas = [];
+    let modelos = {};   // { marcaId: [{modeloId, nombre}] }
+    let versiones = {}; // { modeloId: [{versionId, nombre}] }
+    let filaCounter = 0;
+
+    // Inicializar
+    (function init() {
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('archivoExcel');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#0d6efd';
+            dropZone.style.backgroundColor = '#f0f7ff';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#dee2e6';
+            dropZone.style.backgroundColor = '';
+        });
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#dee2e6';
+            dropZone.style.backgroundColor = '';
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                procesarArchivo(fileInput.files[0]);
+            }
+        });
+        fileInput.addEventListener('change', function () {
+            if (this.files.length > 0) procesarArchivo(this.files[0]);
+        });
+
+        cargarMarcas();
+    })();
+
+    function cargarMarcas() {
+        $.get(URLS.getMarcasAll, function (res) {
+            if (res.success && res.data) {
+                marcas = res.data;
+            }
+        });
+    }
+
+    function cargarModelosPorMarca(marcaId, callback) {
+        if (modelos[marcaId]) { if (callback) callback(modelos[marcaId]); return; }
+        $.get(URLS.getModelosByMarca + '?marcaId=' + marcaId, function (res) {
+            if (res.success && res.data) {
+                modelos[marcaId] = res.data;
+                if (callback) callback(res.data);
+            }
+        });
+    }
+
+    function cargarVersionesPorModelo(modeloId, callback) {
+        if (versiones[modeloId]) { if (callback) callback(versiones[modeloId]); return; }
+        $.get(URLS.getVersionesByModelo + '?modeloId=' + modeloId, function (res) {
+            if (res.success && res.data) {
+                versiones[modeloId] = res.data;
+                if (callback) callback(res.data);
+            }
+        });
+    }
+
+    // Keywords that identify a header row in the Excel
+    const HEADER_KEYWORDS = ['vin', 'vin no', 'vin no.', 'color', 'model year', 'año', 'anio', 'marca', 'engine no', 'engine no.', 'commodity', 'code'];
+
+    function detectarFilaHeaders(rawArrays) {
+        for (let i = 0; i < Math.min(rawArrays.length, 15); i++) {
+            const row = rawArrays[i];
+            if (!row || row.length === 0) continue;
+            const cellTexts = row.map(c => String(c || '').trim().toLowerCase());
+            const matches = cellTexts.filter(t => HEADER_KEYWORDS.some(kw => t === kw || t.includes(kw)));
+            if (matches.length >= 2) return i; // Found header row
+        }
+        return 0; // Default: first row
+    }
+
+    function procesarArchivo(file) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext !== 'xlsx' && ext !== 'xls') {
+            Toast.error('Solo se permiten archivos Excel (.xlsx)');
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            Toast.error('El archivo no puede superar 10 MB');
+            return;
+        }
+
+        $('#fileName').text(file.name);
+        $('#fileInfo').removeClass('d-none');
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                const wb = XLSX.read(e.target.result, { type: 'array' });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+
+                // Read as raw arrays to detect header row
+                const rawArrays = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+                if (rawArrays.length === 0) {
+                    Toast.error('El archivo no contiene datos');
+                    return;
+                }
+
+                const headerIdx = detectarFilaHeaders(rawArrays);
+                const headers = rawArrays[headerIdx].map(h => String(h || '').trim());
+                console.log('Headers detectados (fila ' + headerIdx + '):', headers);
+                const dataRows = rawArrays.slice(headerIdx + 1);
+
+                // Convert to array of objects using detected headers
+                const datos = dataRows
+                    .filter(row => row.some(cell => String(cell || '').trim() !== ''))
+                    .map(row => {
+                        const obj = {};
+                        headers.forEach((h, i) => { if (h) obj[h] = row[i] !== undefined ? row[i] : ''; });
+                        return obj;
+                    });
+
+                if (datos.length === 0) {
+                    Toast.error('El archivo no contiene datos después de los encabezados');
+                    return;
+                }
+
+                mostrarTabla(datos);
+            } catch (ex) {
+                Toast.error('Error al leer el archivo Excel');
+                console.error(ex);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // Mapeo de headers del Excel a campos internos (español e inglés)
+    const HEADER_MAP = {
+        // VIN
+        'vin': 'vin', 'vin no.': 'vin', 'vin no': 'vin', 'v.i.n.': 'vin', 'v.i.n': 'vin', 'vin number': 'vin',
+        // Marca
+        'marca': 'marca', 'brand': 'marca', 'make': 'marca',
+        // Modelo
+        'modelo': 'modelo', 'model': 'modelo', 'commodity': 'modelo',
+        // Version
+        'version': 'version', 'versión': 'version', 'trim': 'version', 'code': 'version',
+        // Año
+        'año': 'anio', 'anio': 'anio', 'ano': 'anio', 'year': 'anio', 'model year': 'anio', 'modelyear': 'anio', 'model year.': 'anio',
+        // Color
+        'color': 'color', 'color exterior': 'color',
+        // Placa
+        'placa': 'placa', 'plate': 'placa',
+        // Procedencia
+        'procedencia': 'procedencia',
+        // Observaciones
+        'observaciones': 'observaciones', 'notas': 'observaciones', 'notes': 'observaciones',
+        // Motor
+        'numero motor': 'numeroMotor', 'número motor': 'numeroMotor', 'no. motor': 'numeroMotor',
+        'engine no.': 'numeroMotor', 'engine no': 'numeroMotor', 'engine number': 'numeroMotor',
+        // Chasis
+        'numero chasis': 'numeroChasis', 'número chasis': 'numeroChasis', 'no. chasis': 'numeroChasis',
+        'chassis no.': 'numeroChasis', 'chassis no': 'numeroChasis',
+        // Kilometraje
+        'kilometraje': 'kilometraje', 'km': 'kilometraje', 'mileage': 'kilometraje',
+        // Poliza
+        'poliza': 'poliza', 'póliza': 'poliza', 'numero poliza': 'poliza', 'número póliza': 'poliza',
+        // Codigo (referencia de fábrica)
+        'codigo': 'codigo', 'código': 'codigo'
+    };
+
+    // Traducción de colores inglés → español
+    const COLOR_MAP = {
+        'white': 'Blanco', 'black': 'Negro', 'red': 'Rojo', 'blue': 'Azul',
+        'silver': 'Plata', 'gray': 'Gris', 'grey': 'Gris', 'green': 'Verde',
+        'yellow': 'Amarillo', 'orange': 'Naranja', 'brown': 'Marrón', 'beige': 'Beige',
+        'gold': 'Dorado', 'bronze': 'Bronce', 'champagne': 'Champagne',
+        'pearl white': 'Blanco Perla', 'midnight black': 'Negro Medianoche',
+        'dark grey': 'Gris Oscuro', 'dark gray': 'Gris Oscuro', 'light grey': 'Gris Claro',
+        'light gray': 'Gris Claro', 'dark blue': 'Azul Oscuro', 'light blue': 'Azul Claro',
+        'dark red': 'Rojo Oscuro', 'burgundy': 'Burdeos', 'maroon': 'Granate',
+        'ivory': 'Marfil', 'cream': 'Crema', 'purple': 'Púrpura', 'pink': 'Rosa'
+    };
+
+    function traducirColor(color) {
+        if (!color) return '';
+        const lower = color.trim().toLowerCase();
+        return COLOR_MAP[lower] || color.trim();
+    }
+
+    function normalizarHeaderKey(key) {
+        return key.trim().toLowerCase()
+            .replace(/[\r\n]+/g, ' ')  // saltos de línea → espacio
+            .replace(/\s+/g, ' ')      // múltiples espacios → uno
+            .replace(/\.+$/, '')        // puntos finales
+            .trim();
+    }
+
+    function normalizarDatos(rawRows) {
+        return rawRows.map(row => {
+            const normalized = {};
+            Object.keys(row).forEach(key => {
+                const lowerKey = normalizarHeaderKey(key);
+                // Buscar exacto primero, luego con punto al final
+                const campo = HEADER_MAP[lowerKey] || HEADER_MAP[lowerKey + '.'];
+                if (campo) {
+                    normalized[campo] = String(row[key]).trim();
+                }
+            });
+            // Traducir color de inglés a español
+            if (normalized.color) normalized.color = traducirColor(normalized.color);
+            // Si hay código de fábrica, guardarlo en observaciones
+            if (normalized.codigo && !normalized.observaciones) {
+                normalized.observaciones = 'Código: ' + normalized.codigo;
+            } else if (normalized.codigo && normalized.observaciones) {
+                normalized.observaciones += ' | Código: ' + normalized.codigo;
+            }
+            return normalized;
+        });
+    }
+
+    function mostrarTabla(rawRows) {
+        const datos = normalizarDatos(rawRows);
+        const tbody = document.getElementById('cmTbody');
+        tbody.innerHTML = '';
+        filaCounter = 0;
+
+        datos.forEach(row => {
+            if (!row.vin && !row.marca) return; // skip empty rows
+            agregarFilaConDatos(row);
+        });
+
+        $('#cmStep1').addClass('d-none');
+        $('#cmStep2').removeClass('d-none');
+        $('#btnEnviarLote').removeClass('d-none');
+        actualizarContador();
+
+        // Match catalogs after table is rendered
+        setTimeout(matchearCatalogos, 300);
+    }
+
+    function crearSelectMarca(selectedName) {
+        let html = '<select class="form-select form-select-sm cm-marca" onchange="CM.onMarcaChange(this)">';
+        html += '<option value="">Seleccione...</option>';
+        marcas.forEach(m => {
+            const sel = selectedName && m.nombre.toLowerCase() === selectedName.toLowerCase() ? ' selected' : '';
+            html += `<option value="${m.marcaId}"${sel}>${m.nombre}</option>`;
+        });
+        html += '</select>';
+        return html;
+    }
+
+    function crearSelectModelo() {
+        return '<select class="form-select form-select-sm cm-modelo" onchange="CM.onModeloChange(this)"><option value="">Seleccione...</option></select>';
+    }
+
+    function crearSelectVersion() {
+        return '<select class="form-select form-select-sm cm-version"><option value="">Seleccione...</option></select>';
+    }
+
+    function crearSelectProcedencia(value) {
+        const isLocal = value && value.toLowerCase() === 'local';
+        return `<select class="form-select form-select-sm cm-procedencia">
+            <option value="2"${!isLocal ? ' selected' : ''}>Importado</option>
+            <option value="1"${isLocal ? ' selected' : ''}>Local</option>
+        </select>`;
+    }
+
+    function agregarFilaConDatos(data) {
+        data = data || {};
+        filaCounter++;
+        const idx = filaCounter;
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-idx', idx);
+        tr.innerHTML = `
+            <td class="text-center text-muted">${idx}</td>
+            <td><input type="text" class="form-control form-control-sm text-uppercase cm-vin" maxlength="17" value="${escapeHtml(data.vin || '')}" /></td>
+            <td>${crearSelectMarca(data.marca)}</td>
+            <td>${crearSelectModelo()}</td>
+            <td>${crearSelectVersion()}</td>
+            <td><input type="number" class="form-control form-control-sm cm-anio" min="1900" max="2100" value="${data.anio || ''}" /></td>
+            <td><input type="text" class="form-control form-control-sm cm-color" value="${escapeHtml(data.color || '')}" /></td>
+            <td><input type="text" class="form-control form-control-sm cm-numero-motor" value="${escapeHtml(data.numeroMotor || '')}" /></td>
+            <td><input type="text" class="form-control form-control-sm cm-numero-chasis" value="${escapeHtml(data.numeroChasis || '')}" /></td>
+            <td><input type="text" class="form-control form-control-sm text-uppercase cm-placa" value="${escapeHtml(data.placa || '')}" /></td>
+            <td><input type="text" class="form-control form-control-sm cm-poliza" value="${escapeHtml(data.poliza || '')}" /></td>
+            <td>${crearSelectProcedencia(data.procedencia)}</td>
+            <td><input type="text" class="form-control form-control-sm cm-observaciones" value="${escapeHtml(data.observaciones || '')}" /></td>
+            <td><button class="btn btn-sm btn-outline-danger" onclick="CM.eliminarFila(this)" title="Eliminar"><i class="fas fa-trash-alt"></i></button></td>
+        `;
+
+        // Store extra fields as data attributes
+        if (data.kilometraje) tr.setAttribute('data-kilometraje', data.kilometraje);
+        if (data.modelo) tr.setAttribute('data-modelo-nombre', data.modelo);
+        if (data.version) tr.setAttribute('data-version-nombre', data.version);
+
+        document.getElementById('cmTbody').appendChild(tr);
+    }
+
+    function matchearCatalogos() {
+        // For each row, if marca is selected, load modelos and try to match
+        const rows = document.querySelectorAll('#cmTbody tr');
+        rows.forEach(tr => {
+            const marcaSelect = tr.querySelector('.cm-marca');
+            const marcaId = marcaSelect.value;
+            if (marcaId) {
+                const modeloNombre = tr.getAttribute('data-modelo-nombre');
+                const versionNombre = tr.getAttribute('data-version-nombre');
+                cargarModelosPorMarca(marcaId, function (modelosList) {
+                    poblarSelectModelo(tr, modelosList, modeloNombre, function () {
+                        const modeloSelect = tr.querySelector('.cm-modelo');
+                        const modeloId = modeloSelect.value;
+                        if (modeloId && versionNombre) {
+                            cargarVersionesPorModelo(modeloId, function (versionesList) {
+                                poblarSelectVersion(tr, versionesList, versionNombre);
+                            });
+                        }
+                    });
+                });
+            }
+        });
+    }
+
+    function poblarSelectModelo(tr, modelosList, matchNombre, callback) {
+        const select = tr.querySelector('.cm-modelo');
+        select.innerHTML = '<option value="">Seleccione...</option>';
+        modelosList.forEach(m => {
+            const sel = matchNombre && m.nombre.toLowerCase() === matchNombre.toLowerCase() ? ' selected' : '';
+            select.innerHTML += `<option value="${m.modeloId}"${sel}>${m.nombre}</option>`;
+        });
+        if (callback) callback();
+    }
+
+    function poblarSelectVersion(tr, versionesList, matchNombre) {
+        const select = tr.querySelector('.cm-version');
+        select.innerHTML = '<option value="">Seleccione...</option>';
+        versionesList.forEach(v => {
+            const sel = matchNombre && v.nombre.toLowerCase() === matchNombre.toLowerCase() ? ' selected' : '';
+            select.innerHTML += `<option value="${v.versionId}"${sel}>${v.nombre}</option>`;
+        });
+    }
+
+    function onMarcaChange(selectEl) {
+        const tr = selectEl.closest('tr');
+        const marcaId = selectEl.value;
+        const modeloSelect = tr.querySelector('.cm-modelo');
+        const versionSelect = tr.querySelector('.cm-version');
+        modeloSelect.innerHTML = '<option value="">Seleccione...</option>';
+        versionSelect.innerHTML = '<option value="">Seleccione...</option>';
+        if (marcaId) {
+            cargarModelosPorMarca(marcaId, function (list) {
+                poblarSelectModelo(tr, list, null);
+            });
+        }
+    }
+
+    function onModeloChange(selectEl) {
+        const tr = selectEl.closest('tr');
+        const modeloId = selectEl.value;
+        const versionSelect = tr.querySelector('.cm-version');
+        versionSelect.innerHTML = '<option value="">Seleccione...</option>';
+        if (modeloId) {
+            cargarVersionesPorModelo(modeloId, function (list) {
+                poblarSelectVersion(tr, list, null);
+            });
+        }
+    }
+
+    function eliminarFila(btn) {
+        btn.closest('tr').remove();
+        actualizarContador();
+    }
+
+    function agregarFila() {
+        agregarFilaConDatos({});
+        actualizarContador();
+        // Scroll to bottom
+        const container = document.querySelector('#cmStep2 > div[style]');
+        if (container) container.scrollTop = container.scrollHeight;
+    }
+
+    function actualizarContador() {
+        const count = document.querySelectorAll('#cmTbody tr').length;
+        $('#cmContadorFilas').text(count + ' vehículo' + (count !== 1 ? 's' : ''));
+        $('#btnEnviarLote').prop('disabled', count === 0);
+    }
+
+    function volverUpload() {
+        $('#cmStep2').addClass('d-none');
+        $('#cmStep1').removeClass('d-none');
+        $('#btnEnviarLote').addClass('d-none');
+        document.getElementById('cmTbody').innerHTML = '';
+        limpiarArchivo();
+    }
+
+    function limpiarArchivo() {
+        $('#archivoExcel').val('');
+        $('#fileInfo').addClass('d-none');
+    }
+
+    function recolectarDatos() {
+        const vehiculos = [];
+        const rows = document.querySelectorAll('#cmTbody tr');
+        let errores = [];
+
+        rows.forEach((tr, idx) => {
+            const vin = tr.querySelector('.cm-vin').value.trim().toUpperCase();
+            const marcaId = tr.querySelector('.cm-marca').value;
+            const modeloId = tr.querySelector('.cm-modelo').value;
+            const versionId = tr.querySelector('.cm-version').value;
+            const anio = tr.querySelector('.cm-anio').value;
+            const color = tr.querySelector('.cm-color').value.trim();
+            const numeroMotor = tr.querySelector('.cm-numero-motor').value.trim();
+            const numeroChasis = tr.querySelector('.cm-numero-chasis').value.trim();
+            const placa = tr.querySelector('.cm-placa').value.trim().toUpperCase();
+            const poliza = tr.querySelector('.cm-poliza').value.trim();
+            const procedencia = tr.querySelector('.cm-procedencia').value;
+            const observaciones = tr.querySelector('.cm-observaciones').value.trim();
+
+            // Basic frontend validation
+            tr.classList.remove('table-danger');
+            if (!vin) { tr.classList.add('table-danger'); errores.push(`Fila ${idx + 1}: VIN es obligatorio`); }
+            if (!marcaId) { tr.classList.add('table-danger'); errores.push(`Fila ${idx + 1}: Marca es obligatoria`); }
+            if (!modeloId) { tr.classList.add('table-danger'); errores.push(`Fila ${idx + 1}: Modelo es obligatorio`); }
+            if (!anio) { tr.classList.add('table-danger'); errores.push(`Fila ${idx + 1}: Año es obligatorio`); }
+
+            vehiculos.push({
+                vin: vin,
+                marcaId: parseInt(marcaId) || 0,
+                modeloId: parseInt(modeloId) || 0,
+                versionId: versionId ? parseInt(versionId) : null,
+                anio: parseInt(anio) || 0,
+                color: color || null,
+                placa: placa || null,
+                numeroMotor: numeroMotor || null,
+                numeroChasis: numeroChasis || null,
+                kilometrajeActual: parseInt(tr.getAttribute('data-kilometraje')) || 0,
+                estado: 1, // EnTransito
+                procedencia: parseInt(procedencia) || 2, // Importado default
+                numeroPoliza: poliza || null,
+                observaciones: observaciones || null
+            });
+        });
+
+        return { vehiculos, errores };
+    }
+
+    function enviarLote() {
+        const { vehiculos, errores } = recolectarDatos();
+
+        if (vehiculos.length === 0) {
+            Toast.error('No hay vehículos para importar');
+            return;
+        }
+
+        if (errores.length > 0) {
+            Toast.error('Corrija los errores marcados en rojo: ' + errores.slice(0, 3).join('; ') + (errores.length > 3 ? '...' : ''));
+            return;
+        }
+
+        // Show loading
+        $('#cmStep2').addClass('d-none');
+        $('#cmStep3').removeClass('d-none');
+        $('#btnEnviarLote').addClass('d-none');
+
+        $.ajax({
+            url: URLS.crearLote,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(vehiculos),
+            success: function (response) {
+                $('#cmStep3').addClass('d-none');
+                if (response.success && response.data) {
+                    mostrarResultados(response.data);
+                    if (response.data.exitosos > 0) recargarTabla();
+                } else {
+                    Toast.error(response.message || 'Error al importar');
+                    $('#cmStep2').removeClass('d-none');
+                    $('#btnEnviarLote').removeClass('d-none');
+                }
+            },
+            error: function (xhr) {
+                $('#cmStep3').addClass('d-none');
+                $('#cmStep2').removeClass('d-none');
+                $('#btnEnviarLote').removeClass('d-none');
+                Toast.error(xhr.responseJSON?.message || 'Error al procesar la solicitud');
+            }
+        });
+    }
+
+    function mostrarResultados(data) {
+        $('#cmStep4').removeClass('d-none');
+        $('#resTotalFilas').text(data.totalFilas);
+        $('#resExitosos').text(data.exitosos);
+        $('#resFallidos').text(data.fallidos);
+
+        const tbody = $('#tablaResultados tbody');
+        tbody.empty();
+
+        data.detalle.forEach(function (fila) {
+            const statusBadge = fila.exitoso
+                ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>OK</span>'
+                : '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>Error</span>';
+            const detalle = fila.exitoso
+                ? '<span class="text-success">Creado exitosamente</span>'
+                : '<span class="text-danger">' + escapeHtml(fila.error || '') + '</span>';
+
+            tbody.append(`<tr class="${fila.exitoso ? '' : 'table-danger'}">
+                <td>${fila.numeroFila}</td>
+                <td><code>${escapeHtml(fila.vin || 'N/A')}</code></td>
+                <td>${statusBadge}</td>
+                <td>${detalle}</td>
+            </tr>`);
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    return {
+        limpiarArchivo,
+        agregarFila,
+        eliminarFila,
+        volverUpload,
+        enviarLote,
+        onMarcaChange,
+        onModeloChange
+    };
+})();
+</script>

@@ -4,9 +4,14 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0"><i class="fas fa-warehouse me-2"></i>@ViewData["Title"]</h1>
-        <button class="btn btn-primary" id="btnNuevo">
-            <i class="fas fa-plus me-2"></i>Nuevo Vehículo
-        </button>
+        <div class="btn-group">
+            <button class="btn btn-success" id="btnCargaMasiva">
+                <i class="fas fa-file-excel me-2"></i>Carga Masiva
+            </button>
+            <button class="btn btn-primary" id="btnNuevo">
+                <i class="fas fa-plus me-2"></i>Nuevo Vehículo
+            </button>
+        </div>
     </div>
 
     <div class="card shadow-sm">
@@ -84,7 +89,12 @@
         actualizarKm: '@Url.Action("ActualizarKilometraje", "Inventario")',
         procesarVenta: '@Url.Action("ProcesarVenta", "Inventario")',
         cancelarVencidas: '@Url.Action("CancelarReservasVencidas", "Inventario")',
-        reservarPartial: '@Url.Action("ReservarPartial", "Inventario")'
+        reservarPartial: '@Url.Action("ReservarPartial", "Inventario")',
+        cargaMasivaPartial: '@Url.Action("CargaMasivaPartial", "Inventario")',
+        crearLote: '@Url.Action("CrearLote", "Inventario")',
+        getMarcasAll: '@Url.Action("GetAll", "Marca")',
+        getModelosByMarca: '@Url.Action("GetByMarca", "Modelos")',
+        getVersionesByModelo: '@Url.Action("GetByModelo", "VersionesVehiculo")'
     };
 
     const estadoColors = {
@@ -107,6 +117,7 @@
         cargarMarcasFiltro();
         cargarSucursalesFiltro();
         $('#btnNuevo').on('click', abrirModalCrear);
+        $('#btnCargaMasiva').on('click', abrirModalCargaMasiva);
 
         // Select2 en filtros
         $('#filtroEstado').select2({ theme: 'bootstrap-5', allowClear: true, placeholder: 'Todos', width: '100%' });
@@ -270,6 +281,14 @@
         AppModal.open({
             title: '<i class="fas fa-car me-2"></i>Nuevo Vehículo',
             url: URLS.createPartial,
+            size: 'xl'
+        });
+    }
+
+    function abrirModalCargaMasiva() {
+        AppModal.open({
+            title: '<i class="fas fa-file-excel me-2"></i>Carga Masiva de Vehículos',
+            url: URLS.cargaMasivaPartial,
             size: 'xl'
         });
     }
@@ -543,8 +562,6 @@
             versionId: $('#VersionId').val() ? parseInt($('#VersionId').val()) : null,
             anio: parseInt($('#Anio').val()),
             color: $('#Color').val()?.trim() || null,
-            tipoCombustible: parseInt($('#TipoCombustible').val()),
-            transmision: $('#Transmision').val() ? parseInt($('#Transmision').val()) : null,
             estado: parseInt($('#Estado').val()),
             sucursalId: $('#SucursalId').val() ? parseInt($('#SucursalId').val()) : null,
             procedencia: parseInt($('#Procedencia').val()),

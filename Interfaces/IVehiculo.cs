@@ -21,5 +21,6 @@ namespace SmartAdmin.Interfaces
         Task<ApiResponse<VehiculoViewModel>> GetByVinAsync(string vin);
         Task<ApiResponse<VehiculoViewModel>> GetByPlacaAsync(string placa);
         Task<ApiResponse<List<VehiculoViewModel>>> GetDisponiblesParaVentaAsync();
+        Task<ApiResponse<ResultadoImportacionViewModel>> CrearLoteAsync(List<CreateVehiculoViewModel> vehiculos);
     }
 }

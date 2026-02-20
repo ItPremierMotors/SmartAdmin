@@ -76,6 +76,7 @@ builder.Services.AddScoped<IVehiculo, VehiculoServices>();
 builder.Services.AddScoped<ICapacidadTaller, CapacidadTallerServices>();
 builder.Services.AddScoped<IBloqueHorario, BloqueHorarioServices>();
 builder.Services.AddScoped<ICita, CitaServices>();
+builder.Services.AddScoped<IRecepcion, RecepcionServices>();
 // Para poder leer cookies en servicios
 builder.Services.AddHttpContextAccessor(); 
 

@@ -1,0 +1,42 @@
+<svg viewBox="0 0 220 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Body (wider than sedan) -->
+  <path d="M68,50 Q110,30 152,50 L172,100 Q180,150 180,200 Q180,250 172,300 L152,350 Q110,370 68,350 L48,300 Q40,250 40,200 Q40,150 48,100 Z" fill="#e9ecef" stroke="#adb5bd" stroke-width="1.5"/>
+
+  <!-- Windshield -->
+  <path d="M64,74 L156,74 L148,108 L72,108 Z" fill="#d0e7ff" stroke="#adb5bd" stroke-width="1"/>
+
+  <!-- Rear window -->
+  <path d="M72,295 L148,295 L156,325 L64,325 Z" fill="#d0e7ff" stroke="#adb5bd" stroke-width="1"/>
+
+  <!-- Roof -->
+  <rect x="68" y="112" width="84" height="180" rx="6" fill="#f8f9fa" stroke="#ced4da" stroke-width="1"/>
+
+  <!-- Roof rails -->
+  <line x1="68" y1="115" x2="68" y2="289" stroke="#adb5bd" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="152" y1="115" x2="152" y2="289" stroke="#adb5bd" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Side mirrors -->
+  <ellipse cx="32" cy="88" rx="6" ry="9" fill="#dee2e6" stroke="#adb5bd" stroke-width="1"/>
+  <ellipse cx="188" cy="88" rx="6" ry="9" fill="#dee2e6" stroke="#adb5bd" stroke-width="1"/>
+
+  <!-- Wheels front (bigger) -->
+  <rect x="26" y="72" width="16" height="32" rx="5" fill="#6c757d"/>
+  <rect x="178" y="72" width="16" height="32" rx="5" fill="#6c757d"/>
+  <!-- Wheels rear -->
+  <rect x="26" y="298" width="16" height="32" rx="5" fill="#6c757d"/>
+  <rect x="178" y="298" width="16" height="32" rx="5" fill="#6c757d"/>
+
+  <!-- Headlights -->
+  <ellipse cx="80" cy="46" rx="10" ry="5" fill="#fff3cd" stroke="#adb5bd" stroke-width="0.5"/>
+  <ellipse cx="140" cy="46" rx="10" ry="5" fill="#fff3cd" stroke="#adb5bd" stroke-width="0.5"/>
+
+  <!-- Taillights -->
+  <ellipse cx="78" cy="354" rx="8" ry="4" fill="#f8d7da" stroke="#adb5bd" stroke-width="0.5"/>
+  <ellipse cx="142" cy="354" rx="8" ry="4" fill="#f8d7da" stroke="#adb5bd" stroke-width="0.5"/>
+
+  <!-- Labels -->
+  <text x="110" y="18" text-anchor="middle" font-size="12" fill="#adb5bd">FRENTE</text>
+  <text x="110" y="393" text-anchor="middle" font-size="12" fill="#adb5bd">TRASERA</text>
+  <text x="14" y="200" text-anchor="middle" font-size="10" fill="#adb5bd" transform="rotate(-90,14,200)">IZQ</text>
+  <text x="206" y="200" text-anchor="middle" font-size="10" fill="#adb5bd" transform="rotate(90,206,200)">DER</text>
+</svg>
