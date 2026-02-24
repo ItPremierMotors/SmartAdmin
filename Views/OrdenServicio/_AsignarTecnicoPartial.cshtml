@@ -1,0 +1,64 @@
+@{
+    var osId = ViewBag.OsId;
+}
+
+<form id="formAsignarTecnico">
+    <input type="hidden" id="AsignarOsId" value="@osId" />
+
+    <div class="mb-3">
+        <label class="form-label">Tecnico <span class="text-danger">*</span></label>
+        <select class="form-select" id="AsignarTecnicoId" required>
+            <option value="">Cargando...</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Servicio <span class="text-danger">*</span></label>
+        <select class="form-select" id="AsignarServicioId" required>
+            <option value="">Seleccione servicio...</option>
+        </select>
+        <small class="text-muted">El tecnico sera asignado a este servicio y controlara su inicio/completado.</small>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Observaciones</label>
+        <textarea class="form-control" id="AsignarObservaciones" rows="2"
+                  placeholder="Observaciones (opcional)"></textarea>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnConfirmarAsignarTecnico" onclick="confirmarAsignarTecnico()">
+        <i class="fas fa-hard-hat me-1"></i> Asignar Tecnico
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Cargar tecnicos
+        $.get(URLS.getTecnicos, function (r) {
+            const $sel = $('#AsignarTecnicoId');
+            $sel.empty().append('<option value="">Seleccione tecnico...</option>');
+            if (r.success && r.data) {
+                r.data.forEach(t => {
+                    $sel.append(`<option value="${t.tecnicoId}">${t.nombreCompleto} (${t.codigo}) - ${t.especialidad || 'General'}</option>`);
+                });
+            }
+        });
+
+        // Cargar servicios de la OS
+        $.get(URLS.getServicios, { osId: $('#AsignarOsId').val() }, function (r) {
+            const $sel = $('#AsignarServicioId');
+            if (r.success && r.data) {
+                r.data.forEach(s => {
+                    if (!s.estaCompletado && !s.estaCancelado) {
+                        $sel.append(`<option value="${s.osServicioId}">${s.tipoServicioNombre} - ${s.descripcionTrabajo || 'Sin descripcion'}</option>`);
+                    }
+                });
+            }
+        });
+    });
+</script>

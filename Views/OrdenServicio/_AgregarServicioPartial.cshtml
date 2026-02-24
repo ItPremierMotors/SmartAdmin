@@ -1,0 +1,92 @@
+@{
+    var osId = ViewBag.OsId;
+}
+
+<form id="formAgregarServicio">
+    <input type="hidden" id="AgregarServicioOsId" value="@osId" />
+
+    <div class="row">
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Tipo de Servicio <span class="text-danger">*</span></label>
+            <select class="form-select" id="AgregarTipoServicioId" required>
+                <option value="">Cargando...</option>
+            </select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Cantidad</label>
+            <input type="number" class="form-control" id="AgregarCantidad" value="1" min="1" />
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Descripcion del Trabajo</label>
+        <textarea class="form-control" id="AgregarDescripcion" rows="2"
+                  placeholder="Descripcion detallada del trabajo a realizar..."></textarea>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Precio Unitario</label>
+            <div class="input-group">
+                <span class="input-group-text">L</span>
+                <input type="number" class="form-control" id="AgregarPrecioUnitario" step="0.01" min="0"
+                       placeholder="Se tomara del tipo de servicio" />
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Tecnico (Opcional)</label>
+            <select class="form-select" id="AgregarTecnicoId">
+                <option value="">Sin asignar</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Observaciones</label>
+        <textarea class="form-control" id="AgregarObservaciones" rows="2"
+                  placeholder="Observaciones adicionales (opcional)"></textarea>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="btnConfirmarAgregarServicio" onclick="confirmarAgregarServicio()">
+        <i class="fas fa-plus me-1"></i> Agregar Servicio
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Cargar tipos de servicio
+        $.get(URLS.getTiposServicio, function (r) {
+            const $sel = $('#AgregarTipoServicioId');
+            $sel.empty().append('<option value="">Seleccione tipo de servicio...</option>');
+            if (r.success && r.data) {
+                r.data.forEach(ts => {
+                    $sel.append(`<option value="${ts.tipoServicioId}" data-precio="${ts.precioBase}">${ts.nombre} (${ts.duracionFormateada})</option>`);
+                });
+            }
+        });
+
+        // Cargar tecnicos
+        $.get(URLS.getTecnicos, function (r) {
+            const $sel = $('#AgregarTecnicoId');
+            if (r.success && r.data) {
+                r.data.forEach(t => {
+                    $sel.append(`<option value="${t.tecnicoId}">${t.nombreCompleto} (${t.codigo})</option>`);
+                });
+            }
+        });
+
+        // Auto-fill precio al seleccionar tipo
+        $('#AgregarTipoServicioId').on('change', function () {
+            const $opt = $(this).find(':selected');
+            const precio = $opt.data('precio');
+            if (precio) {
+                $('#AgregarPrecioUnitario').val(precio);
+            }
+        });
+    });
+</script>

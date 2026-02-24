@@ -19,6 +19,7 @@ namespace SmartAdmin.Models.Taller
         public string? MotivoCancelacion { get; set; }
         public string? PreOrdenId { get; set; }
         public int? SucursalId { get; set; }
+        public int? OsId { get; set; }
 
         // Extras UI
         public string ClienteNombre { get; set; } = null!;

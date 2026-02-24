@@ -158,8 +158,9 @@
             if (response.success && response.data && response.data.length > 0) {
                 response.data.forEach(v => {
                     const desc = v.descripcionCompleta || (v.marcaNombre + ' ' + v.modeloNombre + ' ' + v.anio);
-                    const placa = v.placa ? ' (' + v.placa + ')' : '';
-                    $sel.append(`<option value="${v.vehiculoId}">${desc}${placa}</option>`);
+                    const placa = v.placa ? ` | Placa: ${v.placa}` : '';
+                    const vin = v.vin ? ` | VIN: ...${v.vin.slice(-6)}` : '';
+                    $sel.append(`<option value="${v.vehiculoId}">${desc}${placa}${vin}</option>`);
                 });
             } else {
                 $sel.empty().append('<option value="">No se encontraron vehiculos para este cliente</option>');

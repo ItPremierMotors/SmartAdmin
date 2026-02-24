@@ -1,0 +1,190 @@
+@model SmartAdmin.Models.Taller.OrdenServicioDetalleViewModel
+@{
+    ViewData["Title"] = "Detalle OS - " + Model.NumeroOs;
+}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index", "OrdenServicio")">Ordenes de Servicio</a></li>
+            <li class="breadcrumb-item active">@Model.NumeroOs</li>
+        </ol>
+    </nav>
+
+    <!-- Header Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h3 class="mb-1">
+                        @Model.NumeroOs
+                        <span class="badge @ObtenerBadgeEstado(Model.EstadoCodigo) ms-2">@Model.EstadoCodigo.Replace("_", " ")</span>
+                        @if (Model.EsGarantia)
+                        {
+                            <span class="badge bg-warning text-dark ms-1">Garantia</span>
+                        }
+                        @if (Model.EsWalkIn)
+                        {
+                            <span class="badge bg-info ms-1">Walk-In</span>
+                        }
+                    </h3>
+                    <p class="text-muted mb-0">Abierta: @Model.FechaApertura.ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+                <div id="accionesOs">
+                    <!-- Acciones dinamicas via JS -->
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-2"><i class="fas fa-user me-1"></i> Cliente</h6>
+                    <p class="mb-1 fw-bold">@Model.ClienteNombre</p>
+                    @if (!string.IsNullOrEmpty(Model.ClienteTelefono))
+                    {
+                        <p class="mb-1 small"><i class="fas fa-phone me-1"></i> @Model.ClienteTelefono</p>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ClienteEmail))
+                    {
+                        <p class="mb-0 small"><i class="fas fa-envelope me-1"></i> @Model.ClienteEmail</p>
+                    }
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-2"><i class="fas fa-car me-1"></i> Vehiculo</h6>
+                    <p class="mb-1 fw-bold">@Model.VehiculoDescripcion</p>
+                    @if (!string.IsNullOrEmpty(Model.VehiculoPlaca))
+                    {
+                        <p class="mb-1 small">Placa: @Model.VehiculoPlaca</p>
+                    }
+                    <p class="mb-0 small">Km ingreso: @Model.KilometrajeIngreso.ToString("N0")</p>
+                    @if (Model.NivelCombustiblePorcentaje.HasValue)
+                    {
+                        <p class="mb-0 small">Combustible: @Model.NivelCombustiblePorcentaje%</p>
+                    }
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-2"><i class="fas fa-dollar-sign me-1"></i> Totales</h6>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Mano de obra:</span>
+                        <span id="totalManoObra">L @Model.TotalManoObra.ToString("N2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Repuestos:</span>
+                        <span id="totalRepuestos">L @Model.TotalRepuestos.ToString("N2")</span>
+                    </div>
+                    <hr class="my-1" />
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total General:</span>
+                        <span id="totalGeneral" class="text-primary">L @Model.TotalGeneral.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ObservacionesApertura))
+            {
+                <div class="mt-3 p-2 bg-light rounded">
+                    <small class="text-muted"><i class="fas fa-sticky-note me-1"></i> @Model.ObservacionesApertura</small>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="osTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabServicios" type="button">
+                <i class="fas fa-tools me-1"></i> Servicios
+                <span class="badge bg-primary ms-1" id="countServicios">@Model.CantidadServicios</span>
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabTecnicos" type="button">
+                <i class="fas fa-hard-hat me-1"></i> Tecnicos
+                <span class="badge bg-primary ms-1" id="countTecnicos">@Model.CantidadTecnicos</span>
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabEvidencias" type="button">
+                <i class="fas fa-camera me-1"></i> Evidencias
+                <span class="badge bg-primary ms-1" id="countEvidencias">@Model.CantidadEvidencias</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white">
+        <div class="tab-pane fade show active" id="tabServicios">
+            @await Html.PartialAsync("_ServiciosTab")
+        </div>
+        <div class="tab-pane fade" id="tabTecnicos">
+            @await Html.PartialAsync("_TecnicosTab")
+        </div>
+        <div class="tab-pane fade" id="tabEvidencias">
+            @await Html.PartialAsync("_EvidenciasTab")
+        </div>
+    </div>
+</div>
+
+@functions {
+    string ObtenerBadgeEstado(string codigo)
+    {
+        return codigo switch
+        {
+            "ABIERTA" => "bg-primary",
+            "DIAGNOSTICO" => "bg-info",
+            "COTIZADA" => "bg-secondary",
+            "APROBADA" => "bg-success",
+            "EN_TRABAJO" => "bg-warning text-dark",
+            "PAUSADA" => "bg-secondary",
+            "COMPLETADA" => "bg-success",
+            "FACTURADA" => "bg-dark",
+            "CERRADA" => "bg-dark",
+            "CANCELADA" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@section Scripts {
+<script>
+    const OS_ID = @Model.OsId;
+    const OS_ESTADO_CODIGO = '@Model.EstadoCodigo';
+    const OS_PUEDE_MODIFICARSE = @Model.PuedeModificarse.ToString().ToLower();
+    const OS_ESTA_ABIERTA = @Model.EstaAbierta.ToString().ToLower();
+
+    const URLS = {
+        // Vistas
+        reporte:              '@Url.Action("Reporte", "OrdenServicio", new { id = Model.OsId })',
+        // Data
+        getDetalle:           '@Url.Action("GetDetalle", "OrdenServicio")',
+        getServicios:         '@Url.Action("GetServicios", "OrdenServicio")',
+        getAsignaciones:      '@Url.Action("GetAsignaciones", "OrdenServicio")',
+        getEstados:           '@Url.Action("GetEstados", "OrdenServicio")',
+        getTransiciones:      '@Url.Action("GetTransicionesValidas", "OrdenServicio")',
+        getTecnicos:          '@Url.Action("GetTecnicos", "OrdenServicio")',
+        getTiposServicio:     '@Url.Action("GetTiposServicio", "OrdenServicio")',
+        // Partials
+        agregarServicioPartial:  '@Url.Action("AgregarServicioPartial", "OrdenServicio")',
+        asignarTecnicoPartial:   '@Url.Action("AsignarTecnicoPartial", "OrdenServicio")',
+        cambiarEstadoPartial:    '@Url.Action("CambiarEstadoPartial", "OrdenServicio")',
+        // Commands OS
+        postCambiarEstado:    '@Url.Action("CambiarEstado", "OrdenServicio")',
+        postCerrar:           '@Url.Action("Cerrar", "OrdenServicio")',
+        postCancelar:         '@Url.Action("Cancelar", "OrdenServicio")',
+        postRecalcular:       '@Url.Action("RecalcularTotales", "OrdenServicio")',
+        // Commands Servicios
+        postAgregarServicio:  '@Url.Action("AgregarServicio", "OrdenServicio")',
+        postUpdateServicio:   '@Url.Action("UpdateServicio", "OrdenServicio")',
+        postQuitarServicio:   '@Url.Action("QuitarServicio", "OrdenServicio")',
+        postIniciarServicio:  '@Url.Action("IniciarTrabajoServicio", "OrdenServicio")',
+        postCompletarServicio:'@Url.Action("CompletarServicio", "OrdenServicio")',
+        postCancelarServicio: '@Url.Action("CancelarServicio", "OrdenServicio")',
+        // Commands Asignaciones
+        postAsignarTecnico:   '@Url.Action("AsignarTecnico", "OrdenServicio")',
+        postIniciarAsignacion:'@Url.Action("IniciarAsignacion", "OrdenServicio")',
+        postPausarAsignacion: '@Url.Action("PausarAsignacion", "OrdenServicio")',
+        postReanudarAsignacion:'@Url.Action("ReanudarAsignacion", "OrdenServicio")',
+        postCompletarAsignacion:'@Url.Action("CompletarAsignacion", "OrdenServicio")',
+        postCancelarAsignacion:'@Url.Action("CancelarAsignacion", "OrdenServicio")'
+    };
+</script>
+<script src="~/JS/pages/orden-servicio-detalle.js"></script>
+}

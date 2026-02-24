@@ -344,10 +344,15 @@ function accionCita(accion, citaId) {
         return;
     }
 
+    // Completar abre modal con evidencia de salida
+    if (accion === 'completar') {
+        abrirCompletarCita(citaId);
+        return;
+    }
+
     let url, msg;
     switch (accion) {
         case 'confirmar': url = URLS.postConfirmar; msg = 'Cita confirmada'; break;
-        case 'completar': url = URLS.postCompletar; msg = 'Cita completada'; break;
         case 'noshow': url = URLS.postNoShow; msg = 'Marcada como No Show'; break;
         default: return;
     }
@@ -368,6 +373,197 @@ function accionCita(accion, citaId) {
         },
         error: function (xhr) { Toast.error(xhr.responseJSON?.message || 'Error en la operacion'); }
     });
+}
+
+// ─── Completar con Evidencia de Salida ───
+
+let fotosSalidaData = {};
+let fotosSalidaInitialized = false;
+
+function abrirCompletarCita(citaId) {
+    fotosSalidaData = {};
+    fotosSalidaInitialized = false;
+    AppModal.open({
+        title: '<i class="fas fa-check-double me-2"></i>Completar Cita - Evidencia de Salida',
+        url: URLS.completarPartial,
+        data: { citaId: citaId },
+        size: 'lg',
+        onShown: function () {
+            initFotosSalida();
+        }
+    });
+}
+
+function initFotosSalida() {
+    // Evitar doble inicializacion
+    if (fotosSalidaInitialized) return;
+
+    // Reintentar si el contenido AJAX aun no cargo
+    var btn = document.getElementById('btnCompletarConFotos');
+    if (!btn) {
+        setTimeout(initFotosSalida, 200);
+        return;
+    }
+
+    fotosSalidaInitialized = true;
+
+    document.querySelectorAll('.foto-salida-dropzone').forEach(function (zone) {
+        var tipo = zone.dataset.tipo;
+        var input = zone.querySelector('.foto-salida-input');
+
+        zone.addEventListener('click', function (e) {
+            // No abrir file dialog si se hizo click en el boton remover
+            if (e.target.closest('.foto-remove')) return;
+            // No abrir si el click viene del input (evita doble trigger)
+            if (e.target === input) return;
+            input.click();
+        });
+
+        input.addEventListener('change', function () {
+            if (!input.files || input.files.length === 0) return;
+            var file = input.files[0];
+            if (!file.type.startsWith('image/')) return;
+            var reader = new FileReader();
+            reader.onload = function (ev) {
+                fotosSalidaData[tipo] = { base64: ev.target.result, nombre: file.name };
+                renderFotoSalidaPreview(tipo);
+            };
+            reader.readAsDataURL(file);
+            input.value = '';
+        });
+    });
+
+    btn.addEventListener('click', completarConFotos);
+}
+
+function renderFotoSalidaPreview(tipo) {
+    const container = document.querySelector(`.foto-salida-preview[data-tipo="${tipo}"]`);
+    const zone = document.querySelector(`.foto-salida-dropzone[data-tipo="${tipo}"]`);
+    if (!container || !zone) return;
+
+    const foto = fotosSalidaData[tipo];
+    if (foto) {
+        container.innerHTML = `
+            <div class="position-relative d-inline-block">
+                <img src="${foto.base64}" class="img-fluid rounded" style="max-height:80px;" />
+                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 foto-remove"
+                        onclick="removerFotoSalida('${tipo}')" style="padding:1px 5px; font-size:10px;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`;
+        zone.querySelector('i').className = 'fas fa-check-circle fa-2x text-success mb-1';
+        zone.querySelector('small').textContent = 'Capturada';
+    } else {
+        container.innerHTML = '';
+        zone.querySelector('i').className = 'fas fa-camera fa-2x text-muted mb-1';
+        zone.querySelector('small').textContent = tipo.replace('FotoSalida', '');
+    }
+}
+
+function removerFotoSalida(tipo) {
+    delete fotosSalidaData[tipo];
+    renderFotoSalidaPreview(tipo);
+}
+
+async function completarConFotos() {
+    const btn = document.getElementById('btnCompletarConFotos');
+    const osId = parseInt(document.getElementById('completarOsId').value);
+    const citaId = parseInt(document.getElementById('completarCitaId').value);
+
+    if (!osId) {
+        Toast.error('Esta cita no tiene una Orden de Servicio asociada.');
+        return;
+    }
+
+    const totalFotos = Object.keys(fotosSalidaData).length;
+    if (totalFotos === 0) {
+        // Confirmar si quiere completar sin fotos
+        AppAlert.confirm({
+            title: 'Sin fotos de salida',
+            text: 'No ha capturado fotos de salida. Desea completar sin evidencia?',
+            onConfirm: async function () {
+                await ejecutarCompletar(citaId, osId, btn);
+            }
+        });
+        return;
+    }
+
+    await ejecutarCompletar(citaId, osId, btn);
+}
+
+async function ejecutarCompletar(citaId, osId, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Subiendo fotos...';
+
+    try {
+        // 1. Subir fotos de salida
+        let fotosSubidas = 0;
+        const totalFotos = Object.keys(fotosSalidaData).length;
+
+        for (const [tipo, foto] of Object.entries(fotosSalidaData)) {
+            try {
+                const response = await fetch(URLS.subirEvidencia, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        osId: osId,
+                        recepcionId: null,
+                        tipoEvidencia: tipo,
+                        base64Data: foto.base64,
+                        nombreArchivo: foto.nombre,
+                        descripcion: 'Foto de salida - ' + tipo.replace('FotoSalida', '')
+                    })
+                });
+                const result = await response.json();
+                if (result.success) fotosSubidas++;
+                else console.warn('Error subiendo foto ' + tipo + ':', result.message);
+            } catch (err) {
+                console.warn('Error subiendo foto ' + tipo + ':', err);
+            }
+        }
+
+        if (totalFotos > 0 && fotosSubidas === 0) {
+            Toast.error('No se pudieron subir las fotos. Intente de nuevo.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-double me-1"></i> Completar y Entregar';
+            return;
+        }
+
+        // 2. Completar la cita
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Completando...';
+
+        $.ajax({
+            url: URLS.postCompletar,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(citaId),
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    cargarCitas();
+                    const msg = fotosSubidas > 0
+                        ? 'Cita completada con ' + fotosSubidas + ' foto(s) de salida'
+                        : 'Cita completada exitosamente';
+                    Toast.success(msg);
+                } else {
+                    Toast.error(response.message || 'Error al completar la cita');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al completar');
+            },
+            complete: function () {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-double me-1"></i> Completar y Entregar';
+            }
+        });
+
+    } catch (error) {
+        console.error('Error:', error);
+        Toast.error('Error inesperado al completar la cita.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-double me-1"></i> Completar y Entregar';
+    }
 }
 
 function cancelarCita(citaId) {

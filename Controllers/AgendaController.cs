@@ -10,13 +10,15 @@ namespace SmartAdmin.Controllers
         private readonly IBloqueHorario bloqueServices;
         private readonly ICapacidadTaller capacidadServices;
         private readonly ISucursal sucursalServices;
+        private readonly IRecepcion recepcionServices;
 
-        public AgendaController(ICita citaServices, IBloqueHorario bloqueServices, ICapacidadTaller capacidadServices, ISucursal sucursalServices)
+        public AgendaController(ICita citaServices, IBloqueHorario bloqueServices, ICapacidadTaller capacidadServices, ISucursal sucursalServices, IRecepcion recepcionServices)
         {
             this.citaServices = citaServices;
             this.bloqueServices = bloqueServices;
             this.capacidadServices = capacidadServices;
             this.sucursalServices = sucursalServices;
+            this.recepcionServices = recepcionServices;
         }
 
         public IActionResult Index() => View();
@@ -111,10 +113,26 @@ namespace SmartAdmin.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> CompletarPartial(int citaId)
+        {
+            var response = await citaServices.GetByIdAsync(citaId);
+            if (!response.Success || response.Data == null)
+                return Content("<div class='alert alert-danger'>Cita no encontrada</div>");
+            return PartialView("_CompletarCitaPartial", response.Data);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Completar([FromBody] int citaId)
         {
             var response = await citaServices.CompletarAsync(citaId);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SubirEvidencia([FromBody] SubirEvidenciaRequest model)
+        {
+            var response = await recepcionServices.SubirEvidenciaBase64Async(model);
             return StatusCode(response.StatusCode, response);
         }
 

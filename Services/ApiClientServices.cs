@@ -18,8 +18,7 @@ namespace SmartAdmin.Services
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase // <-- Esto convierte Email -> email
-
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
         }
 

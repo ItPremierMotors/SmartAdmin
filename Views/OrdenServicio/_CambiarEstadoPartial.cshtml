@@ -1,0 +1,75 @@
+@model SmartAdmin.Models.Taller.OrdenServicioViewModel
+
+<div class="mb-3">
+    <label class="form-label">Estado Actual</label>
+    <div>
+        <span class="badge @ObtenerBadge(Model.EstadoCodigo) fs-6">@Model.EstadoCodigo.Replace("_", " ")</span>
+    </div>
+</div>
+
+<form id="formCambiarEstado">
+    <input type="hidden" id="CambiarEstadoOsId" value="@Model.OsId" />
+
+    <div class="mb-3">
+        <label class="form-label">Nuevo Estado <span class="text-danger">*</span></label>
+        <select class="form-select" id="NuevoEstadoId" required>
+            <option value="">Cargando transiciones...</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Observaciones</label>
+        <textarea class="form-control" id="CambiarEstadoObservaciones" rows="2"
+                  placeholder="Motivo del cambio de estado (opcional)"></textarea>
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-warning" id="btnConfirmarCambioEstado" onclick="confirmarCambiarEstado()">
+        <i class="fas fa-exchange-alt me-1"></i> Cambiar Estado
+    </button>
+</div>
+
+@functions {
+    string ObtenerBadge(string codigo)
+    {
+        return codigo switch
+        {
+            "ABIERTA" => "bg-primary",
+            "DIAGNOSTICO" => "bg-info",
+            "COTIZADA" => "bg-secondary",
+            "APROBADA" => "bg-success",
+            "EN_TRABAJO" => "bg-warning text-dark",
+            "PAUSADA" => "bg-secondary",
+            "COMPLETADA" => "bg-success",
+            "FACTURADA" => "bg-dark",
+            "CERRADA" => "bg-dark",
+            "CANCELADA" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+<script>
+    $(document).ready(function () {
+        const osId = @Model.OsId;
+        const url = (typeof URLS !== 'undefined' && URLS.getTransiciones)
+            || '@Url.Action("GetTransicionesValidas", "OrdenServicio")';
+
+        $.get(url, { osId: osId }, function (r) {
+            const $sel = $('#NuevoEstadoId');
+            $sel.empty().append('<option value="">Seleccione nuevo estado...</option>');
+            if (r.success && r.data && r.data.length > 0) {
+                r.data.forEach(e => {
+                    $sel.append(`<option value="${e.estadoId}">${e.nombre}</option>`);
+                });
+            } else {
+                $sel.empty().append('<option value="">No hay transiciones disponibles</option>');
+                $('#btnConfirmarCambioEstado').prop('disabled', true);
+            }
+        });
+    });
+</script>

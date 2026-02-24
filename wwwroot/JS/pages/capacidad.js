@@ -143,7 +143,7 @@ function confirmarGenerarSemana() {
             turno: parseInt($('#SemanaTurno').val()),
             tecnicosDisponibles: parseInt($('#SemanaTecnicos').val()),
             bahiasDisponibles: parseInt($('#SemanaBahias').val()),
-            minutosDisponibles: parseInt($('#SemanaMinutos').val()),
+            minutosPorTecnico: parseInt($('#SemanaMinutosPorTecnico').val()),
             permiteSobretiempo: $('#SemanaPermiteSobretiempo').is(':checked'),
             permiteAgendamiento: true,
             sucursalId: getSucursalId() ? parseInt(getSucursalId()) : null
@@ -228,7 +228,7 @@ function confirmarCrearCapacidad() {
         turno: parseInt($('#NuevaCapTurno').val()),
         tecnicosDisponibles: parseInt($('#NuevaCapTecnicos').val()),
         bahiasDisponibles: parseInt($('#NuevaCapBahias').val()),
-        minutosDisponibles: parseInt($('#NuevaCapMinutos').val()),
+        minutosPorTecnico: parseInt($('#NuevaCapMinutosPorTecnico').val()),
         permiteSobretiempo: $('#NuevaCapSobretiempo').is(':checked'),
         permiteAgendamiento: true,
         sucursalId: getSucursalId() ? parseInt(getSucursalId()) : null
@@ -257,25 +257,28 @@ function confirmarCrearCapacidad() {
 // ─── Bloquear / Desbloquear Dia ───
 
 function bloquearDia(capacidadId) {
-    AppAlert.input({
-        title: 'Bloquear Dia',
-        label: 'Motivo del bloqueo',
-        placeholder: 'Escriba el motivo...',
-        inputType: 'textarea',
-        onConfirm: function (motivo) {
-            $.ajax({
-                url: URLS.postBloquear,
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ capacidadId: capacidadId, motivo: motivo }),
-                success: function (response) {
-                    if (response.success) { AppModal.close(); calendar.refetchEvents(); Toast.success('Dia bloqueado'); }
-                    else { Toast.error(response.message); }
-                },
-                error: function (xhr) { Toast.error(xhr.responseJSON?.message || 'Error'); }
-            });
-        }
-    });
+    AppModal.close();
+    setTimeout(function () {
+        AppAlert.input({
+            title: 'Bloquear Dia',
+            label: 'Motivo del bloqueo',
+            placeholder: 'Escriba el motivo...',
+            inputType: 'textarea',
+            onConfirm: function (motivo) {
+                $.ajax({
+                    url: URLS.postBloquear,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ capacidadId: capacidadId, motivo: motivo }),
+                    success: function (response) {
+                        if (response.success) { calendar.refetchEvents(); Toast.success('Dia bloqueado'); }
+                        else { Toast.error(response.message); }
+                    },
+                    error: function (xhr) { Toast.error(xhr.responseJSON?.message || 'Error'); }
+                });
+            }
+        });
+    }, 300);
 }
 
 function desbloquearDia(capacidadId) {
@@ -322,7 +325,7 @@ function confirmarEditarCapacidad() {
         turno: parseInt($('#EditTurno').val()),
         tecnicosDisponibles: parseInt($('#EditTecnicos').val()),
         bahiasDisponibles: parseInt($('#EditBahias').val()),
-        minutosDisponibles: parseInt($('#EditMinutos').val()),
+        minutosPorTecnico: parseInt($('#EditMinutos').val()),
         permiteSobretiempo: $('#EditPermiteSobretiempo').is(':checked'),
         permiteAgendamiento: $('#EditPermiteAgendamiento').is(':checked'),
         observaciones: $('#EditObservaciones').val() || null

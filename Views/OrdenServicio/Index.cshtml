@@ -1,0 +1,89 @@
+@{
+    ViewData["Title"] = "Ordenes de Servicio";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-clipboard-list me-2"></i>@ViewData["Title"]</h1>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Filtros -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Estado</label>
+                    <select class="form-select form-select-sm" id="filtroEstado">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Sucursal</label>
+                    <select class="form-select form-select-sm" id="filtroSucursal">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Fecha Desde</label>
+                    <input type="date" class="form-control form-control-sm" id="filtroFechaDesde" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Fecha Hasta</label>
+                    <input type="date" class="form-control form-control-sm" id="filtroFechaHasta" />
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button class="btn btn-primary btn-sm" onclick="aplicarFiltros()">
+                        <i class="fas fa-search me-1"></i> Filtrar
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="limpiarFiltros()">
+                        <i class="fas fa-eraser me-1"></i> Limpiar
+                    </button>
+                    <div class="btn-group btn-group-sm ms-auto">
+                        <button class="btn btn-outline-primary active" onclick="filtroRapido('abiertas', this)">Abiertas</button>
+                        <button class="btn btn-outline-secondary" onclick="filtroRapido('todas', this)">Todas</button>
+                        <button class="btn btn-outline-info" onclick="filtroRapido('hoy', this)">Hoy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando ordenes...</p>
+            </div>
+
+            <table class="table table-hover table-sm d-none" id="tablaOs" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>N. OS</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Vehiculo</th>
+                        <th class="text-center">Estado</th>
+                        <th>Tipo</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const URLS = {
+        getAll:             '@Url.Action("GetAll", "OrdenServicio")',
+        getAbiertas:        '@Url.Action("GetAbiertas", "OrdenServicio")',
+        getByFecha:         '@Url.Action("GetByFecha", "OrdenServicio")',
+        getByRango:         '@Url.Action("GetByRango", "OrdenServicio")',
+        getByEstado:        '@Url.Action("GetByEstado", "OrdenServicio")',
+        getEstados:         '@Url.Action("GetEstados", "OrdenServicio")',
+        getSucursales:      '@Url.Action("GetSucursales", "OrdenServicio")',
+        cambiarEstadoPartial: '@Url.Action("CambiarEstadoPartial", "OrdenServicio")',
+        postCambiarEstado:  '@Url.Action("CambiarEstado", "OrdenServicio")',
+        getTransiciones:    '@Url.Action("GetTransicionesValidas", "OrdenServicio")',
+        detalle:            '@Url.Action("Detalle", "OrdenServicio")'
+    };
+</script>
+<script src="~/JS/pages/orden-servicio.js"></script>
+}

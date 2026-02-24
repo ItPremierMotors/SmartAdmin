@@ -9,6 +9,7 @@ namespace SmartAdmin.Models.Taller
         public TurnoTaller Turno { get; set; }
         public int TecnicosDisponibles { get; set; }
         public int BahiasDisponibles { get; set; }
+        public int MinutosPorTecnico { get; set; }
         public int MinutosDisponibles { get; set; }
         public int MinutosReservados { get; set; }
         public int MinutosUtilizados { get; set; }
@@ -33,7 +34,7 @@ namespace SmartAdmin.Models.Taller
         public TurnoTaller Turno { get; set; } = TurnoTaller.Completo;
         public int TecnicosDisponibles { get; set; }
         public int BahiasDisponibles { get; set; }
-        public int MinutosDisponibles { get; set; } = 480;
+        public int MinutosPorTecnico { get; set; } = 480;
         public bool PermiteSobretiempo { get; set; } = true;
         public bool PermiteAgendamiento { get; set; } = true;
         public int? SucursalId { get; set; }
@@ -45,7 +46,7 @@ namespace SmartAdmin.Models.Taller
         public TurnoTaller Turno { get; set; }
         public int TecnicosDisponibles { get; set; }
         public int BahiasDisponibles { get; set; }
-        public int MinutosDisponibles { get; set; }
+        public int MinutosPorTecnico { get; set; }
         public bool PermiteSobretiempo { get; set; }
         public bool PermiteAgendamiento { get; set; }
         public string? Observaciones { get; set; }

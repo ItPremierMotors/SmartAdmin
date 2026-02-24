@@ -35,9 +35,9 @@
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Minutos Disponibles <span class="text-danger">*</span></label>
-        <input type="number" class="form-control" id="EditMinutos" min="60" max="1440" value="@Model.MinutosDisponibles" required />
-        <small class="text-muted">@(Model.MinutosDisponibles / 60) horas</small>
+        <label class="form-label">Minutos por Tecnico <span class="text-danger">*</span></label>
+        <input type="number" class="form-control" id="EditMinutos" min="60" max="1440" value="@Model.MinutosPorTecnico" required />
+        <small class="text-muted">Total: @Model.TecnicosDisponibles tecnico(s) x @Model.MinutosPorTecnico min = @Model.MinutosDisponibles min (@(Model.MinutosDisponibles / 60)h)</small>
     </div>
 
     <div class="row">

@@ -1,0 +1,324 @@
+@model SmartAdmin.Models.Taller.ReporteOsViewModel
+@{
+    Layout = null;
+    var d = Model.Detalle;
+    var serviciosActivos = Model.Servicios.Where(s => !s.EstaCancelado).ToList();
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reporte OS - @d.NumeroOs</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            font-size: 13px;
+            color: #333;
+        }
+        .report-header {
+            border-bottom: 3px solid #0d6efd;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+        .report-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        .info-value {
+            font-size: 13px;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0d6efd;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+        .table-report {
+            font-size: 12px;
+        }
+        .table-report th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #555;
+        }
+        .totals-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .total-general {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            width: 250px;
+            margin-top: 60px;
+            padding-top: 5px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .badge-estado {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        @@media print {
+            .no-print { display: none !important; }
+            body { font-size: 12px; }
+            .container { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Print toolbar -->
+    <div class="no-print bg-light border-bottom py-2 mb-3">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="@Url.Action("Detalle", "OrdenServicio", new { id = d.OsId })" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Volver al Detalle
+                </a>
+                <button class="btn btn-primary btn-sm" onclick="window.print()">
+                    <i class="fas fa-print me-1"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 800px;">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="row align-items-center">
+                <div class="col-7">
+                    <div class="company-name">PremierFlow</div>
+                    <div class="text-muted" style="font-size: 12px;">Sistema de Gestion de Taller</div>
+                </div>
+                <div class="col-5 text-end">
+                    <div class="report-title">Orden de Servicio</div>
+                    <div style="font-size: 20px; font-weight: 700;">@d.NumeroOs</div>
+                    <div>
+                        <span class="badge-estado" style="background-color: @ObtenerColorEstado(d.EstadoCodigo); color: white;">
+                            @d.EstadoNombre
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info grid -->
+        <div class="row">
+            <!-- Cliente -->
+            <div class="col-6">
+                <div class="section-title">Cliente</div>
+                <div class="mb-1">
+                    <span class="info-label">Nombre:</span>
+                    <span class="info-value">@d.ClienteNombre</span>
+                </div>
+                @if (!string.IsNullOrEmpty(d.ClienteTelefono))
+                {
+                    <div class="mb-1">
+                        <span class="info-label">Telefono:</span>
+                        <span class="info-value">@d.ClienteTelefono</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(d.ClienteEmail))
+                {
+                    <div class="mb-1">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">@d.ClienteEmail</span>
+                    </div>
+                }
+            </div>
+
+            <!-- Vehiculo -->
+            <div class="col-6">
+                <div class="section-title">Vehiculo</div>
+                <div class="mb-1">
+                    <span class="info-label">Descripcion:</span>
+                    <span class="info-value">@d.VehiculoDescripcion</span>
+                </div>
+                @if (!string.IsNullOrEmpty(d.VehiculoPlaca))
+                {
+                    <div class="mb-1">
+                        <span class="info-label">Placa:</span>
+                        <span class="info-value">@d.VehiculoPlaca</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(d.VehiculoVin))
+                {
+                    <div class="mb-1">
+                        <span class="info-label">VIN:</span>
+                        <span class="info-value">@d.VehiculoVin</span>
+                    </div>
+                }
+                <div class="mb-1">
+                    <span class="info-label">Km Ingreso:</span>
+                    <span class="info-value">@d.KilometrajeIngreso.ToString("N0")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- OS Info -->
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="section-title">Informacion de la Orden</div>
+                <div class="row">
+                    <div class="col-3">
+                        <span class="info-label">Fecha Apertura:</span><br />
+                        <span class="info-value">@d.FechaApertura.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div class="col-3">
+                        <span class="info-label">Tipo Ingreso:</span><br />
+                        <span class="info-value">@(d.EsWalkIn ? "Walk-In" : "Cita")</span>
+                    </div>
+                    @if (d.EsGarantia)
+                    {
+                        <div class="col-3">
+                            <span class="info-label">Garantia:</span><br />
+                            <span class="info-value text-warning fw-bold">Si</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(d.SucursalNombre))
+                    {
+                        <div class="col-3">
+                            <span class="info-label">Sucursal:</span><br />
+                            <span class="info-value">@d.SucursalNombre</span>
+                        </div>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(d.ObservacionesApertura))
+                {
+                    <div class="mt-2 p-2 bg-light rounded" style="font-size: 12px;">
+                        <span class="info-label">Observaciones:</span>
+                        @d.ObservacionesApertura
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Servicios -->
+        <div class="section-title mt-3">Detalle de Servicios</div>
+        <table class="table table-bordered table-report mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 5%">#</th>
+                    <th style="width: 25%">Servicio</th>
+                    <th style="width: 30%">Descripcion</th>
+                    <th class="text-center" style="width: 8%">Cant.</th>
+                    <th class="text-end" style="width: 15%">Precio Unit.</th>
+                    <th class="text-end" style="width: 17%">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (serviciosActivos.Any())
+                {
+                    var i = 1;
+                    @foreach (var s in serviciosActivos)
+                    {
+                        <tr>
+                            <td>@i</td>
+                            <td><strong>@s.TipoServicioNombre</strong></td>
+                            <td>@(s.DescripcionTrabajo ?? "-")</td>
+                            <td class="text-center">@s.Cantidad</td>
+                            <td class="text-end">L @s.PrecioUnitario.ToString("N2")</td>
+                            <td class="text-end fw-bold">L @s.Subtotal.ToString("N2")</td>
+                        </tr>
+                        i++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-3">No hay servicios registrados</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Totales -->
+        <div class="row mt-3">
+            <div class="col-7"></div>
+            <div class="col-5">
+                <div class="totals-box">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="info-label">Mano de Obra:</span>
+                        <span>L @d.TotalManoObra.ToString("N2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="info-label">Repuestos:</span>
+                        <span>L @d.TotalRepuestos.ToString("N2")</span>
+                    </div>
+                    <hr class="my-1" />
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Total General:</span>
+                        <span class="total-general">L @d.TotalGeneral.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Firmas -->
+        <div class="row mt-5">
+            <div class="col-6 text-center">
+                <div class="signature-line mx-auto">
+                    Firma del Cliente
+                </div>
+            </div>
+            <div class="col-6 text-center">
+                <div class="signature-line mx-auto">
+                    Firma del Asesor
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-muted mt-4 mb-3" style="font-size: 10px;">
+            Documento generado el @DateTime.Now.ToString("dd/MM/yyyy HH:mm") | PremierFlow
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="~/webfonts/fontawesome/fontawesome.css" />
+</body>
+</html>
+
+@functions {
+    string ObtenerColorEstado(string codigo)
+    {
+        return codigo switch
+        {
+            "ABIERTA" => "#0d6efd",
+            "DIAGNOSTICO" => "#0dcaf0",
+            "COTIZADA" => "#6c757d",
+            "APROBADA" => "#198754",
+            "EN_TRABAJO" => "#ffc107",
+            "PAUSADA" => "#6c757d",
+            "COMPLETADA" => "#198754",
+            "FACTURADA" => "#212529",
+            "CERRADA" => "#212529",
+            "CANCELADA" => "#dc3545",
+            _ => "#6c757d"
+        };
+    }
+}
