@@ -1,18 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 
 namespace Smartadmin.Controllers
+{
+    public class AppsController : Controller
     {
-        public class AppsController : Controller
-        {
-            public IActionResult Systemmail()
+        public IActionResult Systemmail()
         {
             return View();
         }
-
-        public IActionResult Fullcalendar()
-        {
-            return View();
-        }        
 
         public IActionResult SystemmailRead()
         {
@@ -24,19 +19,9 @@ namespace Smartadmin.Controllers
             return View();
         }
 
-        public IActionResult Messenger()
-        {
-            return View();
-        }
-
-        public IActionResult UserContact()
-        {
-            return View();
-        }
-
         public IActionResult UserProfile()
         {
             return View();
         }
-        }
     }
+}
