@@ -222,19 +222,17 @@ function obtenerAcciones(cita) {
                     </button>`;
             }
             break;
-        case 3: // En Proceso
-            if (esFechaPasada) {
+        case 3: // En Proceso - solo transferir, completar se hace desde la OS
+            btns = `
+                <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(${cita.citaId})" title="Transferir a manana">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>`;
+            break;
+        case 4: // Completada - solo evidencia de salida si tiene OS
+            if (cita.osId) {
                 btns = `
-                    <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(${cita.citaId})" title="Transferir a manana">
-                        <i class="fas fa-exchange-alt"></i>
-                    </button>`;
-            } else {
-                btns = `
-                    <button class="btn btn-sm btn-outline-success" onclick="accionCita('completar', ${cita.citaId})" title="Completar">
-                        <i class="fas fa-check-double"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(${cita.citaId})" title="Transferir a manana">
-                        <i class="fas fa-exchange-alt"></i>
+                    <button class="btn btn-sm btn-outline-info" onclick="abrirEvidenciaSalida(${cita.citaId})" title="Evidencia de Salida">
+                        <i class="fas fa-camera"></i>
                     </button>`;
             }
             break;
@@ -344,12 +342,6 @@ function accionCita(accion, citaId) {
         return;
     }
 
-    // Completar abre modal con evidencia de salida
-    if (accion === 'completar') {
-        abrirCompletarCita(citaId);
-        return;
-    }
-
     let url, msg;
     switch (accion) {
         case 'confirmar': url = URLS.postConfirmar; msg = 'Cita confirmada'; break;
@@ -375,16 +367,16 @@ function accionCita(accion, citaId) {
     });
 }
 
-// ─── Completar con Evidencia de Salida ───
+// ─── Evidencia de Salida ───
 
 let fotosSalidaData = {};
 let fotosSalidaInitialized = false;
 
-function abrirCompletarCita(citaId) {
+function abrirEvidenciaSalida(citaId) {
     fotosSalidaData = {};
     fotosSalidaInitialized = false;
     AppModal.open({
-        title: '<i class="fas fa-check-double me-2"></i>Completar Cita - Evidencia de Salida',
+        title: '<i class="fas fa-camera me-2"></i>Evidencia de Salida',
         url: URLS.completarPartial,
         data: { citaId: citaId },
         size: 'lg',
@@ -406,6 +398,9 @@ function initFotosSalida() {
     }
 
     fotosSalidaInitialized = true;
+
+    btn.innerHTML = '<i class="fas fa-camera me-1"></i> Guardar Evidencia';
+    btn.className = 'btn btn-info';
 
     document.querySelectorAll('.foto-salida-dropzone').forEach(function (zone) {
         var tipo = zone.dataset.tipo;
@@ -433,7 +428,7 @@ function initFotosSalida() {
         });
     });
 
-    btn.addEventListener('click', completarConFotos);
+    btn.addEventListener('click', subirSoloEvidencia);
 }
 
 function renderFotoSalidaPreview(tipo) {
@@ -465,10 +460,9 @@ function removerFotoSalida(tipo) {
     renderFotoSalidaPreview(tipo);
 }
 
-async function completarConFotos() {
+async function subirSoloEvidencia() {
     const btn = document.getElementById('btnCompletarConFotos');
     const osId = parseInt(document.getElementById('completarOsId').value);
-    const citaId = parseInt(document.getElementById('completarCitaId').value);
 
     if (!osId) {
         Toast.error('Esta cita no tiene una Orden de Servicio asociada.');
@@ -477,29 +471,15 @@ async function completarConFotos() {
 
     const totalFotos = Object.keys(fotosSalidaData).length;
     if (totalFotos === 0) {
-        // Confirmar si quiere completar sin fotos
-        AppAlert.confirm({
-            title: 'Sin fotos de salida',
-            text: 'No ha capturado fotos de salida. Desea completar sin evidencia?',
-            onConfirm: async function () {
-                await ejecutarCompletar(citaId, osId, btn);
-            }
-        });
+        Toast.error('Debe capturar al menos una foto de salida.');
         return;
     }
 
-    await ejecutarCompletar(citaId, osId, btn);
-}
-
-async function ejecutarCompletar(citaId, osId, btn) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Subiendo fotos...';
 
     try {
-        // 1. Subir fotos de salida
         let fotosSubidas = 0;
-        const totalFotos = Object.keys(fotosSalidaData).length;
-
         for (const [tipo, foto] of Object.entries(fotosSalidaData)) {
             try {
                 const response = await fetch(URLS.subirEvidencia, {
@@ -522,47 +502,18 @@ async function ejecutarCompletar(citaId, osId, btn) {
             }
         }
 
-        if (totalFotos > 0 && fotosSubidas === 0) {
+        if (fotosSubidas === 0) {
             Toast.error('No se pudieron subir las fotos. Intente de nuevo.');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-check-double me-1"></i> Completar y Entregar';
-            return;
+        } else {
+            AppModal.close();
+            Toast.success(fotosSubidas + ' foto(s) de salida guardada(s)');
         }
-
-        // 2. Completar la cita
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Completando...';
-
-        $.ajax({
-            url: URLS.postCompletar,
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(citaId),
-            success: function (response) {
-                if (response.success) {
-                    AppModal.close();
-                    cargarCitas();
-                    const msg = fotosSubidas > 0
-                        ? 'Cita completada con ' + fotosSubidas + ' foto(s) de salida'
-                        : 'Cita completada exitosamente';
-                    Toast.success(msg);
-                } else {
-                    Toast.error(response.message || 'Error al completar la cita');
-                }
-            },
-            error: function (xhr) {
-                Toast.error(xhr.responseJSON?.message || 'Error al completar');
-            },
-            complete: function () {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check-double me-1"></i> Completar y Entregar';
-            }
-        });
-
     } catch (error) {
         console.error('Error:', error);
-        Toast.error('Error inesperado al completar la cita.');
+        Toast.error('Error inesperado al subir evidencia.');
+    } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-check-double me-1"></i> Completar y Entregar';
+        btn.innerHTML = '<i class="fas fa-camera me-1"></i> Guardar Evidencia';
     }
 }
 
