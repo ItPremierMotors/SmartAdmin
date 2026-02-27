@@ -609,7 +609,12 @@ function cerrarOs() {
                 success: function (r) {
                     if (r.success) {
                         Toast.success('Orden cerrada exitosamente');
-                        location.reload();
+                        // Si hay CitaId, redirigir a agenda para fotos de salida
+                        if (r.data) {
+                            window.location.href = URLS.agendaIndex + '?fotosSalida=' + r.data;
+                        } else {
+                            location.reload();
+                        }
                     } else {
                         Toast.error(r.message || 'Error al cerrar');
                     }

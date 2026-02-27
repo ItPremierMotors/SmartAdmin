@@ -95,9 +95,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
         /* Add class to app-content if sortable is active */
-        document.querySelector('.main-content').classList.add('sortable-active');
+        document.querySelector('.main-content')?.classList.add('sortable-active');
     } else {
-        document.querySelector('.main-content').classList.add('sortable-inactive');
+        document.querySelector('.main-content')?.classList.add('sortable-inactive');
     }
 
 
@@ -1563,7 +1563,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     let finalUrl = themeUrl;
                     // If doesn't end with .css, add the extension
                     if (!finalUrl.endsWith('.css')) {
-                        finalUrl = `css/themes/${finalUrl}.css`;
+                        finalUrl = `/css/themes/${finalUrl}.css`;
                     }
                     plugin.setThemeStyle(finalUrl);
                 }

@@ -48,6 +48,15 @@ namespace SmartAdmin.Models.Catalogo.Tecnico
 
         [Display(Name = "Sucursal")]
         public int? SucursalId { get; set; }
+
+        // Cuenta de acceso (opcional)
+        [Display(Name = "Email")]
+        [EmailAddress(ErrorMessage = "El email no es válido")]
+        public string? Email { get; set; }
+
+        [Display(Name = "Contraseña")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+        public string? Password { get; set; }
     }
 
     public class EditTecnicoViewModel

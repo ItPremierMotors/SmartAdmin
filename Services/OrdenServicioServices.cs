@@ -65,8 +65,8 @@ namespace SmartAdmin.Services
         public async Task<ApiResponse<bool>> CambiarEstadoAsync(CambiarEstadoOsViewModel model)
             => await apiClient.PostAsync<bool>("api/OrdenesServicio/cambiar-estado", model);
 
-        public async Task<ApiResponse<bool>> CerrarAsync(CerrarOsViewModel model)
-            => await apiClient.PostAsync<bool>("api/OrdenesServicio/cerrar", model);
+        public async Task<ApiResponse<int?>> CerrarAsync(CerrarOsViewModel model)
+            => await apiClient.PostAsync<int?>("api/OrdenesServicio/cerrar", model);
 
         public async Task<ApiResponse<bool>> CancelarAsync(int osId, string motivo)
             => await apiClient.PostAsync<bool>($"api/OrdenesServicio/cancelar/{osId}", motivo);

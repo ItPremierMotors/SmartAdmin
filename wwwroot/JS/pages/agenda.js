@@ -10,6 +10,17 @@ function getSucursalId() {
 
 $(document).ready(function () {
     cargarSucursales();
+
+    // Si viene de cerrar OS, abrir modal de fotos de salida automáticamente
+    const params = new URLSearchParams(window.location.search);
+    const fotosSalidaCitaId = params.get('fotosSalida');
+    if (fotosSalidaCitaId) {
+        // Limpiar el parámetro de la URL sin recargar
+        window.history.replaceState({}, '', window.location.pathname);
+        setTimeout(function () {
+            abrirEvidenciaSalida(parseInt(fotosSalidaCitaId));
+        }, 500);
+    }
 });
 
 // ─── Sucursales ───

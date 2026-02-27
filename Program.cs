@@ -10,7 +10,7 @@ builder.Services.AddControllersWithViews(options=>{
     options.Filters.Add(new Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter()); //agregamos autorization a todos los controllers
 });
 
-// Leer configuraci�n de JWT
+// Leer configuracion de JWT
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSection.GetValue<string>("Key")!);
 
@@ -46,6 +46,13 @@ builder.Services.AddAuthentication(options =>
                     context.Token = accessToken;
                 }
                 return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                // Cuando el JWT expira o no es válido, redirigir al login
+                context.HandleResponse();
+                context.Response.Redirect("/Auth/Login");
+                return Task.CompletedTask;
             }
         };
 
@@ -71,6 +78,7 @@ builder.Services.AddScoped<ITipoServicio, TipoServicioServices>();
 builder.Services.AddScoped<ITecnico, TecnicoServices>();
 builder.Services.AddScoped<IEstadoOs, EstadoOsServices>();
 builder.Services.AddScoped<ISucursal, SucursalServices>();
+builder.Services.AddScoped<IUbicacion, UbicacionServices>();
 builder.Services.AddScoped<ICliente, ClienteServices>();
 builder.Services.AddScoped<IVehiculo, VehiculoServices>();
 builder.Services.AddScoped<ICapacidadTaller, CapacidadTallerServices>();

@@ -18,7 +18,7 @@ namespace SmartAdmin.Interfaces
         Task<ApiResponse<OrdenServicioViewModel>> CreateWalkInAsync(CreateOsWalkInViewModel model);
         Task<ApiResponse<OrdenServicioViewModel>> UpdateAsync(UpdateOrdenServicioViewModel model);
         Task<ApiResponse<bool>> CambiarEstadoAsync(CambiarEstadoOsViewModel model);
-        Task<ApiResponse<bool>> CerrarAsync(CerrarOsViewModel model);
+        Task<ApiResponse<int?>> CerrarAsync(CerrarOsViewModel model);
         Task<ApiResponse<bool>> CancelarAsync(int osId, string motivo);
         Task<ApiResponse<bool>> RecalcularTotalesAsync(int osId);
         Task<ApiResponse<List<EstadoOsViewModel>>> GetTransicionesValidasAsync(int osId);

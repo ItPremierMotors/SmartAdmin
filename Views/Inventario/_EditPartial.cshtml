@@ -70,9 +70,9 @@
             <small class="text-muted">Use "Cambiar Estado" desde el detalle</small>
         </div>
         <div class="col-md-4 mb-3">
-            <label asp-for="SucursalId" class="form-label">@Html.DisplayNameFor(m => m.SucursalId)</label>
-            <select asp-for="SucursalId" class="form-select" id="SucursalId">
-                <option value="">Seleccione sucursal...</option>
+            <label asp-for="UbicacionId" class="form-label">@Html.DisplayNameFor(m => m.UbicacionId)</label>
+            <select asp-for="UbicacionId" class="form-select" id="UbicacionId">
+                <option value="">Seleccione ubicación...</option>
             </select>
         </div>
         <div class="col-md-4 mb-3">
@@ -210,7 +210,7 @@
             });
         });
 
-        _cargarSucursales();
+        _cargarUbicaciones();
         _initClienteSelect2();
 
         $('#Procedencia').off('change').on('change', function () {
@@ -269,14 +269,14 @@
             });
         }
 
-        function _cargarSucursales() {
-            $.get('@Url.Action("GetSucursales", "Inventario")', function (res) {
+        function _cargarUbicaciones() {
+            $.get('@Url.Action("GetUbicaciones", "Inventario")', function (res) {
                 if (res.success && res.data) {
-                    var select = $('#SucursalId');
-                    var currentValue = @(Model.SucursalId.HasValue ? Model.SucursalId.Value.ToString() : "null");
-                    res.data.forEach(function (s) {
-                        var selected = s.id == currentValue ? 'selected' : '';
-                        select.append('<option value="' + s.id + '" ' + selected + '>' + s.nombre + '</option>');
+                    var select = $('#UbicacionId');
+                    var currentValue = @(Model.UbicacionId.HasValue ? Model.UbicacionId.Value.ToString() : "null");
+                    res.data.forEach(function (u) {
+                        var selected = u.id == currentValue ? 'selected' : '';
+                        select.append('<option value="' + u.id + '" ' + selected + '>' + u.nombre + (u.sucursalNombre ? ' (' + u.sucursalNombre + ')' : '') + '</option>');
                     });
                 }
             });

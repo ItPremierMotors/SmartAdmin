@@ -13,7 +13,6 @@ namespace SmartAdmin.Models.Taller
         public DateTime FechaHoraFin { get; set; }
         public DateTime FechaRecepcion { get; set; }
         public EstadoCita Estado { get; set; }
-        public TipoIngreso TipoIngreso { get; set; }
         public string MotivoVisita { get; set; } = null!;
         public string? Observaciones { get; set; }
         public string? MotivoCancelacion { get; set; }

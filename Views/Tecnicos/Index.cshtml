@@ -270,6 +270,7 @@
 
         if (!form.checkValidity()) { form.reportValidity(); return; }
 
+        const crearCuenta = document.getElementById('chkCrearCuenta')?.checked;
         const data = {
             codigo: $('#Codigo').val().trim(),
             nombre: $('#Nombre').val().trim(),
@@ -277,7 +278,9 @@
             especialidad: $('#Especialidad').val().trim() || null,
             bahiaAsignada: $('#BahiaAsignada').val() ? parseInt($('#BahiaAsignada').val()) : null,
             usuarioId: $('#UsuarioId').val()?.trim() || null,
-            sucursalId: $('#SucursalId').val() ? parseInt($('#SucursalId').val()) : null
+            sucursalId: $('#SucursalId').val() ? parseInt($('#SucursalId').val()) : null,
+            email: crearCuenta ? $('#Email').val().trim() : null,
+            password: crearCuenta ? $('#Password').val() : null
         };
 
         $.ajax({

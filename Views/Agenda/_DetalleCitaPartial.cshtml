@@ -11,20 +11,12 @@
         _ => "bg-secondary"
     };
 
-    var tipoIngresoNombre = Model.TipoIngreso switch
-    {
-        SmartAdmin.Models.Enums.TipoIngreso.Cita => "Cita",
-        SmartAdmin.Models.Enums.TipoIngreso.WalkIn => "Walk-In",
-        SmartAdmin.Models.Enums.TipoIngreso.Garantia => "Garantia",
-        _ => "Otro"
-    };
 }
 
 <!-- Header with status -->
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <span class="badge @badgeClass fs-6">@Model.EstadoNombre</span>
-        <span class="badge bg-secondary ms-1">@tipoIngresoNombre</span>
     </div>
     <code class="fs-6">@Model.CodigoCita</code>
 </div>

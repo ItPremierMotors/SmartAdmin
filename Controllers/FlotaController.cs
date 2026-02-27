@@ -45,7 +45,6 @@ namespace SmartAdmin.Controllers
                     Anio = d.Anio,
                     Color = d.Color,
                     Estado = d.Estado,
-                    SucursalId = d.SucursalId,
                     Procedencia = d.Procedencia,
                     NumeroImportacion = d.NumeroImportacion,
                     NumeroPoliza = d.NumeroPoliza,

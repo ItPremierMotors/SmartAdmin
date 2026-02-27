@@ -14,9 +14,8 @@ namespace SmartAdmin.Models.Vehiculo
         public string? Color { get; set; }
         public int Estado { get; set; }
         #region Estado y Ubicación
-       
+
         public int? UbicacionId { get; set; }
-        public int? SucursalId { get; set; }
         #endregion
         public int? ClienteId { get; set; }
         public decimal? PrecioLista { get; set; }
@@ -63,7 +62,6 @@ namespace SmartAdmin.Models.Vehiculo
         // Estado
         public int Estado { get; set; }
         public int? UbicacionId { get; set; }
-        public int? SucursalId { get; set; }
 
         // Importación
         public int Procedencia { get; set; }
@@ -152,8 +150,8 @@ namespace SmartAdmin.Models.Vehiculo
         [Display(Name = "Estado")]
         public int Estado { get; set; } = 1;
 
-        [Display(Name = "Sucursal")]
-        public int? SucursalId { get; set; }
+        [Display(Name = "Ubicación")]
+        public int? UbicacionId { get; set; }
 
         [Display(Name = "Procedencia")]
         public int Procedencia { get; set; } = 2;
@@ -240,8 +238,8 @@ namespace SmartAdmin.Models.Vehiculo
         [Display(Name = "Estado")]
         public int Estado { get; set; }
 
-        [Display(Name = "Sucursal")]
-        public int? SucursalId { get; set; }
+        [Display(Name = "Ubicación")]
+        public int? UbicacionId { get; set; }
 
         [Display(Name = "Procedencia")]
         public int Procedencia { get; set; }

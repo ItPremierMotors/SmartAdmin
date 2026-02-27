@@ -10,6 +10,7 @@ namespace SmartAdmin.Controllers
         private readonly IVehiculo vehiculoServices;
         private readonly IMarca marcaServices;
         private readonly ISucursal sucursalServices;
+        private readonly IUbicacion ubicacionServices;
         private readonly IAuth authServices;
         private readonly IApiClient apiClient;
 
@@ -29,11 +30,12 @@ namespace SmartAdmin.Controllers
             { 4, "En Exhibición" }, { 5, "Reservado" }, { 6, "Vendido" }, { 7, "Entregado" }
         };
 
-        public InventarioController(IVehiculo vehiculoServices, IMarca marcaServices, ISucursal sucursalServices, IAuth authServices, IApiClient apiClient)
+        public InventarioController(IVehiculo vehiculoServices, IMarca marcaServices, ISucursal sucursalServices, IUbicacion ubicacionServices, IAuth authServices, IApiClient apiClient)
         {
             this.vehiculoServices = vehiculoServices;
             this.marcaServices = marcaServices;
             this.sucursalServices = sucursalServices;
+            this.ubicacionServices = ubicacionServices;
             this.authServices = authServices;
             this.apiClient = apiClient;
         }
@@ -66,7 +68,7 @@ namespace SmartAdmin.Controllers
                     Anio = d.Anio,
                     Color = d.Color,
                     Estado = d.Estado,
-                    SucursalId = d.SucursalId,
+                    UbicacionId = d.UbicacionId,
                     Procedencia = d.Procedencia,
                     NumeroImportacion = d.NumeroImportacion,
                     NumeroPoliza = d.NumeroPoliza,
@@ -194,6 +196,13 @@ namespace SmartAdmin.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetUbicaciones()
+        {
+            var response = await ubicacionServices.GetActivasAsync();
+            return StatusCode(response.StatusCode, response);
+        }
+
         // CRUD
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateVehiculoViewModel model)
@@ -280,7 +289,7 @@ namespace SmartAdmin.Controllers
                 Anio = d.Anio,
                 Color = d.Color,
                 Estado = d.Estado,
-                SucursalId = d.SucursalId,
+                UbicacionId = d.UbicacionId,
                 Procedencia = d.Procedencia,
                 NumeroImportacion = d.NumeroImportacion,
                 NumeroPoliza = d.NumeroPoliza,
