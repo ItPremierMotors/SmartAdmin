@@ -176,6 +176,9 @@ namespace SmartAdmin.Models.Taller
 
         // Extras UI
         public string NumeroOs { get; set; } = null!;
+        public int VehiculoId { get; set; }
+        public string? VehiculoDescripcion { get; set; }
+        public string? VehiculoPlaca { get; set; }
         public string TecnicoNombre { get; set; } = null!;
         public string? TecnicoCodigo { get; set; }
         public string? ServicioDescripcion { get; set; }

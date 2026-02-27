@@ -125,5 +125,13 @@ namespace SmartAdmin.Services
 
         public async Task<ApiResponse<bool>> CancelarAsignacionAsync(int asignacionId)
             => await apiClient.DeleteAsync<bool>($"api/AsignacionesTecnico/Cancelar{asignacionId}");
+
+        // ─── Portal Técnico ───
+
+        public async Task<ApiResponse<List<AsignacionTecnicoViewModel>>> GetActivasByTecnicoIdAsync(int tecnicoId)
+            => await apiClient.GetAsync<List<AsignacionTecnicoViewModel>>($"api/AsignacionesTecnico/GetActivasByTecnicoId/{tecnicoId}");
+
+        public async Task<ApiResponse<List<OrdenServicioViewModel>>> GetHistorialVehiculoAsync(int vehiculoId)
+            => await apiClient.GetAsync<List<OrdenServicioViewModel>>($"api/OrdenesServicio/GetByVehiculo/{vehiculoId}");
     }
 }

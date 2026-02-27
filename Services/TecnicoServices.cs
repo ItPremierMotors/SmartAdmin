@@ -42,5 +42,10 @@ namespace SmartAdmin.Services
         {
             return await apiClient.DeleteAsync<bool>($"api/Tecnicos/Delete/{tecnicoId}");
         }
+
+        public async Task<ApiResponse<TecnicoViewModel>> GetByUsuarioIdAsync(string usuarioId)
+        {
+            return await apiClient.GetAsync<TecnicoViewModel>($"api/Tecnicos/GetByUsuarioId/{usuarioId}");
+        }
     }
 }

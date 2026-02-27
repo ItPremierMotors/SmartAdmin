@@ -1,0 +1,96 @@
+@model SmartAdmin.Models.Catalogo.Tecnico.TecnicoViewModel
+@{
+    ViewData["Title"] = "Portal Tecnico";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fal fa-hard-hat me-2"></i>Portal Tecnico
+            </h3>
+            <p class="text-muted mb-0">
+                <strong>@Model.NombreCompleto</strong>
+                @if (!string.IsNullOrEmpty(Model.Codigo))
+                {
+                    <span class="badge bg-secondary ms-2">@Model.Codigo</span>
+                }
+                @if (!string.IsNullOrEmpty(Model.Especialidad))
+                {
+                    <span class="ms-2">| @Model.Especialidad</span>
+                }
+            </p>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" onclick="cargarAsignaciones()">
+            <i class="fal fa-sync-alt me-1"></i> Actualizar
+        </button>
+    </div>
+
+    <!-- Asignaciones Activas -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fal fa-tasks me-2"></i>Mis Asignaciones</h5>
+        </div>
+        <div class="card-body">
+            <div id="loadingAsignaciones" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando asignaciones...</p>
+            </div>
+            <div id="sinAsignaciones" class="text-center py-4 d-none">
+                <i class="fal fa-check-circle fa-3x text-success mb-3 d-block"></i>
+                <p class="text-muted">No tienes asignaciones pendientes.</p>
+            </div>
+            <div id="asignacionesContainer" class="row g-3 d-none">
+                <!-- Cards renderizadas por JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial del Vehiculo -->
+    <div class="card shadow-sm d-none" id="historialCard">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fal fa-history me-2"></i>Historial del Vehiculo: <span id="historialVehiculoNombre"></span></h5>
+            <button class="btn btn-outline-secondary btn-sm" onclick="cerrarHistorial()">
+                <i class="fal fa-times"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="loadingHistorial" class="text-center py-3 d-none">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm d-none" id="tablaHistorial">
+                    <thead class="table-light">
+                        <tr>
+                            <th>N. OS</th>
+                            <th>Fecha Apertura</th>
+                            <th>Fecha Cierre</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historialBody"></tbody>
+                </table>
+            </div>
+            <div id="sinHistorial" class="text-center py-3 d-none">
+                <p class="text-muted mb-0">Sin historial de servicio para este vehiculo.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+<script>
+    const TECNICO_ID = @Model.TecnicoId;
+    const URLS = {
+        getAsignacionesActivas: '@Url.Action("GetAsignacionesActivas", "PortalTecnico")',
+        getHistorialVehiculo:   '@Url.Action("GetHistorialVehiculo", "PortalTecnico")',
+        postIniciar:            '@Url.Action("IniciarAsignacion", "PortalTecnico")',
+        postPausar:             '@Url.Action("PausarAsignacion", "PortalTecnico")',
+        postReanudar:           '@Url.Action("ReanudarAsignacion", "PortalTecnico")',
+        postCompletar:          '@Url.Action("CompletarAsignacion", "PortalTecnico")'
+    };
+</script>
+<script src="~/JS/pages/portal-tecnico.js"></script>
+}

@@ -41,5 +41,9 @@ namespace SmartAdmin.Interfaces
         Task<ApiResponse<bool>> CompletarAsignacionAsync(int asignacionId);
         Task<ApiResponse<AsignacionTecnicoViewModel>> ReasignarAsync(ReasignarViewModel model);
         Task<ApiResponse<bool>> CancelarAsignacionAsync(int asignacionId);
+
+        // ─── Portal Técnico ───
+        Task<ApiResponse<List<AsignacionTecnicoViewModel>>> GetActivasByTecnicoIdAsync(int tecnicoId);
+        Task<ApiResponse<List<OrdenServicioViewModel>>> GetHistorialVehiculoAsync(int vehiculoId);
     }
 }

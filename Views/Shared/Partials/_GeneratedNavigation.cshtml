@@ -236,5 +236,16 @@
         </ul>
     </li>
 
+    @if (User.IsInRole("TECNICO"))
+    {
+        <li class="nav-item">
+            <a href="@Url.Action("Index", "PortalTecnico")" title="Portal Tecnico" data-filter-tags>
+                <svg class="sa-icon">
+                    <use href="/icons/sprite.svg#tool"></use>
+                </svg>
+                <span class="nav-link-text" data-i18n>Portal Tecnico</span>
+            </a>
+        </li>
+    }
 
 </ul>

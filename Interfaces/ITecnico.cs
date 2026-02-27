@@ -11,5 +11,6 @@ namespace SmartAdmin.Interfaces
         Task<ApiResponse<TecnicoViewModel>> CreateAsync(CreateTecnicoViewModel model);
         Task<ApiResponse<TecnicoViewModel>> EditAsync(EditTecnicoViewModel model);
         Task<ApiResponse<bool>> DeleteAsync(int tecnicoId);
+        Task<ApiResponse<TecnicoViewModel>> GetByUsuarioIdAsync(string usuarioId);
     }
 }
