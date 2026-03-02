@@ -22,25 +22,67 @@
                 </div>
             </div>
 
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-3" id="tabVentas" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-pendientes" data-bs-toggle="tab" data-bs-target="#panel-pendientes"
+                            type="button" role="tab">
+                        <i class="fas fa-clock me-1"></i> Pendientes de Entrega
+                        <span class="badge bg-warning text-dark ms-1" id="countPendientes">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-entregados" data-bs-toggle="tab" data-bs-target="#panel-entregados"
+                            type="button" role="tab">
+                        <i class="fas fa-check-circle me-1"></i> Entregados
+                        <span class="badge bg-success ms-1" id="countEntregados">0</span>
+                    </button>
+                </li>
+            </ul>
+
             <div id="loading" class="text-center py-4">
                 <div class="spinner-border text-primary"></div>
                 <p class="mt-2 text-muted">Cargando ventas...</p>
             </div>
 
-            <table class="table table-hover table-sm d-none" id="tablaVentas" style="width:100%">
-                <thead class="table-light">
-                    <tr>
-                        <th>Identificador</th>
-                        <th>Descripción</th>
-                        <th>Cliente</th>
-                        <th>Precio Venta</th>
-                        <th>Fecha Venta</th>
-                        <th>Vendedor</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="tab-content" id="tabVentasContent">
+                <!-- Tab Pendientes -->
+                <div class="tab-pane fade show active" id="panel-pendientes" role="tabpanel">
+                    <table class="table table-hover table-sm d-none" id="tablaPendientes" style="width:100%">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Identificador</th>
+                                <th>Descripción</th>
+                                <th>Cliente</th>
+                                <th>Precio Venta</th>
+                                <th>Fecha Venta</th>
+                                <th>Plazo</th>
+                                <th>Vendedor</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <!-- Tab Entregados -->
+                <div class="tab-pane fade" id="panel-entregados" role="tabpanel">
+                    <table class="table table-hover table-sm d-none" id="tablaEntregados" style="width:100%">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Identificador</th>
+                                <th>Descripción</th>
+                                <th>Cliente</th>
+                                <th>Precio Venta</th>
+                                <th>Fecha Venta</th>
+                                <th>Fecha Entrega</th>
+                                <th>Días</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -59,9 +101,12 @@
     };
 
     const ESTADO_VENDIDO = 6;
+    const ESTADO_ENTREGADO = 7;
 
-    let dtVentas = null;
-    let datosOriginales = [];
+    let dtPendientes = null;
+    let dtEntregados = null;
+    let datosPendientes = [];
+    let datosEntregados = [];
 
     $(document).ready(function () {
         cargarDatos();
@@ -93,6 +138,11 @@
         });
 
         $('#filtroCliente').on('change', aplicarFiltros);
+
+        // Re-render entregados table when tab is shown (DataTables fix)
+        document.getElementById('tab-entregados').addEventListener('shown.bs.tab', function () {
+            if (dtEntregados) dtEntregados.columns.adjust().responsive.recalc();
+        });
     });
 
     function cargarDatos() {
@@ -101,8 +151,19 @@
             type: 'GET',
             success: function (response) {
                 if (response.success && response.data) {
-                    datosOriginales = response.data.filter(v => v.estado === ESTADO_VENDIDO);
-                    renderizarTabla(datosOriginales);
+                    datosPendientes = response.data.filter(v => v.estado === ESTADO_VENDIDO);
+
+                    // Entregados: últimos 30 días
+                    var hace30Dias = new Date();
+                    hace30Dias.setDate(hace30Dias.getDate() - 30);
+                    datosEntregados = response.data.filter(v =>
+                        v.estado === ESTADO_ENTREGADO &&
+                        v.fechaEntrega && new Date(v.fechaEntrega) >= hace30Dias
+                    );
+
+                    renderizarTablaPendientes(datosPendientes);
+                    renderizarTablaEntregados(datosEntregados);
+                    actualizarContadores();
                 } else {
                     Toast.error('Error al cargar ventas');
                 }
@@ -115,10 +176,30 @@
         });
     }
 
-    function renderizarTabla(datos) {
-        if (dtVentas) dtVentas.destroy();
+    function calcularPlazo(fechaMaximaEntrega) {
+        if (!fechaMaximaEntrega) return { dias: null, clase: 'text-muted', texto: 'Sin plazo', badge: '' };
+        var hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        var limite = new Date(fechaMaximaEntrega);
+        limite.setHours(0, 0, 0, 0);
+        var diffMs = limite - hoy;
+        var dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-        dtVentas = $('#tablaVentas').DataTable({
+        if (dias < 0) {
+            return { dias: dias, clase: 'bg-danger text-white', texto: Math.abs(dias) + 'd vencido', badge: 'VENCIDO' };
+        } else if (dias === 0) {
+            return { dias: 0, clase: 'bg-danger text-white', texto: 'Hoy', badge: '' };
+        } else if (dias <= 3) {
+            return { dias: dias, clase: 'bg-warning text-dark', texto: dias + 'd restante' + (dias > 1 ? 's' : ''), badge: '' };
+        } else {
+            return { dias: dias, clase: 'bg-success text-white', texto: dias + 'd restantes', badge: '' };
+        }
+    }
+
+    function renderizarTablaPendientes(datos) {
+        if (dtPendientes) dtPendientes.destroy();
+
+        dtPendientes = $('#tablaPendientes').DataTable({
             data: datos,
             columns: [
                 {
@@ -148,6 +229,16 @@
                     }
                 },
                 {
+                    data: 'fechaMaximaEntrega',
+                    render: function (data, type, row) {
+                        var plazo = calcularPlazo(data);
+                        if (type === 'sort' || type === 'type') return plazo.dias ?? 999;
+                        var html = `<span class="badge ${plazo.clase}">${plazo.texto}</span>`;
+                        if (plazo.badge) html += ` <span class="badge bg-dark">${plazo.badge}</span>`;
+                        return html;
+                    }
+                },
+                {
                     data: 'vendedorNombre',
                     render: data => data || '<span class="text-muted">N/A</span>'
                 },
@@ -173,23 +264,118 @@
             language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
             pageLength: 10,
             lengthMenu: [5, 10, 25, 50],
-            order: [[4, 'desc']],
+            order: [[5, 'asc']], // Ordenar por plazo (más urgentes primero)
             responsive: true
         });
 
-        $('#tablaVentas').removeClass('d-none');
+        $('#tablaPendientes').removeClass('d-none');
+    }
+
+    function renderizarTablaEntregados(datos) {
+        if (dtEntregados) dtEntregados.destroy();
+
+        dtEntregados = $('#tablaEntregados').DataTable({
+            data: datos,
+            columns: [
+                {
+                    data: 'identificador',
+                    render: data => `<strong>${data}</strong>`
+                },
+                {
+                    data: 'descripcionCompleta',
+                    render: data => data || 'N/A'
+                },
+                {
+                    data: 'clienteNombre',
+                    render: data => data || '<span class="text-muted">Sin asignar</span>'
+                },
+                {
+                    data: 'precioVenta',
+                    render: data => data ? '$ ' + data.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '<span class="text-muted">N/A</span>'
+                },
+                {
+                    data: 'fechaVenta',
+                    render: data => {
+                        if (data) {
+                            const d = new Date(data);
+                            return d.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                        return '<span class="text-muted">N/A</span>';
+                    }
+                },
+                {
+                    data: 'fechaEntrega',
+                    render: data => {
+                        if (data) {
+                            const d = new Date(data);
+                            return d.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                        return '<span class="text-muted">N/A</span>';
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        if (!row.fechaVenta || !row.fechaEntrega) return '<span class="text-muted">N/A</span>';
+                        var venta = new Date(row.fechaVenta);
+                        var entrega = new Date(row.fechaEntrega);
+                        var diffMs = entrega - venta;
+                        var dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                        if (type === 'sort' || type === 'type') return dias;
+
+                        var aTiempo = true;
+                        if (row.fechaMaximaEntrega) {
+                            var limite = new Date(row.fechaMaximaEntrega);
+                            aTiempo = entrega <= limite;
+                        }
+                        var badge = aTiempo
+                            ? '<span class="badge bg-success">A tiempo</span>'
+                            : '<span class="badge bg-danger">Tardío</span>';
+                        return `${dias}d ${badge}`;
+                    }
+                },
+                {
+                    data: 'vehiculoId',
+                    orderable: false,
+                    className: 'text-center',
+                    render: data => `
+                        <button class="btn btn-outline-info btn-sm" onclick="abrirModalDetalle(${data})" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    `
+                }
+            ],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            order: [[5, 'desc']], // Más recientes primero
+            responsive: true
+        });
+
+        $('#tablaEntregados').removeClass('d-none');
+    }
+
+    function actualizarContadores() {
+        $('#countPendientes').text(datosPendientes.length);
+        $('#countEntregados').text(datosEntregados.length);
     }
 
     function aplicarFiltros() {
         const clienteFiltro = $('#filtroCliente').val();
-        let datos = [...datosOriginales];
-        if (clienteFiltro) datos = datos.filter(v => v.clienteNombre === clienteFiltro);
-        renderizarTabla(datos);
+        let pendientes = [...datosPendientes];
+        let entregados = [...datosEntregados];
+        if (clienteFiltro) {
+            pendientes = pendientes.filter(v => v.clienteNombre === clienteFiltro);
+            entregados = entregados.filter(v => v.clienteNombre === clienteFiltro);
+        }
+        renderizarTablaPendientes(pendientes);
+        renderizarTablaEntregados(entregados);
     }
 
     function limpiarFiltros() {
         $('#filtroCliente').val('').trigger('change.select2');
-        renderizarTabla(datosOriginales);
+        renderizarTablaPendientes(datosPendientes);
+        renderizarTablaEntregados(datosEntregados);
     }
 
     function recargarTabla() {
@@ -198,8 +384,17 @@
             type: 'GET',
             success: function (response) {
                 if (response.success && response.data) {
-                    datosOriginales = response.data.filter(v => v.estado === ESTADO_VENDIDO);
+                    datosPendientes = response.data.filter(v => v.estado === ESTADO_VENDIDO);
+
+                    var hace30Dias = new Date();
+                    hace30Dias.setDate(hace30Dias.getDate() - 30);
+                    datosEntregados = response.data.filter(v =>
+                        v.estado === ESTADO_ENTREGADO &&
+                        v.fechaEntrega && new Date(v.fechaEntrega) >= hace30Dias
+                    );
+
                     limpiarFiltros();
+                    actualizarContadores();
                 }
             }
         });
@@ -322,22 +517,15 @@
     }
 
     function confirmarProcesarEntrega() {
-        const form = document.getElementById('formProcesarEntrega');
         const btn = document.getElementById('btnProcesarEntrega');
         const btnOriginal = btn.innerHTML;
-
-        if (!form.checkValidity()) { form.reportValidity(); return; }
-
-        const data = {
-            vehiculoId: parseInt($('#EntregaVehiculoId').val()),
-            fechaEntrega: $('#EntregaFecha').val()
-        };
+        const vehiculoId = parseInt($('#EntregaVehiculoId').val());
 
         $.ajax({
             url: URLS.procesarEntrega,
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(data),
+            data: JSON.stringify({ vehiculoId: vehiculoId }),
             beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...'),
             success: function (response) {
                 if (response.success) {

@@ -40,9 +40,9 @@ namespace SmartAdmin.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetHistorialVehiculo(int vehiculoId)
+        public async Task<IActionResult> GetHistorialServicio(int vehiculoId)
         {
-            var response = await _osServices.GetHistorialVehiculoAsync(vehiculoId);
+            var response = await _osServices.GetHistorialServicioVehiculoAsync(vehiculoId);
             return StatusCode(response.StatusCode, response);
         }
 

@@ -45,5 +45,8 @@ namespace SmartAdmin.Interfaces
         // ─── Portal Técnico ───
         Task<ApiResponse<List<AsignacionTecnicoViewModel>>> GetActivasByTecnicoIdAsync(int tecnicoId);
         Task<ApiResponse<List<OrdenServicioViewModel>>> GetHistorialVehiculoAsync(int vehiculoId);
+
+        // ─── Historial de Servicio ───
+        Task<ApiResponse<HistorialServicioVehiculoViewModel>> GetHistorialServicioVehiculoAsync(int vehiculoId);
     }
 }

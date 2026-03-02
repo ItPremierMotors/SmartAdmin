@@ -7,10 +7,12 @@ namespace SmartAdmin.Controllers
     public class FlotaController : Controller
     {
         private readonly IVehiculo vehiculoServices;
+        private readonly IOrdenServicio osServices;
 
-        public FlotaController(IVehiculo vehiculoServices)
+        public FlotaController(IVehiculo vehiculoServices, IOrdenServicio osServices)
         {
             this.vehiculoServices = vehiculoServices;
+            this.osServices = osServices;
         }
 
         public IActionResult Index() => View();
@@ -100,6 +102,13 @@ namespace SmartAdmin.Controllers
         public async Task<IActionResult> ActualizarKilometraje([FromBody] ActualizarKilometrajeRequest request)
         {
             var response = await vehiculoServices.ActualizarKilometrajeAsync(request.VehiculoId, request.NuevoKilometraje);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetHistorialServicio(int vehiculoId)
+        {
+            var response = await osServices.GetHistorialServicioVehiculoAsync(vehiculoId);
             return StatusCode(response.StatusCode, response);
         }
 

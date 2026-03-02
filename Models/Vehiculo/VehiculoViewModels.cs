@@ -22,6 +22,7 @@ namespace SmartAdmin.Models.Vehiculo
         public decimal? PrecioVenta { get; set; }
         public DateTime? FechaVenta { get; set; }
         public DateTime? FechaEntrega { get; set; }
+        public DateTime? FechaMaximaEntrega { get; set; }
         public string? VendedorId { get; set; }
         public string? VendedorNombre { get; set; }
         public int KilometrajeActual { get; set; }
@@ -77,6 +78,7 @@ namespace SmartAdmin.Models.Vehiculo
         public decimal? PrecioVenta { get; set; }
         public DateTime? FechaVenta { get; set; }
         public DateTime? FechaEntrega { get; set; }
+        public DateTime? FechaMaximaEntrega { get; set; }
         public string? VendedorId { get; set; }
         public string? VendedorNombre { get; set; }
 
@@ -306,19 +308,11 @@ namespace SmartAdmin.Models.Vehiculo
         [Required(ErrorMessage = "El precio de venta es obligatorio")]
         [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a 0")]
         public decimal PrecioVenta { get; set; }
-
-        [Display(Name = "Fecha de Venta")]
-        [Required(ErrorMessage = "La fecha de venta es obligatoria")]
-        public DateTime FechaVenta { get; set; } = DateTime.Now;
     }
 
     public class ProcesarEntregaViewModel
     {
         public int VehiculoId { get; set; }
-
-        [Display(Name = "Fecha de Entrega")]
-        [Required(ErrorMessage = "La fecha de entrega es obligatoria")]
-        public DateTime FechaEntrega { get; set; } = DateTime.Now;
     }
 
     public class CambiarEstadoRequest
@@ -327,6 +321,7 @@ namespace SmartAdmin.Models.Vehiculo
         public int NuevoEstado { get; set; }
         public int? ClienteId { get; set; }
         public string? VendedorId { get; set; }
+        public int? UbicacionId { get; set; }
     }
 
     public class ActualizarKilometrajeRequest

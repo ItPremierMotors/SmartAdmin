@@ -71,6 +71,50 @@
     </div>
 </div>
 
+<!-- Modal Seleccionar Ubicación para Cambio de Estado -->
+<div class="modal fade" id="modalUbicacionEstado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-map-marker-alt me-2"></i>Seleccionar Ubicación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Seleccione la ubicación donde estará el vehículo en su nuevo estado.</p>
+                <input type="hidden" id="ue_vehiculoId" />
+                <input type="hidden" id="ue_nuevoEstado" />
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Ubicación <span class="text-danger">*</span></label>
+                    <select class="form-select" id="ue_ubicacionId" required>
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+                <!-- Campos extra para Reservar (estado 5) -->
+                <div id="ue_reservaFields" class="d-none">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Vendedor <span class="text-danger">*</span></label>
+                        <select class="form-select" id="ue_vendedorId">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Cliente</label>
+                        <select class="form-select" id="ue_clienteId">
+                            <option value="">-- Sin cliente --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" id="btnConfirmarUbicacionEstado" onclick="confirmarUbicacionYCambiar()">
+                    <i class="fas fa-exchange-alt me-1"></i> Confirmar y Cambiar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
     const URLS = {
@@ -94,7 +138,10 @@
         crearLote: '@Url.Action("CrearLote", "Inventario")',
         getMarcasAll: '@Url.Action("GetAll", "Marca")',
         getModelosByMarca: '@Url.Action("GetByMarca", "Modelos")',
-        getVersionesByModelo: '@Url.Action("GetByModelo", "VersionesVehiculo")'
+        getVersionesByModelo: '@Url.Action("GetByModelo", "VersionesVehiculo")',
+        getUbicaciones: '@Url.Action("GetUbicaciones", "Inventario")',
+        getVendedores: '@Url.Action("GetVendedores", "Inventario")',
+        getClientes: '@Url.Action("GetAll", "Clientes")'
     };
 
     const estadoColors = {
@@ -424,35 +471,104 @@
         const vehiculoId = parseInt($('#stateChangeVehiculoId').val());
         const nuevoEstado = parseInt($('#nuevoEstado').val());
 
-        if (nuevoEstado === 5) {
-            abrirModalReservar(vehiculoId);
-            return;
-        }
-
-        ejecutarCambioEstado(vehiculoId, nuevoEstado, null);
+        // Siempre abrir modal de ubicación
+        abrirModalUbicacionEstado(vehiculoId, nuevoEstado);
     }
 
-    function abrirModalReservar(vehiculoId) {
-        AppModal.open({
-            title: '<i class="fas fa-bookmark me-2"></i>Reservar Vehículo',
-            url: URLS.reservarPartial,
-            data: { id: vehiculoId },
-            size: 'md'
+    function abrirModalUbicacionEstado(vehiculoId, nuevoEstado) {
+        $('#ue_vehiculoId').val(vehiculoId);
+        $('#ue_nuevoEstado').val(nuevoEstado);
+        $('#ue_ubicacionId').val('');
+
+        // Cargar ubicaciones
+        $.get(URLS.getUbicaciones, function (r) {
+            if (r.success && r.data) {
+                var $sel = $('#ue_ubicacionId');
+                $sel.html('<option value="">-- Seleccione --</option>');
+                r.data.forEach(function (u) {
+                    $sel.append('<option value="' + u.id + '">' + u.nombre + (u.sucursalNombre ? ' (' + u.sucursalNombre + ')' : '') + '</option>');
+                });
+            }
+        });
+
+        // Mostrar campos de reserva si es estado 5
+        if (nuevoEstado === 5) {
+            $('#ue_reservaFields').removeClass('d-none');
+            cargarVendedoresYClientes();
+        } else {
+            $('#ue_reservaFields').addClass('d-none');
+            $('#ue_vendedorId').val('');
+            $('#ue_clienteId').val('');
+        }
+
+        var modalEl = document.getElementById('modalUbicacionEstado');
+        $(modalEl).css('z-index', 1065);
+        var modal = new bootstrap.Modal(modalEl);
+        modalEl.addEventListener('shown.bs.modal', function () {
+            var backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 1) backdrops[backdrops.length - 1].style.zIndex = '1060';
+        }, { once: true });
+        modal.show();
+    }
+
+    function cargarVendedoresYClientes() {
+        $.get(URLS.getVendedores, function (r) {
+            if (r.success && r.data) {
+                var $sel = $('#ue_vendedorId');
+                $sel.html('<option value="">-- Seleccione --</option>');
+                r.data.forEach(function (v) {
+                    $sel.append('<option value="' + v.id + '">' + v.nombreCompleto + '</option>');
+                });
+            }
+        });
+        $.get(URLS.getClientes, function (r) {
+            if (r.success && r.data) {
+                var $sel = $('#ue_clienteId');
+                $sel.html('<option value="">-- Sin cliente --</option>');
+                r.data.forEach(function (c) {
+                    $sel.append('<option value="' + c.clienteId + '">' + c.nombreCompleto + '</option>');
+                });
+            }
         });
     }
 
-    function ejecutarCambioEstado(vehiculoId, nuevoEstado, clienteId) {
-        const btn = document.getElementById('btnConfirmarEstado');
+    function confirmarUbicacionYCambiar() {
+        var ubicacionId = $('#ue_ubicacionId').val() ? parseInt($('#ue_ubicacionId').val()) : null;
+        if (!ubicacionId) {
+            Toast.error('Debe seleccionar una ubicación');
+            return;
+        }
+
+        var vehiculoId = parseInt($('#ue_vehiculoId').val());
+        var nuevoEstado = parseInt($('#ue_nuevoEstado').val());
+        var clienteId = null;
+        var vendedorId = null;
+
+        if (nuevoEstado === 5) {
+            vendedorId = $('#ue_vendedorId').val() || null;
+            clienteId = $('#ue_clienteId').val() ? parseInt($('#ue_clienteId').val()) : null;
+            if (!vendedorId) {
+                Toast.error('Debe seleccionar un vendedor');
+                return;
+            }
+        }
+
+        ejecutarCambioEstado(vehiculoId, nuevoEstado, clienteId, vendedorId, ubicacionId);
+    }
+
+    function ejecutarCambioEstado(vehiculoId, nuevoEstado, clienteId, vendedorId, ubicacionId) {
+        const btn = document.getElementById('btnConfirmarUbicacionEstado');
         const btnOriginal = btn ? btn.innerHTML : '';
 
         $.ajax({
             url: URLS.cambiarEstado,
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ vehiculoId: vehiculoId, nuevoEstado: nuevoEstado, clienteId: clienteId }),
+            data: JSON.stringify({ vehiculoId: vehiculoId, nuevoEstado: nuevoEstado, clienteId: clienteId, vendedorId: vendedorId, ubicacionId: ubicacionId }),
             beforeSend: () => { if (btn) $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cambiando...'); },
             success: function (response) {
                 if (response.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('modalUbicacionEstado'))?.hide();
                     AppModal.close();
                     recargarTabla();
                     Toast.success(response.message || 'Estado actualizado');
@@ -464,40 +580,6 @@
                 Toast.error(xhr.responseJSON?.message || 'Error al cambiar estado');
             },
             complete: () => { if (btn) $(btn).prop('disabled', false).html(btnOriginal); }
-        });
-    }
-
-    function confirmarReservar() {
-        const vehiculoId = parseInt($('#ReservaVehiculoId').val());
-        const vendedorId = $('#ReservaVendedorId').val() || null;
-        const clienteId = $('#ReservaClienteId').val() ? parseInt($('#ReservaClienteId').val()) : null;
-        const btn = document.getElementById('btnReservar');
-        const btnOriginal = btn.innerHTML;
-
-        if (!vendedorId) {
-            Toast.error('Debe seleccionar un vendedor');
-            return;
-        }
-
-        $.ajax({
-            url: URLS.cambiarEstado,
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ vehiculoId: vehiculoId, nuevoEstado: 5, clienteId: clienteId, vendedorId: vendedorId }),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Reservando...'),
-            success: function (response) {
-                if (response.success) {
-                    AppModal.close();
-                    recargarTabla();
-                    Toast.success(response.message || 'Vehículo reservado exitosamente');
-                } else {
-                    Toast.error(response.message || 'Error al reservar');
-                }
-            },
-            error: function (xhr) {
-                Toast.error(xhr.responseJSON?.message || 'Error al reservar');
-            },
-            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
         });
     }
 
@@ -521,8 +603,7 @@
         const data = {
             vehiculoId: parseInt($('#VentaVehiculoId').val()),
             clienteId: parseInt($('#VentaClienteId').val()),
-            precioVenta: parseFloat($('#PrecioVenta').val()),
-            fechaVenta: $('#FechaVenta').val()
+            precioVenta: parseFloat($('#PrecioVenta').val())
         };
 
         if (!data.clienteId) { Toast.error('Seleccione un cliente'); return; }

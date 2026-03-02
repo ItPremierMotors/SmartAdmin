@@ -94,11 +94,11 @@ namespace SmartAdmin.Controllers
             {
                 var model = new ProcesarEntregaViewModel
                 {
-                    VehiculoId = id,
-                    FechaEntrega = DateTime.Now
+                    VehiculoId = id
                 };
                 ViewBag.VehiculoInfo = $"{response.Data.DescripcionCompleta} - {response.Data.Identificador}";
                 ViewBag.ClienteNombre = response.Data.ClienteNombre;
+                ViewBag.FechaMaximaEntrega = response.Data.FechaMaximaEntrega;
                 return PartialView("_EntregaPartial", model);
             }
             return Content("<div class='alert alert-danger'>El vehículo debe estar en estado Vendido para procesar la entrega</div>");
@@ -152,58 +152,10 @@ namespace SmartAdmin.Controllers
         [HttpPost]
         public async Task<IActionResult> ProcesarEntrega([FromBody] ProcesarEntregaViewModel model)
         {
-            if (!ModelState.IsValid) return BadRequest(new { success = false, message = ObtenerErroresValidacion() });
-
-            // 1. Obtener detalle actual
-            var detalle = await vehiculoServices.GetDetalleAsync(model.VehiculoId);
-            if (!detalle.Success || detalle.Data == null)
-                return StatusCode(detalle.StatusCode, detalle);
-
-            if (detalle.Data.Estado != 6)
-                return BadRequest(new { success = false, message = "El vehículo debe estar en estado Vendido para procesar la entrega" });
-
-            // 2. Actualizar con fecha de entrega
-            var d = detalle.Data;
-            var editModel = new EditVehiculoViewModel
-            {
-                VehiculoId = d.VehiculoId,
-                Vin = d.Vin,
-                Placa = d.Placa,
-                NumeroMotor = d.NumeroMotor,
-                NumeroChasis = d.NumeroChasis,
-                MarcaId = d.MarcaId,
-                ModeloId = d.ModeloId,
-                VersionId = d.VersionId,
-                Anio = d.Anio,
-                Color = d.Color,
-                Estado = d.Estado,
-                Procedencia = d.Procedencia,
-                NumeroImportacion = d.NumeroImportacion,
-                NumeroPoliza = d.NumeroPoliza,
-                FechaIngresoPais = d.FechaIngresoPais,
-                FechaRecepcion = d.FechaRecepcion,
-                CostoImportacion = d.CostoImportacion,
-                ClienteId = d.ClienteId,
-                PrecioLista = d.PrecioLista,
-                PrecioVenta = d.PrecioVenta,
-                FechaVenta = d.FechaVenta,
-                KilometrajeActual = d.KilometrajeActual,
-                FechaPrimeraMatricula = d.FechaPrimeraMatricula,
-                GarantiaHasta = d.GarantiaHasta,
-                Observaciones = d.Observaciones,
-                VendedorId = d.VendedorId,
-                // Dato de entrega
-                FechaEntrega = model.FechaEntrega
-            };
-
-            var editResult = await vehiculoServices.EditAsync(editModel);
-            if (!editResult.Success)
-                return StatusCode(editResult.StatusCode, editResult);
-
-            // 3. Cambiar estado a Entregado
+            // Cambiar estado a Entregado (el backend auto-asigna FechaEntrega)
             var estadoResult = await vehiculoServices.CambiarEstadoAsync(model.VehiculoId, 7);
             if (!estadoResult.Success)
-                return StatusCode(estadoResult.StatusCode, new { success = false, message = $"La fecha de entrega se guardó pero hubo un error al cambiar el estado: {estadoResult.Message}" });
+                return StatusCode(estadoResult.StatusCode, new { success = false, message = estadoResult.Message ?? "Error al procesar la entrega" });
 
             return Ok(new { success = true, message = "Entrega procesada exitosamente" });
         }

@@ -133,5 +133,10 @@ namespace SmartAdmin.Services
 
         public async Task<ApiResponse<List<OrdenServicioViewModel>>> GetHistorialVehiculoAsync(int vehiculoId)
             => await apiClient.GetAsync<List<OrdenServicioViewModel>>($"api/OrdenesServicio/GetByVehiculo/{vehiculoId}");
+
+        // ─── Historial de Servicio ───
+
+        public async Task<ApiResponse<HistorialServicioVehiculoViewModel>> GetHistorialServicioVehiculoAsync(int vehiculoId)
+            => await apiClient.GetAsync<HistorialServicioVehiculoViewModel>($"api/OrdenesServicio/GetHistorialServicio/{vehiculoId}");
     }
 }

@@ -126,6 +126,64 @@
     </div>
 </div>
 
+<!-- Historial de Servicio -->
+<div class="card mb-3 border-success">
+    <div class="card-header bg-success bg-opacity-25 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="fas fa-history me-2"></i>Historial de Servicio</h6>
+        <button class="btn btn-sm btn-outline-success" onclick="cargarHistorialServicio(@Model.VehiculoId)">
+            <i class="fas fa-sync-alt me-1"></i> Cargar
+        </button>
+    </div>
+    <div class="card-body">
+        <div id="historialLoading" class="text-center py-3 d-none">
+            <div class="spinner-border spinner-border-sm text-success"></div>
+            <span class="ms-2 text-muted">Cargando historial...</span>
+        </div>
+        <div id="historialResumen" class="d-none">
+            <div class="row mb-3">
+                <div class="col-3 text-center">
+                    <div class="fw-bold fs-5" id="hTotalVisitas">0</div>
+                    <small class="text-muted">Visitas</small>
+                </div>
+                <div class="col-3 text-center">
+                    <div class="fw-bold fs-5" id="hKmActual">0</div>
+                    <small class="text-muted">Km Actual</small>
+                </div>
+                <div class="col-3 text-center">
+                    <div class="fw-bold fs-5" id="hUltimaVisita">-</div>
+                    <small class="text-muted">Ultima Visita</small>
+                </div>
+                <div class="col-3 text-center">
+                    <div class="fw-bold fs-6 text-truncate" id="hRecomendacion" title="">-</div>
+                    <small class="text-muted">Recomendacion</small>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:30px"></th>
+                            <th>N. OS</th>
+                            <th>Fecha</th>
+                            <th>Km</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historialBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="historialVacio" class="text-center py-3 d-none">
+            <i class="fas fa-inbox fa-2x text-muted mb-2 d-block"></i>
+            <p class="text-muted mb-0">Sin historial de servicio para este vehiculo.</p>
+        </div>
+        <div id="historialInicio" class="text-center py-2">
+            <small class="text-muted">Haga clic en "Cargar" para ver el historial de servicio.</small>
+        </div>
+    </div>
+</div>
+
 <!-- Vehículo (info condensada) -->
 <div class="card mb-3">
     <div class="card-header bg-light">
@@ -207,6 +265,94 @@
 </div>
 
 <script>
+    const HISTORIAL_URL = '@Url.Action("GetHistorialServicio", "Flota")';
+
+    const estadoOsBadge = {
+        'ABIERTA': 'bg-primary', 'DIAGNOSTICO': 'bg-info', 'COTIZADA': 'bg-secondary',
+        'APROBADA': 'bg-success', 'EN_TRABAJO': 'bg-warning text-dark', 'PAUSADA': 'bg-secondary',
+        'COMPLETADA': 'bg-success', 'FACTURADA': 'bg-dark', 'CERRADA': 'bg-dark', 'CANCELADA': 'bg-danger'
+    };
+
+    function cargarHistorialServicio(vehiculoId) {
+        $('#historialInicio, #historialResumen, #historialVacio').addClass('d-none');
+        $('#historialLoading').removeClass('d-none');
+
+        $.get(HISTORIAL_URL, { vehiculoId: vehiculoId }, function (r) {
+            $('#historialLoading').addClass('d-none');
+            if (!r.success || !r.data) {
+                $('#historialVacio').removeClass('d-none');
+                return;
+            }
+            const d = r.data;
+            if (!d.ordenes || d.ordenes.length === 0) {
+                $('#historialVacio').removeClass('d-none');
+                return;
+            }
+            $('#hTotalVisitas').text(d.totalVisitas);
+            $('#hKmActual').text(d.kilometrajeActual.toLocaleString());
+            $('#hUltimaVisita').text(d.ultimaVisita ? new Date(d.ultimaVisita).toLocaleDateString() : '-');
+            $('#hRecomendacion').text(d.ultimaRecomendacion || '-').attr('title', d.ultimaRecomendacion || '');
+
+            let html = '';
+            d.ordenes.forEach(os => {
+                const badge = estadoOsBadge[os.estadoCodigo] || 'bg-secondary';
+                const fecha = new Date(os.fechaApertura).toLocaleDateString();
+                const garantia = os.esGarantia ? '<span class="badge bg-info ms-1">Garantia</span>' : '';
+                html += `<tr class="cursor-pointer" onclick="toggleServicios(this)">
+                    <td><i class="fas fa-chevron-right fa-xs text-muted toggle-icon"></i></td>
+                    <td><strong>${os.numeroOs}</strong>${garantia}</td>
+                    <td>${fecha}</td>
+                    <td>${os.kilometrajeIngreso.toLocaleString()}</td>
+                    <td class="text-center"><span class="badge ${badge}">${os.estadoNombre}</span></td>
+                    <td class="text-end">L ${os.totalGeneral.toLocaleString('es-HN', { minimumFractionDigits: 2 })}</td>
+                </tr>`;
+                if (os.servicios && os.servicios.length > 0) {
+                    html += `<tr class="d-none servicio-detalle"><td colspan="6" class="p-0">
+                        <table class="table table-sm table-borderless mb-0 ms-4" style="background:#f8f9fa;">
+                            <thead><tr>
+                                <th><small>Servicio</small></th>
+                                <th><small>Trabajo</small></th>
+                                <th><small>Tecnico</small></th>
+                                <th><small>Estado</small></th>
+                                <th class="text-end"><small>Costo</small></th>
+                            </tr></thead><tbody>`;
+                    os.servicios.forEach(s => {
+                        html += `<tr>
+                            <td><small>${s.tipoServicioNombre}</small></td>
+                            <td><small>${s.descripcionTrabajo}</small></td>
+                            <td><small>${s.tecnicoNombre || '-'}</small></td>
+                            <td><small>${s.estadoNombre}</small></td>
+                            <td class="text-end"><small>L ${s.subtotal.toLocaleString('es-HN', { minimumFractionDigits: 2 })}</small></td>
+                        </tr>`;
+                    });
+                    html += `</tbody></table></td></tr>`;
+                }
+                if (os.observacionesCierre || os.proximaRevision) {
+                    html += `<tr class="d-none servicio-detalle"><td colspan="6" class="ps-4 pt-0">`;
+                    if (os.observacionesCierre) html += `<small class="text-muted"><strong>Obs:</strong> ${os.observacionesCierre}</small><br/>`;
+                    if (os.proximaRevision) html += `<small class="text-success"><strong>Proxima revision:</strong> ${os.proximaRevision}</small>`;
+                    html += `</td></tr>`;
+                }
+            });
+            $('#historialBody').html(html);
+            $('#historialResumen').removeClass('d-none');
+        }).fail(function () {
+            $('#historialLoading').addClass('d-none');
+            Toast.error('Error al cargar el historial');
+        });
+    }
+
+    function toggleServicios(row) {
+        const $row = $(row);
+        const $icon = $row.find('.toggle-icon');
+        let $next = $row.next('.servicio-detalle');
+        while ($next.length) {
+            $next.toggleClass('d-none');
+            $next = $next.next('.servicio-detalle');
+        }
+        $icon.toggleClass('fa-chevron-right fa-chevron-down');
+    }
+
     function toggleEditarKm() {
         $('#kmDisplay, #btnEditarKm').addClass('d-none');
         $('#kmEditor').removeClass('d-none');

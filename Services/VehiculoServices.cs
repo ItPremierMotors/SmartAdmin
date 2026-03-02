@@ -58,9 +58,9 @@ namespace SmartAdmin.Services
             return await apiClient.DeleteAsync<bool>($"api/Vehiculos/Delete/{id}");
         }
 
-        public async Task<ApiResponse<bool>> CambiarEstadoAsync(int vehiculoId, int nuevoEstado, int? clienteId = null, string? vendedorId = null)
+        public async Task<ApiResponse<bool>> CambiarEstadoAsync(int vehiculoId, int nuevoEstado, int? clienteId = null, string? vendedorId = null, int? ubicacionId = null)
         {
-            var body = new { nuevoEstado, clienteId, vendedorId };
+            var body = new { nuevoEstado, clienteId, vendedorId, ubicacionId };
             return await apiClient.PatchAsync<bool>($"api/Vehiculos/CambiarEstado/{vehiculoId}", body);
         }
 

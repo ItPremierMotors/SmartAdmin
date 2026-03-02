@@ -50,7 +50,7 @@
     <!-- Historial del Vehiculo -->
     <div class="card shadow-sm d-none" id="historialCard">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fal fa-history me-2"></i>Historial del Vehiculo: <span id="historialVehiculoNombre"></span></h5>
+            <h5 class="mb-0"><i class="fal fa-history me-2"></i>Historial: <span id="historialVehiculoNombre"></span></h5>
             <button class="btn btn-outline-secondary btn-sm" onclick="cerrarHistorial()">
                 <i class="fal fa-times"></i>
             </button>
@@ -59,19 +59,36 @@
             <div id="loadingHistorial" class="text-center py-3 d-none">
                 <div class="spinner-border spinner-border-sm text-primary"></div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover table-sm d-none" id="tablaHistorial">
-                    <thead class="table-light">
-                        <tr>
-                            <th>N. OS</th>
-                            <th>Fecha Apertura</th>
-                            <th>Fecha Cierre</th>
-                            <th class="text-center">Estado</th>
-                            <th class="text-end">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historialBody"></tbody>
-                </table>
+            <div id="historialResumen" class="d-none">
+                <div class="row mb-3 text-center">
+                    <div class="col-4">
+                        <div class="fw-bold fs-5" id="hpTotalVisitas">0</div>
+                        <small class="text-muted">Visitas</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold fs-5" id="hpKmActual">0</div>
+                        <small class="text-muted">Km Actual</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold fs-6 text-truncate" id="hpRecomendacion" title="">-</div>
+                        <small class="text-muted">Ult. Recomendacion</small>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:30px"></th>
+                                <th>N. OS</th>
+                                <th>Fecha</th>
+                                <th>Km</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historialBody"></tbody>
+                    </table>
+                </div>
             </div>
             <div id="sinHistorial" class="text-center py-3 d-none">
                 <p class="text-muted mb-0">Sin historial de servicio para este vehiculo.</p>
@@ -85,7 +102,7 @@
     const TECNICO_ID = @Model.TecnicoId;
     const URLS = {
         getAsignacionesActivas: '@Url.Action("GetAsignacionesActivas", "PortalTecnico")',
-        getHistorialVehiculo:   '@Url.Action("GetHistorialVehiculo", "PortalTecnico")',
+        getHistorialVehiculo:   '@Url.Action("GetHistorialServicio", "PortalTecnico")',
         postIniciar:            '@Url.Action("IniciarAsignacion", "PortalTecnico")',
         postPausar:             '@Url.Action("PausarAsignacion", "PortalTecnico")',
         postReanudar:           '@Url.Action("ReanudarAsignacion", "PortalTecnico")',

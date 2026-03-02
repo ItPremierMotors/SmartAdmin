@@ -197,16 +197,15 @@ function verHistorialVehiculo(vehiculoId, vehiculoNombre) {
     $('#historialCard').removeClass('d-none');
     $('#historialVehiculoNombre').text(vehiculoNombre);
     $('#loadingHistorial').removeClass('d-none');
-    $('#tablaHistorial, #sinHistorial').addClass('d-none');
+    $('#historialResumen, #sinHistorial').addClass('d-none');
 
-    // Scroll al historial
     $('html, body').animate({ scrollTop: $('#historialCard').offset().top - 80 }, 300);
 
     $.get(URLS.getHistorialVehiculo, { vehiculoId: vehiculoId }, function (r) {
         $('#loadingHistorial').addClass('d-none');
-        if (r.success && r.data && r.data.length > 0) {
+        if (r.success && r.data && r.data.ordenes && r.data.ordenes.length > 0) {
             renderHistorial(r.data);
-            $('#tablaHistorial').removeClass('d-none');
+            $('#historialResumen').removeClass('d-none');
         } else {
             $('#sinHistorial').removeClass('d-none');
         }
@@ -216,26 +215,70 @@ function verHistorialVehiculo(vehiculoId, vehiculoNombre) {
     });
 }
 
-function renderHistorial(ordenes) {
+function renderHistorial(data) {
+    $('#hpTotalVisitas').text(data.totalVisitas);
+    $('#hpKmActual').text(data.kilometrajeActual.toLocaleString());
+    $('#hpRecomendacion').text(data.ultimaRecomendacion || '-').attr('title', data.ultimaRecomendacion || '');
+
     var $body = $('#historialBody');
     $body.empty();
 
-    ordenes.forEach(function (os) {
+    data.ordenes.forEach(function (os) {
         var cls = estadoOsBadge[os.estadoCodigo] || 'bg-secondary';
-        var fechaApertura = os.fechaApertura ? new Date(os.fechaApertura).toLocaleDateString('es-HN') : '-';
-        var fechaCierre = os.fechaCierre ? new Date(os.fechaCierre).toLocaleDateString('es-HN') : '-';
-        var total = os.totalGeneral != null ? 'L ' + os.totalGeneral.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '-';
+        var fecha = os.fechaApertura ? new Date(os.fechaApertura).toLocaleDateString('es-HN') : '-';
+        var total = 'L ' + os.totalGeneral.toLocaleString('es-HN', { minimumFractionDigits: 2 });
+        var garantia = os.esGarantia ? '<span class="badge bg-info ms-1">Garantia</span>' : '';
 
         $body.append(
-            '<tr>' +
-                '<td><strong>' + os.numeroOs + '</strong></td>' +
-                '<td>' + fechaApertura + '</td>' +
-                '<td>' + fechaCierre + '</td>' +
+            '<tr class="cursor-pointer" onclick="togglePortalServicios(this)">' +
+                '<td><i class="fal fa-chevron-right fa-xs text-muted toggle-icon"></i></td>' +
+                '<td><strong>' + os.numeroOs + '</strong>' + garantia + '</td>' +
+                '<td>' + fecha + '</td>' +
+                '<td>' + os.kilometrajeIngreso.toLocaleString() + '</td>' +
                 '<td class="text-center"><span class="badge ' + cls + '">' + (os.estadoNombre || os.estadoCodigo) + '</span></td>' +
                 '<td class="text-end">' + total + '</td>' +
             '</tr>'
         );
+
+        if (os.servicios && os.servicios.length > 0) {
+            var serviciosHtml = '<tr class="d-none servicio-detalle-portal"><td colspan="6" class="p-0">' +
+                '<table class="table table-sm table-borderless mb-0 ms-4" style="background:#f8f9fa;">' +
+                '<thead><tr><th><small>Servicio</small></th><th><small>Trabajo</small></th>' +
+                '<th><small>Tecnico</small></th><th><small>Estado</small></th>' +
+                '<th class="text-end"><small>Costo</small></th></tr></thead><tbody>';
+
+            os.servicios.forEach(function (s) {
+                serviciosHtml +=
+                    '<tr><td><small>' + s.tipoServicioNombre + '</small></td>' +
+                    '<td><small>' + s.descripcionTrabajo + '</small></td>' +
+                    '<td><small>' + (s.tecnicoNombre || '-') + '</small></td>' +
+                    '<td><small>' + s.estadoNombre + '</small></td>' +
+                    '<td class="text-end"><small>L ' + s.subtotal.toLocaleString('es-HN', { minimumFractionDigits: 2 }) + '</small></td></tr>';
+            });
+
+            serviciosHtml += '</tbody></table></td></tr>';
+            $body.append(serviciosHtml);
+        }
+
+        if (os.observacionesCierre || os.proximaRevision) {
+            var notasHtml = '<tr class="d-none servicio-detalle-portal"><td colspan="6" class="ps-4 pt-0">';
+            if (os.observacionesCierre) notasHtml += '<small class="text-muted"><strong>Obs:</strong> ' + os.observacionesCierre + '</small><br/>';
+            if (os.proximaRevision) notasHtml += '<small class="text-success"><strong>Proxima revision:</strong> ' + os.proximaRevision + '</small>';
+            notasHtml += '</td></tr>';
+            $body.append(notasHtml);
+        }
     });
+}
+
+function togglePortalServicios(row) {
+    var $row = $(row);
+    var $icon = $row.find('.toggle-icon');
+    var $next = $row.next('.servicio-detalle-portal');
+    while ($next.length) {
+        $next.toggleClass('d-none');
+        $next = $next.next('.servicio-detalle-portal');
+    }
+    $icon.toggleClass('fa-chevron-right fa-chevron-down');
 }
 
 function cerrarHistorial() {

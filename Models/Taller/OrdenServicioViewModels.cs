@@ -209,4 +209,45 @@ namespace SmartAdmin.Models.Taller
         public OrdenServicioDetalleViewModel Detalle { get; set; } = null!;
         public List<OsServicioViewModel> Servicios { get; set; } = new();
     }
+
+    // ─── Historial de Servicio del Vehículo ───
+
+    public class HistorialServicioVehiculoViewModel
+    {
+        public int VehiculoId { get; set; }
+        public string VehiculoDescripcion { get; set; } = null!;
+        public string? Placa { get; set; }
+        public int KilometrajeActual { get; set; }
+        public int TotalVisitas { get; set; }
+        public DateTime? UltimaVisita { get; set; }
+        public string? UltimaRecomendacion { get; set; }
+        public List<HistorialServicioItemViewModel> Ordenes { get; set; } = new();
+    }
+
+    public class HistorialServicioItemViewModel
+    {
+        public int OsId { get; set; }
+        public string NumeroOs { get; set; } = null!;
+        public DateTime FechaApertura { get; set; }
+        public DateTime? FechaCierre { get; set; }
+        public string EstadoNombre { get; set; } = null!;
+        public string EstadoCodigo { get; set; } = null!;
+        public int KilometrajeIngreso { get; set; }
+        public string? TipoIngreso { get; set; }
+        public bool EsGarantia { get; set; }
+        public decimal TotalGeneral { get; set; }
+        public string? ProximaRevision { get; set; }
+        public string? ObservacionesCierre { get; set; }
+        public string? SucursalNombre { get; set; }
+        public List<HistorialServicioLineaViewModel> Servicios { get; set; } = new();
+    }
+
+    public class HistorialServicioLineaViewModel
+    {
+        public string TipoServicioNombre { get; set; } = null!;
+        public string DescripcionTrabajo { get; set; } = null!;
+        public string EstadoNombre { get; set; } = null!;
+        public decimal Subtotal { get; set; }
+        public string? TecnicoNombre { get; set; }
+    }
 }

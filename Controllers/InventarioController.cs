@@ -123,8 +123,7 @@ namespace SmartAdmin.Controllers
             {
                 var model = new ProcesarVentaViewModel
                 {
-                    VehiculoId = id,
-                    FechaVenta = DateTime.Now
+                    VehiculoId = id
                 };
                 ViewBag.VehiculoId = id;
                 ViewBag.VehiculoInfo = $"{response.Data.DescripcionCompleta} - {response.Data.Identificador}";
@@ -236,7 +235,7 @@ namespace SmartAdmin.Controllers
             if (request.NuevoEstado == 5 && !User.IsInRole("JefeVentas"))
                 return StatusCode(403, new { success = false, message = "Solo el rol 'Jefe Ventas' puede reservar vehículos." });
 
-            var response = await vehiculoServices.CambiarEstadoAsync(request.VehiculoId, request.NuevoEstado, request.ClienteId, request.VendedorId);
+            var response = await vehiculoServices.CambiarEstadoAsync(request.VehiculoId, request.NuevoEstado, request.ClienteId, request.VendedorId, request.UbicacionId);
             return StatusCode(response.StatusCode, response);
         }
 
@@ -302,10 +301,9 @@ namespace SmartAdmin.Controllers
                 GarantiaHasta = d.GarantiaHasta,
                 Observaciones = d.Observaciones,
                 VendedorId = d.VendedorId,
-                // Datos de venta
+                // Datos de venta (FechaVenta se auto-asigna al cambiar estado a Vendido)
                 ClienteId = model.ClienteId,
-                PrecioVenta = model.PrecioVenta,
-                FechaVenta = model.FechaVenta
+                PrecioVenta = model.PrecioVenta
             };
 
             var editResult = await vehiculoServices.EditAsync(editModel);
