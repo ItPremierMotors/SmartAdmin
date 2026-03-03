@@ -184,12 +184,13 @@ function obtenerNombreEstado(estado) {
 function obtenerAcciones(cita) {
     let btns = '';
 
-    // Verificar si la fecha de la cita ya paso
+    // Verificar si la fecha de la cita ya paso o es futura
     const fechaCita = new Date(cita.fechaHoraInicio);
     fechaCita.setHours(0, 0, 0, 0);
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const esFechaPasada = fechaCita.getTime() < hoy.getTime();
+    const esHoy = fechaCita.getTime() === hoy.getTime();
 
     switch (cita.estado) {
         case 1: // Agendada
@@ -220,7 +221,7 @@ function obtenerAcciones(cita) {
                     <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
                         <i class="fas fa-times"></i>
                     </button>`;
-            } else {
+            } else if (esHoy) {
                 btns = `
                     <button class="btn btn-sm btn-outline-warning" onclick="accionCita('iniciar', ${cita.citaId})" title="Iniciar Atencion">
                         <i class="fas fa-play"></i>
@@ -228,6 +229,12 @@ function obtenerAcciones(cita) {
                     <button class="btn btn-sm btn-outline-dark" onclick="accionCita('noshow', ${cita.citaId})" title="No Show">
                         <i class="fas fa-user-slash"></i>
                     </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
+                        <i class="fas fa-times"></i>
+                    </button>`;
+            } else {
+                // Fecha futura: solo cancelar
+                btns = `
                     <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
                         <i class="fas fa-times"></i>
                     </button>`;

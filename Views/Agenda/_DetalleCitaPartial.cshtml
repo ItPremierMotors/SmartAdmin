@@ -150,9 +150,90 @@
     </div>
 }
 
+<!-- Evidencias Fotograficas -->
+@if (Model.OsId.HasValue)
+{
+    <div class="card mb-3">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="fas fa-camera me-2"></i>Evidencias Fotograficas</h6>
+            <span id="detalleFotosCount" class="badge bg-secondary">...</span>
+        </div>
+        <div class="card-body p-2">
+            <div id="detalleFotosLoading" class="text-center py-2">
+                <span class="spinner-border spinner-border-sm me-1"></span> Cargando fotos...
+            </div>
+            <div id="detalleFotosEmpty" class="text-center text-muted py-2 d-none">
+                <i class="fas fa-image me-1"></i> Sin evidencias registradas
+            </div>
+            <div id="detalleFotosContainer" class="d-none">
+                <!-- Fotos de entrada -->
+                <div id="detalleFotosEntrada" class="d-none mb-2">
+                    <small class="text-muted fw-bold d-block mb-1"><i class="fas fa-sign-in-alt me-1"></i>Entrada</small>
+                    <div id="detalleFotosEntradaGrid" class="d-flex flex-wrap gap-2"></div>
+                </div>
+                <!-- Fotos de dano -->
+                <div id="detalleFotosDano" class="d-none mb-2">
+                    <small class="text-muted fw-bold d-block mb-1"><i class="fas fa-exclamation-circle me-1"></i>Danos</small>
+                    <div id="detalleFotosDanoGrid" class="d-flex flex-wrap gap-2"></div>
+                </div>
+                <!-- Fotos de salida -->
+                <div id="detalleFotosSalida" class="d-none mb-2">
+                    <small class="text-muted fw-bold d-block mb-1"><i class="fas fa-sign-out-alt me-1"></i>Salida</small>
+                    <div id="detalleFotosSalidaGrid" class="d-flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+    <script>
+        (function () {
+            var apiBase = '@(Configuration["PremierFlowApi:BaseUrl"]?.TrimEnd('/'))';
+            $.get(URLS.getEvidenciasByOs, { osId: @Model.OsId }, function (response) {
+                $('#detalleFotosLoading').addClass('d-none');
+                if (!response.success || !response.data || response.data.length === 0) {
+                    $('#detalleFotosEmpty').removeClass('d-none');
+                    $('#detalleFotosCount').text('0');
+                    return;
+                }
+                var fotos = response.data.filter(function (e) { return e.esImagen; });
+                $('#detalleFotosCount').text(fotos.length);
+                if (fotos.length === 0) {
+                    $('#detalleFotosEmpty').removeClass('d-none');
+                    return;
+                }
+                $('#detalleFotosContainer').removeClass('d-none');
+
+                fotos.forEach(function (foto) {
+                    var fullUrl = apiBase + foto.urlArchivo;
+                    var img = '<a href="' + fullUrl + '" target="_blank">' +
+                        '<img src="' + fullUrl + '" class="rounded border" ' +
+                        'style="width:80px; height:80px; object-fit:cover; cursor:pointer;" ' +
+                        'title="' + (foto.descripcion || foto.tipoEvidenciaNombre) + '"></a>';
+
+                    if (foto.esFotoDano) {
+                        $('#detalleFotosDano').removeClass('d-none');
+                        $('#detalleFotosDanoGrid').append(img);
+                    } else if (foto.tipoEvidenciaNombre && foto.tipoEvidenciaNombre.indexOf('Salida') >= 0) {
+                        $('#detalleFotosSalida').removeClass('d-none');
+                        $('#detalleFotosSalidaGrid').append(img);
+                    } else {
+                        $('#detalleFotosEntrada').removeClass('d-none');
+                        $('#detalleFotosEntradaGrid').append(img);
+                    }
+                });
+            }).fail(function () {
+                $('#detalleFotosLoading').addClass('d-none');
+                $('#detalleFotosEmpty').removeClass('d-none').html('<i class="fas fa-exclamation-triangle me-1"></i> Error al cargar fotos');
+                $('#detalleFotosCount').text('!');
+            });
+        })();
+    </script>
+}
+
 <!-- Action Buttons -->
 @{
     var esFechaPasada = Model.FechaHoraInicio.Date < DateTime.Today;
+    var esHoy = Model.FechaHoraInicio.Date == DateTime.Today;
 }
 <div class="d-flex justify-content-between mt-3 pt-3 border-top">
     <div>
@@ -190,12 +271,15 @@
                     </button>
                     break;
                 case SmartAdmin.Models.Enums.EstadoCita.Confirmada:
-                    <button class="btn btn-sm btn-warning me-1" onclick="accionCita('iniciar', @Model.CitaId)">
-                        <i class="fas fa-play me-1"></i> Iniciar Atencion
-                    </button>
-                    <button class="btn btn-sm btn-dark me-1" onclick="accionCita('noshow', @Model.CitaId)">
-                        <i class="fas fa-user-slash me-1"></i> No Show
-                    </button>
+                    @if (esHoy)
+                    {
+                        <button class="btn btn-sm btn-warning me-1" onclick="accionCita('iniciar', @Model.CitaId)">
+                            <i class="fas fa-play me-1"></i> Iniciar Atencion
+                        </button>
+                        <button class="btn btn-sm btn-dark me-1" onclick="accionCita('noshow', @Model.CitaId)">
+                            <i class="fas fa-user-slash me-1"></i> No Show
+                        </button>
+                    }
                     <button class="btn btn-sm btn-danger" onclick="cancelarCita(@Model.CitaId)">
                         <i class="fas fa-times me-1"></i> Cancelar
                     </button>

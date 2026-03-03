@@ -49,15 +49,21 @@
             }
         });
 
-        // Cargar servicios de la OS
+        // Cargar servicios de la OS (excluir completados, cancelados y ya asignados)
         $.get(URLS.getServicios, { osId: $('#AsignarOsId').val() }, function (r) {
             const $sel = $('#AsignarServicioId');
             if (r.success && r.data) {
+                let disponibles = 0;
                 r.data.forEach(s => {
-                    if (!s.estaCompletado && !s.estaCancelado) {
+                    if (!s.estaCompletado && !s.estaCancelado && !s.tieneAsignacionActiva) {
                         $sel.append(`<option value="${s.osServicioId}">${s.tipoServicioNombre} - ${s.descripcionTrabajo || 'Sin descripcion'}</option>`);
+                        disponibles++;
                     }
                 });
+                if (disponibles === 0) {
+                    $sel.empty().append('<option value="">No hay servicios disponibles</option>');
+                    $('#btnConfirmarAsignarTecnico').prop('disabled', true);
+                }
             }
         });
     });

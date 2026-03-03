@@ -107,7 +107,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-warning" id="btnConfirmarUbicacionEstado" onclick="confirmarUbicacionYCambiar()">
+                <button type="button" class="btn btn-primary" id="btnConfirmarUbicacionEstado" onclick="confirmarUbicacionYCambiar()">
                     <i class="fas fa-exchange-alt me-1"></i> Confirmar y Cambiar
                 </button>
             </div>
@@ -484,10 +484,12 @@
         $.get(URLS.getUbicaciones, function (r) {
             if (r.success && r.data) {
                 var $sel = $('#ue_ubicacionId');
+                if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
                 $sel.html('<option value="">-- Seleccione --</option>');
                 r.data.forEach(function (u) {
                     $sel.append('<option value="' + u.id + '">' + u.nombre + (u.sucursalNombre ? ' (' + u.sucursalNombre + ')' : '') + '</option>');
                 });
+                $sel.select2({ dropdownParent: $('#modalUbicacionEstado'), theme: 'bootstrap-5', placeholder: 'Buscar ubicación...', allowClear: true, width: '100%' });
             }
         });
 
@@ -515,19 +517,23 @@
         $.get(URLS.getVendedores, function (r) {
             if (r.success && r.data) {
                 var $sel = $('#ue_vendedorId');
+                if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
                 $sel.html('<option value="">-- Seleccione --</option>');
                 r.data.forEach(function (v) {
                     $sel.append('<option value="' + v.id + '">' + v.nombreCompleto + '</option>');
                 });
+                $sel.select2({ dropdownParent: $('#modalUbicacionEstado'), theme: 'bootstrap-5', placeholder: 'Buscar vendedor...', allowClear: true, width: '100%' });
             }
         });
         $.get(URLS.getClientes, function (r) {
             if (r.success && r.data) {
                 var $sel = $('#ue_clienteId');
+                if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
                 $sel.html('<option value="">-- Sin cliente --</option>');
                 r.data.forEach(function (c) {
                     $sel.append('<option value="' + c.clienteId + '">' + c.nombreCompleto + '</option>');
                 });
+                $sel.select2({ dropdownParent: $('#modalUbicacionEstado'), theme: 'bootstrap-5', placeholder: 'Buscar cliente...', allowClear: true, width: '100%' });
             }
         });
     }

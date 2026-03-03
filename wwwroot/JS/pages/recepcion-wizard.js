@@ -13,12 +13,117 @@
 
     // ===================== INIT =====================
     document.addEventListener('DOMContentLoaded', () => {
+        if (WIZARD_DATA.isWalkIn) initWalkInSelectors();
         initStep1();
         initStep2();
         initStep4();
         initNavigation();
         initDanoModal();
     });
+
+    // ===================== WALK-IN SELECTORS =====================
+    let walkInData = { clienteId: null, vehiculoId: null, tipoServicioId: null, sucursalId: 1 };
+
+    function initWalkInSelectors() {
+        // Select2 para cliente
+        $('#walkInClienteId').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Buscar cliente...',
+            allowClear: true,
+            minimumInputLength: 2,
+            language: { inputTooShort: () => 'Escriba al menos 2 caracteres...' },
+            ajax: {
+                url: URLS.searchClientes,
+                dataType: 'json',
+                delay: 300,
+                data: function (params) { return { term: params.term }; },
+                processResults: function (data) {
+                    if (data.success && data.data) {
+                        return {
+                            results: data.data.map(c => ({
+                                id: c.clienteId,
+                                text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono || '') + ')'
+                            }))
+                        };
+                    }
+                    return { results: [] };
+                }
+            }
+        }).on('change', function () {
+            var clienteId = $(this).val();
+            walkInData.clienteId = clienteId ? parseInt(clienteId) : null;
+            cargarVehiculosWalkIn(clienteId);
+            // Actualizar header
+            var text = $(this).find(':selected').text();
+            var nombre = text ? text.split(' (')[0] : 'Seleccione un cliente...';
+            $('#walkInClienteNombre').text(nombre).toggleClass('text-muted', !clienteId);
+            // Actualizar nombre en campo "Entregado por"
+            if (clienteId) {
+                WIZARD_DATA.clienteNombre = nombre;
+                $('#entregadoPorPropietario').val(nombre);
+                $('#entregadoPor').val(nombre);
+            }
+        });
+
+        // Cargar tipos de servicio
+        $.get(URLS.tiposServicio, function (response) {
+            var $sel = $('#walkInTipoServicioId');
+            $sel.empty().append('<option value="">Seleccione tipo de servicio...</option>');
+            if (response.success && response.data) {
+                response.data.forEach(function (ts) {
+                    if (ts.permiteWalkIn && !ts.requiereCita) {
+                        var precio = ts.precioBase ? (' - L' + ts.precioBase.toFixed(2)) : '';
+                        $sel.append('<option value="' + ts.tipoServicioId + '">' + ts.nombre + precio + '</option>');
+                    }
+                });
+            }
+        });
+
+        // Evento vehiculo
+        $('#walkInVehiculoId').on('change', function () {
+            var val = $(this).val();
+            walkInData.vehiculoId = val ? parseInt(val) : null;
+            var text = $(this).find(':selected').text();
+            $('#walkInVehiculoDesc').text(val ? text : '-');
+            // Actualizar km minimo del vehiculo seleccionado
+            if (val) {
+                var opt = $(this).find(':selected');
+                var km = parseInt(opt.data('km') || 0);
+                WIZARD_DATA.kilometrajeActual = km;
+                $('#kilometraje').attr('min', km).val(km);
+            }
+        });
+
+        // Evento tipo servicio
+        $('#walkInTipoServicioId').on('change', function () {
+            var val = $(this).val();
+            walkInData.tipoServicioId = val ? parseInt(val) : null;
+            var text = $(this).find(':selected').text();
+            $('#walkInServicioDesc').text(val ? text : '-');
+        });
+    }
+
+    function cargarVehiculosWalkIn(clienteId) {
+        var $sel = $('#walkInVehiculoId');
+        $sel.empty().append('<option value="">Seleccione vehiculo...</option>');
+        if (!clienteId) {
+            $sel.prop('disabled', true);
+            walkInData.vehiculoId = null;
+            $('#walkInVehiculoDesc').text('-');
+            return;
+        }
+        $sel.prop('disabled', false);
+        $.get(URLS.vehiculosByCliente, { clienteId: clienteId }, function (response) {
+            if (response.success && response.data && response.data.length > 0) {
+                response.data.forEach(function (v) {
+                    var desc = v.descripcionCompleta || (v.marcaNombre + ' ' + v.modeloNombre + ' ' + v.anio);
+                    var placa = v.placa ? ' | Placa: ' + v.placa : '';
+                    var vin = v.vin ? ' | VIN: ...' + v.vin.slice(-6) : '';
+                    $sel.append('<option value="' + v.vehiculoId + '" data-km="' + (v.kilometrajeActual || 0) + '" data-segmento="' + (v.segmento || 1) + '">' + desc + placa + vin + '</option>');
+                });
+            }
+        });
+    }
 
     // ===================== STEP 1: ENTREGA =====================
     function initStep1() {
@@ -288,6 +393,31 @@
 
     function validarPasoActual() {
         if (currentStep === 1) {
+            // Validar campos Walk-In
+            if (WIZARD_DATA.isWalkIn) {
+                if (!walkInData.clienteId) {
+                    Toast.warning('Seleccione un cliente.');
+                    $('#walkInClienteId').select2('open');
+                    return false;
+                }
+                if (!walkInData.vehiculoId) {
+                    Toast.warning('Seleccione un vehiculo.');
+                    $('#walkInVehiculoId').focus();
+                    return false;
+                }
+                if (!walkInData.tipoServicioId) {
+                    Toast.warning('Seleccione un tipo de servicio.');
+                    $('#walkInTipoServicioId').focus();
+                    return false;
+                }
+                var motivo = document.getElementById('walkInMotivoVisita').value.trim();
+                if (!motivo) {
+                    Toast.warning('Ingrese el motivo de visita.');
+                    document.getElementById('walkInMotivoVisita').focus();
+                    return false;
+                }
+            }
+
             const esPropietario = document.getElementById('esPropietario').checked;
             if (!esPropietario) {
                 const tercero = document.getElementById('entregadoPorTercero').value.trim();
@@ -332,48 +462,58 @@
 
     // ===================== RECOLECTAR DATOS =====================
     function recolectarDatos() {
-        const data = {
-            citaId: WIZARD_DATA.citaId,
-            kilometraje: parseInt(document.getElementById('kilometraje').value),
-            nivelCombustiblePorcentaje: FuelGauge.getValue(),
-            observacionesApertura: document.getElementById('observacionesApertura').value || null,
+        const data = {};
 
-            entregadoPor: document.getElementById('entregadoPor').value,
-            esPropietarioQuienEntrega: document.getElementById('esPropietario').checked,
-            relacionEntregante: document.getElementById('relacionEntregante')?.value || null,
-            telefonoEntregante: document.getElementById('telefonoEntregante')?.value || null,
+        // Identificador: citaId o campos walk-in
+        if (WIZARD_DATA.isWalkIn) {
+            data.clienteId = walkInData.clienteId;
+            data.vehiculoId = walkInData.vehiculoId;
+            data.tipoServicioId = walkInData.tipoServicioId;
+            data.motivoVisita = document.getElementById('walkInMotivoVisita').value;
+            data.sucursalId = walkInData.sucursalId;
+        } else {
+            data.citaId = WIZARD_DATA.citaId;
+        }
 
-            danosExteriorJson: JSON.stringify(VehicleDiagram.getMarkers()),
+        data.kilometraje = parseInt(document.getElementById('kilometraje').value);
+        data.nivelCombustiblePorcentaje = FuelGauge.getValue();
+        data.observacionesApertura = document.getElementById('observacionesApertura').value || null;
 
-            llantaRepuesto: document.getElementById('chkLlantaRepuesto').checked,
-            gato: document.getElementById('chkGato').checked,
-            triangulos: document.getElementById('chkTriangulos').checked,
-            extintor: document.getElementById('chkExtintor').checked,
-            herramientas: document.getElementById('chkHerramientas').checked,
-            radio: document.getElementById('chkRadio').checked,
-            tapetes: document.getElementById('chkTapetes').checked,
+        data.entregadoPor = document.getElementById('entregadoPor').value;
+        data.esPropietarioQuienEntrega = document.getElementById('esPropietario').checked;
+        data.relacionEntregante = document.getElementById('relacionEntregante')?.value || null;
+        data.telefonoEntregante = document.getElementById('telefonoEntregante')?.value || null;
 
-            antena: document.getElementById('chkAntena').checked,
-            espejoIzquierdo: document.getElementById('chkEspejoIzquierdo').checked,
-            espejoDerecho: document.getElementById('chkEspejoDerecho').checked,
-            limpiaparabrisas: document.getElementById('chkLimpiaparabrisas').checked,
-            placaDelantera: document.getElementById('chkPlacaDelantera').checked,
-            placaTrasera: document.getElementById('chkPlacaTrasera').checked,
-            tapaCombustible: document.getElementById('chkTapaCombustible').checked,
+        data.danosExteriorJson = JSON.stringify(VehicleDiagram.getMarkers());
 
-            manualVehiculo: document.getElementById('chkManualVehiculo').checked,
-            segundaLlave: document.getElementById('chkSegundaLlave').checked,
+        data.llantaRepuesto = document.getElementById('chkLlantaRepuesto').checked;
+        data.gato = document.getElementById('chkGato').checked;
+        data.triangulos = document.getElementById('chkTriangulos').checked;
+        data.extintor = document.getElementById('chkExtintor').checked;
+        data.herramientas = document.getElementById('chkHerramientas').checked;
+        data.radio = document.getElementById('chkRadio').checked;
+        data.tapetes = document.getElementById('chkTapetes').checked;
 
-            inspeccionRuedasJson: JSON.stringify(recolectarRuedas()),
+        data.antena = document.getElementById('chkAntena').checked;
+        data.espejoIzquierdo = document.getElementById('chkEspejoIzquierdo').checked;
+        data.espejoDerecho = document.getElementById('chkEspejoDerecho').checked;
+        data.limpiaparabrisas = document.getElementById('chkLimpiaparabrisas').checked;
+        data.placaDelantera = document.getElementById('chkPlacaDelantera').checked;
+        data.placaTrasera = document.getElementById('chkPlacaTrasera').checked;
+        data.tapaCombustible = document.getElementById('chkTapaCombustible').checked;
 
-            nivelAceiteOk: document.getElementById('chkNivelAceiteOk').checked,
-            nivelRefrigeranteOk: document.getElementById('chkNivelRefrigeranteOk').checked,
-            nivelLiquidoFrenosOk: document.getElementById('chkNivelLiquidoFrenosOk').checked,
-            bateriaOk: document.getElementById('chkBateriaOk').checked,
+        data.manualVehiculo = document.getElementById('chkManualVehiculo').checked;
+        data.segundaLlave = document.getElementById('chkSegundaLlave').checked;
 
-            observacionesGenerales: document.getElementById('observacionesGenerales').value || null,
-            firmaClienteBase64: signaturePad && !signaturePad.isEmpty() ? signaturePad.toDataURL() : null
-        };
+        data.inspeccionRuedasJson = JSON.stringify(recolectarRuedas());
+
+        data.nivelAceiteOk = document.getElementById('chkNivelAceiteOk').checked;
+        data.nivelRefrigeranteOk = document.getElementById('chkNivelRefrigeranteOk').checked;
+        data.nivelLiquidoFrenosOk = document.getElementById('chkNivelLiquidoFrenosOk').checked;
+        data.bateriaOk = document.getElementById('chkBateriaOk').checked;
+
+        data.observacionesGenerales = document.getElementById('observacionesGenerales').value || null;
+        data.firmaClienteBase64 = signaturePad && !signaturePad.isEmpty() ? signaturePad.toDataURL() : null;
 
         return data;
     }
@@ -403,7 +543,8 @@
             const datos = recolectarDatos();
 
             // 1. Crear OS + Recepcion
-            const response = await fetch(URLS.iniciarRecepcion, {
+            const url = WIZARD_DATA.isWalkIn ? URLS.iniciarWalkIn : URLS.iniciarRecepcion;
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(datos)

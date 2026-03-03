@@ -137,6 +137,13 @@ namespace SmartAdmin.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> GetEvidenciasByOs(int osId)
+        {
+            var response = await recepcionServices.GetEvidenciasByOsIdAsync(osId);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> TransferirPartial(int citaId)
         {
             var response = await citaServices.GetByIdAsync(citaId);

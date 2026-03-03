@@ -13,11 +13,72 @@ namespace SmartAdmin.Models.Taller
         public int SegmentoVehiculo { get; set; }
         public string TipoServicioNombre { get; set; } = null!;
         public string MotivoVisita { get; set; } = null!;
+        public bool IsWalkIn { get; set; }
     }
 
     public class IniciarRecepcionRequest
     {
         public int CitaId { get; set; }
+
+        // Datos para OS
+        public int Kilometraje { get; set; }
+        public int NivelCombustiblePorcentaje { get; set; }
+        public string? ObservacionesApertura { get; set; }
+
+        // Entrega
+        public string EntregadoPor { get; set; } = null!;
+        public bool EsPropietarioQuienEntrega { get; set; } = true;
+        public string? RelacionEntregante { get; set; }
+        public string? TelefonoEntregante { get; set; }
+
+        // Daños exteriores (JSON string)
+        public string? DanosExteriorJson { get; set; }
+
+        // Checklist accesorios
+        public bool LlantaRepuesto { get; set; }
+        public bool Gato { get; set; }
+        public bool Triangulos { get; set; }
+        public bool Extintor { get; set; }
+        public bool Herramientas { get; set; }
+        public bool Radio { get; set; }
+        public bool Tapetes { get; set; }
+
+        // Checklist extendido - Exterior
+        public bool Antena { get; set; }
+        public bool EspejoIzquierdo { get; set; }
+        public bool EspejoDerecho { get; set; }
+        public bool Limpiaparabrisas { get; set; }
+        public bool PlacaDelantera { get; set; }
+        public bool PlacaTrasera { get; set; }
+        public bool TapaCombustible { get; set; }
+
+        // Documentos/Extras
+        public bool ManualVehiculo { get; set; }
+        public bool SegundaLlave { get; set; }
+
+        // Ruedas (JSON string)
+        public string? InspeccionRuedasJson { get; set; }
+
+        // Motor
+        public bool NivelAceiteOk { get; set; }
+        public bool NivelRefrigeranteOk { get; set; }
+        public bool NivelLiquidoFrenosOk { get; set; }
+        public bool BateriaOk { get; set; }
+
+        // Observaciones
+        public string? ObservacionesGenerales { get; set; }
+
+        // Firma
+        public string? FirmaClienteBase64 { get; set; }
+    }
+
+    public class IniciarRecepcionWalkInRequest
+    {
+        public int ClienteId { get; set; }
+        public int VehiculoId { get; set; }
+        public int TipoServicioId { get; set; }
+        public string MotivoVisita { get; set; } = null!;
+        public int SucursalId { get; set; }
 
         // Datos para OS
         public int Kilometraje { get; set; }
@@ -79,5 +140,20 @@ namespace SmartAdmin.Models.Taller
         public string Base64Data { get; set; } = null!;
         public string NombreArchivo { get; set; } = null!;
         public string? Descripcion { get; set; }
+    }
+
+    public class EvidenciaViewModel
+    {
+        public int EvidenciaId { get; set; }
+        public int OsId { get; set; }
+        public int? RecepcionId { get; set; }
+        public string TipoEvidencia { get; set; } = null!;
+        public string UrlArchivo { get; set; } = null!;
+        public string? Descripcion { get; set; }
+        public DateTime FechaCaptura { get; set; }
+        public string TipoEvidenciaNombre { get; set; } = null!;
+        public bool EsFotoRecepcion { get; set; }
+        public bool EsFotoDano { get; set; }
+        public bool EsImagen { get; set; }
     }
 }

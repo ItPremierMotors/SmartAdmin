@@ -37,6 +37,39 @@ namespace SmartAdmin.Controllers
             }
         }
 
+        // GET: /Recepcion/WizardWalkIn
+        public IActionResult WizardWalkIn()
+        {
+            var model = new RecepcionWizardViewModel
+            {
+                IsWalkIn = true,
+                CitaId = 0,
+                CodigoCita = "WALK-IN",
+                ClienteNombre = "",
+                VehiculoDescripcion = "",
+                TipoServicioNombre = "",
+                MotivoVisita = "",
+                KilometrajeActual = 0,
+                SegmentoVehiculo = 1
+            };
+            return View("Wizard", model);
+        }
+
+        // POST: /Recepcion/IniciarRecepcionWalkIn
+        [HttpPost]
+        public async Task<IActionResult> IniciarRecepcionWalkIn([FromBody] IniciarRecepcionWalkInRequest model)
+        {
+            try
+            {
+                var response = await recepcionServices.IniciarWalkInAsync(model);
+                return StatusCode(response.StatusCode, response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message, statusCode = 500 });
+            }
+        }
+
         // POST: /Recepcion/SubirEvidencia
         [HttpPost]
         public async Task<IActionResult> SubirEvidencia([FromBody] SubirEvidenciaRequest model)

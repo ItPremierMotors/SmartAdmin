@@ -27,5 +27,15 @@ namespace SmartAdmin.Services
         {
             return await apiClient.PostAsync<object>("api/Evidencias/base64", model);
         }
+
+        public async Task<ApiResponse<List<EvidenciaViewModel>>> GetEvidenciasByOsIdAsync(int osId)
+        {
+            return await apiClient.GetAsync<List<EvidenciaViewModel>>($"api/Evidencias/GetByOsId/{osId}");
+        }
+
+        public async Task<ApiResponse<object>> IniciarWalkInAsync(IniciarRecepcionWalkInRequest model)
+        {
+            return await apiClient.PostAsync<object>("api/Recepciones/IniciarWalkIn", model);
+        }
     }
 }

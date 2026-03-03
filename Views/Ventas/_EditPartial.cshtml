@@ -24,33 +24,35 @@
     <input type="hidden" id="h_KilometrajeActual" value="@Model.KilometrajeActual" />
     <input type="hidden" id="h_FechaPrimeraMatricula" value="@(Model.FechaPrimeraMatricula?.ToString("yyyy-MM-dd"))" />
 
-    <!-- Datos Comerciales -->
+    <!-- Datos Comerciales (campos de venta protegidos post-venta) -->
     <h6 class="text-primary border-bottom pb-2 mb-3"><i class="fas fa-dollar-sign me-2"></i>Datos Comerciales</h6>
     <div class="row">
         <div class="col-md-6 mb-3">
             <label class="form-label">Cliente</label>
-            <select class="form-select" id="ClienteId">
-                <option value="">Sin asignar</option>
-            </select>
+            <input type="text" class="form-control" disabled
+                   value="@(ViewBag.ClienteNombre ?? "Sin asignar")" />
+            <input type="hidden" id="ClienteId" value="@Model.ClienteId" />
         </div>
         <div class="col-md-6 mb-3">
             <label class="form-label">Precio de Venta</label>
             <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="PrecioVenta" step="0.01" min="0"
+                <input type="number" class="form-control" disabled
                        value="@(Model.PrecioVenta?.ToString("F2"))" />
             </div>
+            <input type="hidden" id="PrecioVenta" value="@(Model.PrecioVenta?.ToString("F2"))" />
         </div>
     </div>
     <div class="row">
         <div class="col-md-4 mb-3">
             <label class="form-label">Fecha de Venta</label>
-            <input type="date" class="form-control" id="FechaVenta"
+            <input type="date" class="form-control" disabled
                    value="@(Model.FechaVenta?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" id="FechaVenta" value="@(Model.FechaVenta?.ToString("yyyy-MM-dd"))" />
         </div>
         <div class="col-md-4 mb-3">
             <label class="form-label">Fecha de Entrega</label>
-            <input type="date" class="form-control" id="FechaEntrega" disabled
+            <input type="date" class="form-control" disabled
                    value="@(Model.FechaEntrega?.ToString("yyyy-MM-dd"))" />
             <input type="hidden" id="h_FechaEntrega" value="@(Model.FechaEntrega?.ToString("yyyy-MM-dd"))" />
         </div>
@@ -90,39 +92,3 @@
     </button>
 </div>
 
-<script>
-    $(document).ready(function () {
-        $('#ClienteId').select2({
-            dropdownParent: $('.modal'),
-            theme: 'bootstrap-5',
-            placeholder: 'Buscar cliente...',
-            allowClear: true,
-            minimumInputLength: 2,
-            language: { inputTooShort: () => 'Escriba al menos 2 caracteres...' },
-            ajax: {
-                url: '@Url.Action("Search", "Clientes")',
-                dataType: 'json',
-                delay: 300,
-                data: function (params) { return { term: params.term }; },
-                processResults: function (data) {
-                    if (data.success && data.data) {
-                        return {
-                            results: data.data.map(c => ({
-                                id: c.clienteId,
-                                text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono) + ')'
-                            }))
-                        };
-                    }
-                    return { results: [] };
-                }
-            }
-        });
-
-        @if (Model.ClienteId.HasValue)
-        {
-            @:var option = new Option(@Html.Raw(Json.Serialize((string)ViewBag.ClienteNombre)), '@Model.ClienteId', true, true);
-            @:$('#ClienteId').append(option).trigger('change');
-        }
-
-    });
-</script>

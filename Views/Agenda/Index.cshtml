@@ -11,6 +11,9 @@
                     <option value="">Cargando...</option>
                 </select>
             </div>
+            <a href="@Url.Action("WizardWalkIn", "Recepcion")" class="btn btn-warning">
+                <i class="fas fa-walking me-1"></i> Recepcion Directa
+            </a>
             <button class="btn btn-primary" onclick="abrirAgendarCita()">
                 <i class="fas fa-plus me-1"></i> Nueva Cita
             </button>
@@ -75,6 +78,7 @@
                         <button class="btn btn-outline-primary" onclick="filtrarEstado(1, this)">Agendadas</button>
                         <button class="btn btn-outline-info" onclick="filtrarEstado(2, this)">Confirmadas</button>
                         <button class="btn btn-outline-warning" onclick="filtrarEstado(3, this)">En Proceso</button>
+                        <button class="btn btn-outline-success" onclick="filtrarEstado(4, this)">Completadas</button>
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -141,7 +145,8 @@
         searchClientes: '@Url.Action("Search", "Clientes")',
         searchVehiculos: '@Url.Action("Search", "Flota")',
         getSucursales: '@Url.Action("GetSucursales", "Agenda")',
-        wizardRecepcion: '@Url.Action("Wizard", "Recepcion")'
+        wizardRecepcion: '@Url.Action("Wizard", "Recepcion")',
+        getEvidenciasByOs: '@Url.Action("GetEvidenciasByOs", "Agenda")'
     };
 </script>
 <script src="~/JS/pages/agenda.js"></script>
