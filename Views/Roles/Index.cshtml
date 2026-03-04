@@ -37,7 +37,9 @@
             update: '@Url.Action("edit")',
             createPartial: '@Url.Action("CreatePartial")',
             editPartial: '@Url.Action("EditPartial")',
-            detailPartial: '@Url.Action("DetailPartial")'
+            detailPartial: '@Url.Action("DetailPartial")',
+            permissionsPartial: '@Url.Action("PermissionsPartial")',
+            savePermissions: '@Url.Action("SavePermissions")'
         };
         //definir datatable
         let dataTable = null;
@@ -70,7 +72,8 @@
                         className: 'text-center',
                         render: (data, type, row) => `
                             <div class="btn-group btn-group-sm">
-                                  <button class="btn btn-outline-primary" onclick="abrirModalEditar('${data}')"><i class="fas fa-edit"></i></button>
+                                  <button class="btn btn-outline-primary" onclick="abrirModalEditar('${data}')" title="Editar"><i class="fas fa-edit"></i></button>
+                                  <button class="btn btn-outline-success" onclick="abrirModalPermisos('${data}')" title="Permisos"><i class="fas fa-key"></i></button>
                             </div>
                         `
                     }
@@ -159,11 +162,55 @@
         AppModal.open({
             title: '<i class="fas fa-user-edit me-2"></i>Editar Rol',
                 url: URLS.editPartial,
-                data: { 
+                data: {
                     id: id,
                 },
             size: 'lg'
         });
     }
+
+        function abrirModalPermisos(id) {
+            AppModal.open({
+                title: '<i class="fas fa-key me-2"></i>Permisos del Rol',
+                url: URLS.permissionsPartial,
+                data: { id: id },
+                size: 'xl'
+            });
+        }
+
+        function guardarPermisos() {
+            const roleId = $('#permRoleId').val();
+            const permisos = [];
+            $('input.perm-check:checked').each(function () {
+                permisos.push($(this).val());
+            });
+
+            $.ajax({
+                url: URLS.savePermissions,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    roleId: roleId,
+                    permissions: permisos
+                }),
+                success: function (res) {
+                    if (res.success) {
+                        Toast.success('Permisos actualizados correctamente');
+                        AppModal.close();
+                    } else {
+                        Toast.error(res.message || 'Error al guardar permisos');
+                    }
+                },
+                error: function () {
+                    Toast.error('Error de comunicación con el servidor');
+                }
+            });
+        }
+
+        function toggleModulo(modulo) {
+            const checkboxes = $(`.perm-check[data-modulo="${modulo}"]`);
+            const allChecked = checkboxes.length === checkboxes.filter(':checked').length;
+            checkboxes.prop('checked', !allChecked);
+        }
     </script>
 }

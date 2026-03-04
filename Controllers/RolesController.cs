@@ -79,5 +79,40 @@ namespace SmartAdmin.Controllers
             var result = await _apiClient.PutAsync<bool>($"/api/Roles/{rol.Id}", rol);
             return Json(result);
         }
+
+        // ============================================
+        // PERMISOS
+        // ============================================
+
+        [HttpGet]
+        public async Task<IActionResult> PermissionsPartial(string id)
+        {
+            // Obtener todos los permisos disponibles
+            var allPermissions = await _apiClient.GetAsync<List<string>>("api/Permissions");
+            // Obtener permisos asignados al rol
+            var rolePermissions = await _apiClient.GetAsync<List<string>>($"api/Permissions/role/{id}");
+            // Obtener info del rol
+            var role = await _apiClient.GetAsync<RoleViewModel>($"api/Roles/{id}");
+
+            ViewBag.RoleId = id;
+            ViewBag.RoleName = role.Data?.Name ?? "Rol";
+            ViewBag.AllPermissions = allPermissions.Data ?? new List<string>();
+            ViewBag.RolePermissions = rolePermissions.Data ?? new List<string>();
+
+            return PartialView("_Permissions");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SavePermissions([FromBody] SavePermissionsRequest request)
+        {
+            var result = await _apiClient.PutAsync<bool>($"api/Permissions/role/{request.RoleId}", request.Permissions);
+            return Json(result);
+        }
+    }
+
+    public class SavePermissionsRequest
+    {
+        public string RoleId { get; set; } = null!;
+        public List<string> Permissions { get; set; } = new();
     }
 }

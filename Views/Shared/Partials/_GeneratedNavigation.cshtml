@@ -94,147 +94,191 @@
             </ul>
         </li>
     }
-    <li class="nav-item">
-        <a href="#" title="Catalogo" data-filter-tags>
-            <svg class="sa-icon">
-                <use href="/icons/sprite.svg#book-open"></use>
-            </svg>
-            <span class="nav-link-text" data-i18n>Catalogo</span>
-        </a>
-        @* vehiculos, marcas, modelos, etc *@
-        <ul>
-            <li class="nav-item">
-                <a href="#" title="Marcas" data-filter-tags>
-                    <span class="nav-link-text" data-i18n>Marcas</span>
-                </a>
-                <ul>
-                    <li>
-                        <a href=@Url.Action("Index", "Marca")>
-                            <span class="nav-link-text" data-i18n>Listado de Marcas</span>
+    @* ============ CATÁLOGO ============ *@
+    @if (User.TienePermiso("Catalogo.Marca.Ver") ||
+         User.TienePermiso("Catalogo.Modelo.Ver") ||
+         User.TienePermiso("Catalogo.Version.Ver") ||
+         User.TienePermiso("Catalogo.Servicio.Ver") ||
+         User.TienePermiso("Catalogo.Tecnico.Ver"))
+    {
+        <li class="nav-item">
+            <a href="#" title="Catalogo" data-filter-tags>
+                <svg class="sa-icon">
+                    <use href="/icons/sprite.svg#book-open"></use>
+                </svg>
+                <span class="nav-link-text" data-i18n>Catalogo</span>
+            </a>
+            <ul>
+                @if (User.TienePermiso("Catalogo.Marca.Ver"))
+                {
+                    <li class="nav-item">
+                        <a href="#" title="Marcas" data-filter-tags>
+                            <span class="nav-link-text" data-i18n>Marcas</span>
                         </a>
+                        <ul>
+                            <li>
+                                <a href=@Url.Action("Index", "Marca")>
+                                    <span class="nav-link-text" data-i18n>Listado de Marcas</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                </ul>
-            </li>
-            <li class="nav-item">
-                <a href="#" title="Modelos" data-filter-tags>
-                    <span class="nav-link-text" data-i18n>Modelos</span>
-                </a>
-                <ul>
-                    <li>
-                        <a href=@Url.Action("Index", "Modelos")>
-                            <span class="nav-link-text" data-i18n>Listado de Modelos</span>
+                }
+                @if (User.TienePermiso("Catalogo.Modelo.Ver"))
+                {
+                    <li class="nav-item">
+                        <a href="#" title="Modelos" data-filter-tags>
+                            <span class="nav-link-text" data-i18n>Modelos</span>
                         </a>
+                        <ul>
+                            <li>
+                                <a href=@Url.Action("Index", "Modelos")>
+                                    <span class="nav-link-text" data-i18n>Listado de Modelos</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                </ul>
-            </li>
-            <li class="nav-item">
-                <a href="#" title="Versiones Vehiculos" data-filter-tags>
-                    <span class="nav-link-text" data-i18n>Versión de Vehículos</span>
-                </a>
-                <ul>
-                    <li>
-                        <a href=@Url.Action("Index", "VersionesVehiculo")>
-                            <span class="nav-link-text" data-i18n>Listado de Versiones de Vehículos</span>
+                }
+                @if (User.TienePermiso("Catalogo.Version.Ver"))
+                {
+                    <li class="nav-item">
+                        <a href="#" title="Versiones Vehiculos" data-filter-tags>
+                            <span class="nav-link-text" data-i18n>Versión de Vehículos</span>
                         </a>
+                        <ul>
+                            <li>
+                                <a href=@Url.Action("Index", "VersionesVehiculo")>
+                                    <span class="nav-link-text" data-i18n>Listado de Versiones de Vehículos</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                </ul>
-            </li>
-            <li class="nav-item">
-                <a href="#" title="Tipos de Servicio" data-filter-tags>
-                    <span class="nav-link-text" data-i18n>Tipos de Servicio</span>
-                </a>
-                <ul>
-                    <li>
-                        <a href=@Url.Action("Index", "TiposServicio")>
-                            <span class="nav-link-text" data-i18n>Listado de Tipos de Servicio</span>
+                }
+                @if (User.TienePermiso("Catalogo.Servicio.Ver"))
+                {
+                    <li class="nav-item">
+                        <a href="#" title="Tipos de Servicio" data-filter-tags>
+                            <span class="nav-link-text" data-i18n>Tipos de Servicio</span>
                         </a>
+                        <ul>
+                            <li>
+                                <a href=@Url.Action("Index", "TiposServicio")>
+                                    <span class="nav-link-text" data-i18n>Listado de Tipos de Servicio</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                </ul>
-            </li>
-            <li class="nav-item">
-                <a href="#" title="Técnicos" data-filter-tags>
-                    <span class="nav-link-text" data-i18n>Técnicos</span>
-                </a>
-                <ul>
-                    <li>
-                        <a href=@Url.Action("Index", "Tecnicos")>
-                            <span class="nav-link-text" data-i18n>Listado de Técnicos</span>
+                }
+                @if (User.TienePermiso("Catalogo.Tecnico.Ver"))
+                {
+                    <li class="nav-item">
+                        <a href="#" title="Técnicos" data-filter-tags>
+                            <span class="nav-link-text" data-i18n>Técnicos</span>
                         </a>
+                        <ul>
+                            <li>
+                                <a href=@Url.Action("Index", "Tecnicos")>
+                                    <span class="nav-link-text" data-i18n>Listado de Técnicos</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                </ul>
-            </li>
-            <li class="nav-item">
-                <a href="#" title="Estados OS" data-filter-tags>
-                    <span class="nav-link-text" data-i18n>Estados OS</span>
-                </a>
-                <ul>
-                    <li>
-                        <a href=@Url.Action("Index", "EstadosOs")>
-                            <span class="nav-link-text" data-i18n>Flujo de Estados</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-        @* fin *@
-    </li>
+                }
+                <li class="nav-item">
+                    <a href="#" title="Estados OS" data-filter-tags>
+                        <span class="nav-link-text" data-i18n>Estados OS</span>
+                    </a>
+                    <ul>
+                        <li>
+                            <a href=@Url.Action("Index", "EstadosOs")>
+                                <span class="nav-link-text" data-i18n>Flujo de Estados</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    }
 
-    <li class="nav-item">
-        <a href="#" title="Operaciones" data-filter-tags>
-            <svg class="sa-icon">
-                <use href="/icons/sprite.svg#clipboard"></use>
-            </svg>
-            <span class="nav-link-text" data-i18n>Operaciones</span>
-        </a>
-        <ul>
-            <li>
-                <a href=@Url.Action("Index", "Clientes")>
-                    <span class="nav-link-text" data-i18n>Clientes</span>
-                </a>
-            </li>
-            <li>
-                <a href=@Url.Action("Index", "Inventario")>
-                    <span class="nav-link-text" data-i18n>Inventario</span>
-                </a>
-            </li>
-            <li>
-                <a href=@Url.Action("Index", "Ventas")>
-                    <span class="nav-link-text" data-i18n>Ventas</span>
-                </a>
-            </li>
-            <li>
-                <a href=@Url.Action("Index", "Flota")>
-                    <span class="nav-link-text" data-i18n>Flota</span>
-                </a>
-            </li>
-        </ul>
-    </li>
+    @* ============ OPERACIONES ============ *@
+    @if (User.TienePermiso("Cliente.Ver") ||
+         User.TienePermiso("Inventario.Ver"))
+    {
+        <li class="nav-item">
+            <a href="#" title="Operaciones" data-filter-tags>
+                <svg class="sa-icon">
+                    <use href="/icons/sprite.svg#clipboard"></use>
+                </svg>
+                <span class="nav-link-text" data-i18n>Operaciones</span>
+            </a>
+            <ul>
+                @if (User.TienePermiso("Cliente.Ver"))
+                {
+                    <li>
+                        <a href=@Url.Action("Index", "Clientes")>
+                            <span class="nav-link-text" data-i18n>Clientes</span>
+                        </a>
+                    </li>
+                }
+                @if (User.TienePermiso("Inventario.Ver"))
+                {
+                    <li>
+                        <a href=@Url.Action("Index", "Inventario")>
+                            <span class="nav-link-text" data-i18n>Inventario</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href=@Url.Action("Index", "Ventas")>
+                            <span class="nav-link-text" data-i18n>Ventas</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href=@Url.Action("Index", "Flota")>
+                            <span class="nav-link-text" data-i18n>Flota</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </li>
+    }
 
-    <li class="nav-item">
-        <a href="#" title="Taller" data-filter-tags>
-            <svg class="sa-icon">
-                <use href="/icons/sprite.svg#tool"></use>
-            </svg>
-            <span class="nav-link-text" data-i18n>Taller</span>
-        </a>
-        <ul>
-            <li>
-                <a href=@Url.Action("Index", "Capacidad")>
-                    <span class="nav-link-text" data-i18n>Capacidad</span>
-                </a>
-            </li>
-            <li>
-                <a href=@Url.Action("Index", "Agenda")>
-                    <span class="nav-link-text" data-i18n>Agenda de Citas</span>
-                </a>
-            </li>
-            <li>
-                <a href=@Url.Action("Index", "OrdenServicio")>
-                    <span class="nav-link-text" data-i18n>Ordenes de Servicio</span>
-                </a>
-            </li>
-        </ul>
-    </li>
+    @* ============ TALLER ============ *@
+    @if (User.TienePermiso("OrdenServicio.Ver") ||
+         User.TienePermiso("Cita.Ver") ||
+         User.TienePermiso("Recepcion.Ver"))
+    {
+        <li class="nav-item">
+            <a href="#" title="Taller" data-filter-tags>
+                <svg class="sa-icon">
+                    <use href="/icons/sprite.svg#tool"></use>
+                </svg>
+                <span class="nav-link-text" data-i18n>Taller</span>
+            </a>
+            <ul>
+                <li>
+                    <a href=@Url.Action("Index", "Capacidad")>
+                        <span class="nav-link-text" data-i18n>Capacidad</span>
+                    </a>
+                </li>
+                @if (User.TienePermiso("Cita.Ver"))
+                {
+                    <li>
+                        <a href=@Url.Action("Index", "Agenda")>
+                            <span class="nav-link-text" data-i18n>Agenda de Citas</span>
+                        </a>
+                    </li>
+                }
+                @if (User.TienePermiso("OrdenServicio.Ver"))
+                {
+                    <li>
+                        <a href=@Url.Action("Index", "OrdenServicio")>
+                            <span class="nav-link-text" data-i18n>Ordenes de Servicio</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </li>
+    }
 
     @if (User.IsInRole("TECNICO"))
     {

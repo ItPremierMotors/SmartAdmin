@@ -1,0 +1,115 @@
+@{
+    var allPermissions = (List<string>)ViewBag.AllPermissions;
+    var rolePermissions = (List<string>)ViewBag.RolePermissions;
+    var roleId = (string)ViewBag.RoleId;
+    var roleName = (string)ViewBag.RoleName;
+
+    var grouped = allPermissions
+        .GroupBy(p => p.Split('.')[0])
+        .OrderBy(g => g.Key);
+}
+
+<input type="hidden" id="permRoleId" value="@roleId" />
+
+<div class="mb-3">
+    <span class="badge bg-primary fs-6">@roleName</span>
+</div>
+
+<div class="row">
+    @foreach (var group in grouped)
+    {
+        var hasSubGroups = group.Any(p => p.Split('.').Length > 2);
+        var groupId = group.Key;
+
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center py-2"
+                     role="button" onclick="toggleCollapse('@groupId')">
+                    <strong><i class="fas fa-chevron-down me-2" id="icon_@groupId"></i>@groupId</strong>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); toggleModulo('@groupId')" title="Marcar/Desmarcar todo">
+                        <i class="fas fa-check-double"></i>
+                    </button>
+                </div>
+                <div class="card-body py-2" id="body_@groupId">
+                    @if (hasSubGroups)
+                    {
+                        var subGroups = group
+                            .GroupBy(p => p.Split('.').Length > 2 ? p.Split('.')[1] : "_")
+                            .OrderBy(sg => sg.Key);
+
+                        @foreach (var sub in subGroups)
+                        {
+                            <div class="mb-2">
+                                <strong class="text-muted small text-uppercase">@sub.Key</strong>
+                                <div class="d-flex flex-wrap gap-3 mt-1">
+                                    @foreach (var perm in sub)
+                                    {
+                                        var action = perm.Split('.').Last();
+                                        var isChecked = rolePermissions.Contains(perm);
+                                        <div class="form-check">
+                                            <input class="form-check-input perm-check"
+                                                   type="checkbox"
+                                                   value="@perm"
+                                                   data-modulo="@groupId"
+                                                   id="perm_@perm.Replace(".", "_")"
+                                                   @(isChecked ? "checked" : "") />
+                                            <label class="form-check-label" for="perm_@perm.Replace(".", "_")">
+                                                @action
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            @if (sub != subGroups.Last())
+                            {
+                                <hr class="my-1" />
+                            }
+                        }
+                    }
+                    else
+                    {
+                        @foreach (var perm in group)
+                        {
+                            var action = perm.Split('.').Last();
+                            var isChecked = rolePermissions.Contains(perm);
+                            <div class="form-check">
+                                <input class="form-check-input perm-check"
+                                       type="checkbox"
+                                       value="@perm"
+                                       data-modulo="@groupId"
+                                       id="perm_@perm.Replace(".", "_")"
+                                       @(isChecked ? "checked" : "") />
+                                <label class="form-check-label" for="perm_@perm.Replace(".", "_")">
+                                    @action
+                                </label>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" onclick="guardarPermisos()">
+        <i class="fas fa-save me-2"></i>Guardar Permisos
+    </button>
+</div>
+
+<script>
+    function toggleCollapse(id) {
+        const body = document.getElementById('body_' + id);
+        const icon = document.getElementById('icon_' + id);
+        if (body.style.display === 'none') {
+            body.style.display = '';
+            icon.classList.replace('fa-chevron-right', 'fa-chevron-down');
+        } else {
+            body.style.display = 'none';
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-right');
+        }
+    }
+</script>
