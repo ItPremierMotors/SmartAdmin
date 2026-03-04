@@ -55,6 +55,10 @@
                     {
                         <p class="mb-1 small">Placa: @Model.VehiculoPlaca</p>
                     }
+                    @if (!string.IsNullOrEmpty(Model.VehiculoVin))
+                    {
+                        <p class="mb-1 small">VIN: @Model.VehiculoVin</p>
+                    }
                     <p class="mb-0 small">Km ingreso: @Model.KilometrajeIngreso.ToString("N0")</p>
                     @if (Model.NivelCombustiblePorcentaje.HasValue)
                     {
