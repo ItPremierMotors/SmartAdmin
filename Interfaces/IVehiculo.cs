@@ -22,5 +22,7 @@ namespace SmartAdmin.Interfaces
         Task<ApiResponse<VehiculoViewModel>> GetByPlacaAsync(string placa);
         Task<ApiResponse<List<VehiculoViewModel>>> GetDisponiblesParaVentaAsync();
         Task<ApiResponse<ResultadoImportacionViewModel>> CrearLoteAsync(List<CreateVehiculoViewModel> vehiculos);
+        Task<ApiResponse<ResultadoBulkViewModel>> BulkCambiarEstadoAsync(BulkCambiarEstadoRequest request);
+        Task<ApiResponse<ResultadoBulkViewModel>> BulkEditarAsync(BulkEditarRequest request);
     }
 }

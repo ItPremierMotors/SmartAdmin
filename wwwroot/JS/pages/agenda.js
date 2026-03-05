@@ -195,18 +195,20 @@ function obtenerAcciones(cita) {
     switch (cita.estado) {
         case 1: // Agendada
             if (esFechaPasada) {
-                btns = `
+                if (PERMISOS.editar) btns += `
                     <button class="btn btn-sm btn-outline-primary" onclick="abrirReprogramarCita(${cita.citaId})" title="Reprogramar">
                         <i class="fas fa-calendar-day"></i>
-                    </button>
+                    </button>`;
+                if (PERMISOS.eliminar) btns += `
                     <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
                         <i class="fas fa-times"></i>
                     </button>`;
             } else {
-                btns = `
+                if (PERMISOS.editar) btns += `
                     <button class="btn btn-sm btn-outline-info" onclick="accionCita('confirmar', ${cita.citaId})" title="Confirmar">
                         <i class="fas fa-check"></i>
-                    </button>
+                    </button>`;
+                if (PERMISOS.eliminar) btns += `
                     <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
                         <i class="fas fa-times"></i>
                     </button>`;
@@ -214,41 +216,42 @@ function obtenerAcciones(cita) {
             break;
         case 2: // Confirmada
             if (esFechaPasada) {
-                btns = `
+                if (PERMISOS.editar) btns += `
                     <button class="btn btn-sm btn-outline-primary" onclick="abrirReprogramarCita(${cita.citaId})" title="Reprogramar">
                         <i class="fas fa-calendar-day"></i>
-                    </button>
+                    </button>`;
+                if (PERMISOS.eliminar) btns += `
                     <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
                         <i class="fas fa-times"></i>
                     </button>`;
             } else if (esHoy) {
-                btns = `
+                if (PERMISOS.editar) btns += `
                     <button class="btn btn-sm btn-outline-warning" onclick="accionCita('iniciar', ${cita.citaId})" title="Iniciar Atencion">
                         <i class="fas fa-play"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-dark" onclick="accionCita('noshow', ${cita.citaId})" title="No Show">
                         <i class="fas fa-user-slash"></i>
-                    </button>
+                    </button>`;
+                if (PERMISOS.eliminar) btns += `
                     <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
                         <i class="fas fa-times"></i>
                     </button>`;
             } else {
-                // Fecha futura: solo cancelar
-                btns = `
+                if (PERMISOS.eliminar) btns += `
                     <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
                         <i class="fas fa-times"></i>
                     </button>`;
             }
             break;
         case 3: // En Proceso - solo transferir, completar se hace desde la OS
-            btns = `
+            if (PERMISOS.editar) btns += `
                 <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(${cita.citaId})" title="Transferir a manana">
                     <i class="fas fa-exchange-alt"></i>
                 </button>`;
             break;
         case 4: // Completada - solo evidencia de salida si tiene OS
-            if (cita.osId) {
-                btns = `
+            if (cita.osId && PERMISOS.editar) {
+                btns += `
                     <button class="btn btn-sm btn-outline-info" onclick="abrirEvidenciaSalida(${cita.citaId})" title="Evidencia de Salida">
                         <i class="fas fa-camera"></i>
                     </button>`;

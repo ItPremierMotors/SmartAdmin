@@ -23,6 +23,7 @@ builder.Services.AddAuthentication(options =>
     {
        Options.RequireHttpsMetadata= false; //solo para desarrollo
        Options.SaveToken= true; //guardar el token en la solicitud
+       Options.MapInboundClaims = false; //no remapear tipos de claims del JWT
          Options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
          {
              ValidateIssuer = true, //validar emisor

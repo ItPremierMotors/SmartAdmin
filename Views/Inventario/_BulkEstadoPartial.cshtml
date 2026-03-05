@@ -1,0 +1,102 @@
+<div class="p-3">
+    <div class="alert alert-info small mb-3">
+        <i class="fas fa-info-circle me-1"></i>
+        <span id="bulkEstadoInfo">Seleccione el nuevo estado para los vehículos seleccionados.</span>
+    </div>
+
+    <input type="hidden" id="bulkEstadoIds" />
+
+    <div class="mb-3">
+        <label class="form-label fw-bold">Nuevo Estado <span class="text-danger">*</span></label>
+        <select class="form-select" id="bulkNuevoEstado" required>
+            <option value="">-- Seleccione --</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-bold">Ubicación <span class="text-danger">*</span></label>
+        <select class="form-select" id="bulkUbicacionId" required>
+            <option value="">-- Seleccione --</option>
+        </select>
+    </div>
+
+    <!-- Campos extra para Reservar (estado 5) -->
+    <div id="bulkReservaFields" class="d-none">
+        <div class="mb-3">
+            <label class="form-label fw-bold">Vendedor <span class="text-danger">*</span></label>
+            <select class="form-select" id="bulkVendedorId">
+                <option value="">-- Seleccione --</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold">Cliente</label>
+            <select class="form-select" id="bulkClienteId">
+                <option value="">-- Sin cliente --</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-secondary" onclick="AppModal.close()">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnEjecutarBulkEstado" onclick="ejecutarBulkEstado()">
+            <i class="fas fa-exchange-alt me-1"></i> Cambiar Estado
+        </button>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const $modal = $('#globalModal');
+
+        // Cargar ubicaciones
+        $.get(URLS.getUbicaciones, function (r) {
+            if (r.success && r.data) {
+                const $sel = $('#bulkUbicacionId');
+                $sel.html('<option value="">-- Seleccione --</option>');
+                r.data.forEach(u => {
+                    $sel.append(`<option value="${u.id}">${u.nombre}${u.sucursalNombre ? ' (' + u.sucursalNombre + ')' : ''}</option>`);
+                });
+                $sel.select2({ dropdownParent: $modal, theme: 'bootstrap-5', placeholder: 'Buscar ubicación...', allowClear: true, width: '100%' });
+            }
+        });
+
+        // Mostrar/ocultar campos de reserva según estado seleccionado
+        $('#bulkNuevoEstado').on('change', function () {
+            const estado = parseInt($(this).val());
+            if (estado === 5) {
+                $('#bulkReservaFields').removeClass('d-none');
+                cargarBulkVendedoresYClientes();
+            } else {
+                $('#bulkReservaFields').addClass('d-none');
+            }
+        });
+    })();
+
+    function cargarBulkVendedoresYClientes() {
+        const $modal = $('#globalModal');
+
+        $.get(URLS.getVendedores, function (r) {
+            if (r.success && r.data) {
+                const $sel = $('#bulkVendedorId');
+                if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+                $sel.html('<option value="">-- Seleccione --</option>');
+                r.data.forEach(v => {
+                    $sel.append(`<option value="${v.id}">${v.nombreCompleto}</option>`);
+                });
+                $sel.select2({ dropdownParent: $modal, theme: 'bootstrap-5', placeholder: 'Buscar vendedor...', allowClear: true, width: '100%' });
+            }
+        });
+
+        $.get(URLS.getClientes, function (r) {
+            if (r.success && r.data) {
+                const $sel = $('#bulkClienteId');
+                if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+                $sel.html('<option value="">-- Sin cliente --</option>');
+                r.data.forEach(c => {
+                    $sel.append(`<option value="${c.clienteId}">${c.nombreCompleto}</option>`);
+                });
+                $sel.select2({ dropdownParent: $modal, theme: 'bootstrap-5', placeholder: 'Buscar cliente...', allowClear: true, width: '100%' });
+            }
+        });
+    }
+</script>

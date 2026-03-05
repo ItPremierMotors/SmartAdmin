@@ -101,16 +101,19 @@
                         <td class="text-muted fw-bold" style="width:40%">Kilometraje:</td>
                         <td>
                             <span id="kmDisplay">@Model.KilometrajeActual.ToString("N0") km</span>
-                            <button class="btn btn-sm btn-outline-secondary ms-2" id="btnEditarKm" onclick="toggleEditarKm()">
-                                <i class="fas fa-pencil-alt"></i>
-                            </button>
-                            <span id="kmEditor" class="d-none">
-                                <div class="input-group input-group-sm d-inline-flex" style="width:auto;">
-                                    <input type="number" class="form-control" id="nuevoKm" value="@Model.KilometrajeActual" min="0" style="width:120px;" />
-                                    <button class="btn btn-success" onclick="actualizarKilometraje(@Model.VehiculoId)"><i class="fas fa-check"></i></button>
-                                    <button class="btn btn-secondary" onclick="cancelarEditarKm()"><i class="fas fa-times"></i></button>
-                                </div>
-                            </span>
+                            @if (User.TienePermiso("Inventario.Editar"))
+                            {
+                                <button class="btn btn-sm btn-outline-secondary ms-2" id="btnEditarKm" onclick="toggleEditarKm()">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                                <span id="kmEditor" class="d-none">
+                                    <div class="input-group input-group-sm d-inline-flex" style="width:auto;">
+                                        <input type="number" class="form-control" id="nuevoKm" value="@Model.KilometrajeActual" min="0" style="width:120px;" />
+                                        <button class="btn btn-success" onclick="actualizarKilometraje(@Model.VehiculoId)"><i class="fas fa-check"></i></button>
+                                        <button class="btn btn-secondary" onclick="cancelarEditarKm()"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </span>
+                            }
                         </td>
                     </tr>
                     @if (Model.FechaPrimeraMatricula.HasValue)
@@ -127,6 +130,8 @@
 </div>
 
 <!-- Historial de Servicio -->
+@if (User.TienePermiso("Flota.VerHistorial"))
+{
 <div class="card mb-3 border-success">
     <div class="card-header bg-success bg-opacity-25 d-flex justify-content-between align-items-center">
         <h6 class="mb-0"><i class="fas fa-history me-2"></i>Historial de Servicio</h6>
@@ -183,6 +188,7 @@
         </div>
     </div>
 </div>
+}
 
 <!-- Vehículo (info condensada) -->
 <div class="card mb-3">

@@ -11,12 +11,18 @@
                     <option value="">Cargando...</option>
                 </select>
             </div>
-            <a href="@Url.Action("WizardWalkIn", "Recepcion")" class="btn btn-warning">
-                <i class="fas fa-walking me-1"></i> Recepcion Directa
-            </a>
-            <button class="btn btn-primary" onclick="abrirAgendarCita()">
-                <i class="fas fa-plus me-1"></i> Nueva Cita
-            </button>
+            @if (User.TienePermiso("Recepcion.Crear"))
+            {
+                <a href="@Url.Action("WizardWalkIn", "Recepcion")" class="btn btn-warning">
+                    <i class="fas fa-walking me-1"></i> Recepcion Directa
+                </a>
+            }
+            @if (User.TienePermiso("Cita.Crear"))
+            {
+                <button class="btn btn-primary" onclick="abrirAgendarCita()">
+                    <i class="fas fa-plus me-1"></i> Nueva Cita
+                </button>
+            }
         </div>
     </div>
 
@@ -89,9 +95,12 @@
                     <div id="sinCitas" class="text-center py-5 d-none">
                         <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
                         <p class="text-muted">No hay citas para este dia</p>
-                        <button class="btn btn-sm btn-primary" onclick="abrirAgendarCita()">
-                            <i class="fas fa-plus me-1"></i> Agendar Cita
-                        </button>
+                        @if (User.TienePermiso("Cita.Crear"))
+                        {
+                            <button class="btn btn-sm btn-primary" onclick="abrirAgendarCita()">
+                                <i class="fas fa-plus me-1"></i> Agendar Cita
+                            </button>
+                        }
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover mb-0" id="tablaCitas">
@@ -123,6 +132,12 @@
 </style>
 
 <script>
+    const PERMISOS = {
+        crear: @Json.Serialize(User.TienePermiso("Cita.Crear")),
+        editar: @Json.Serialize(User.TienePermiso("Cita.Editar")),
+        eliminar: @Json.Serialize(User.TienePermiso("Cita.Eliminar")),
+        recepcionCrear: @Json.Serialize(User.TienePermiso("Recepcion.Crear"))
+    };
     const URLS = {
         getByFecha: '@Url.Action("GetByFecha", "Agenda")',
         getRango: '@Url.Action("GetByRangoFechas", "Agenda")',

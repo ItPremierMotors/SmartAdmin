@@ -1,103 +1,255 @@
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Dashboard Gerencial";
 }
 
 @section styles
 {
-
 }
 
-@await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml", new {
-pageTitle = "Blank Page",
-pageSubTitle1 = "SmartAdmin",
-pageSubTitle2 = (string?)null,
-pageSubText = (string?)null
-})
-
-<h1 class="subheader-title mt-4">
-    <small> Can be the starting page for your application...
-
-        <button class="btn btn-sm btn-outline-secondary" data-action="playsound" data-soundfile="blank_.mp3"
-            data-soundpath="~/media/sound/" type="button">
-            <svg class="sa-icon">
-                <use href="/img/sprite.svg#volume-2"></use>
-            </svg>
+<div class="d-flex align-items-end mb-4">
+    <div>
+        @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml", new {
+            pageTitle = "Dashboard Gerencial",
+            pageSubTitle1 = "PremierFlow",
+            pageSubTitle2 = "Insights",
+            pageSubText = (string?)null
+        })
+    </div>
+    <div class="ms-auto d-flex align-items-center gap-2">
+        <select id="dateRange" class="form-select form-select-sm" style="width:auto">
+            <option value="7">Ultimos 7 dias</option>
+            <option value="30" selected>Ultimos 30 dias</option>
+            <option value="90">Ultimos 90 dias</option>
+        </select>
+        <button id="btnRefresh" class="btn btn-sm btn-outline-primary" title="Refrescar datos">
+            <svg class="sa-icon"><use href="/img/sprite.svg#refresh-ccw"></use></svg>
         </button>
-    </small>
-</h1>
+    </div>
+</div>
 
 <div class="main-content">
-    <div class="info-container">
-        You can start building your application by using this page as a starting point.
-    </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="card shadow-0 mb-g">
-                <div class="card-header">
-                    <div class="card-title">Card title</div>
+
+    <!-- =============================================
+         SECCION 1: KPI Cards (estilo Subscription)
+         ============================================= -->
+    <div class="row sortable-off" id="kpi-cards">
+        <!-- Ventas del Mes -->
+        <div class="col-xs-12 col-sm-6 col-xl-3 mb-g">
+            <div class="card">
+                <div class="row">
+                    <div class="col-7">
+                        <div class="p-3">
+                            <p class="p-0 mb-3 text-muted text-truncate">Ventas del Mes</p>
+                            <span class="h5 text-nowrap" id="kpi-ventas-count">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </span>
+                            <div class="fs-sm text-muted mt-1" id="kpi-ventas-revenue">L 0.00</div>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="d-flex h-100 align-items-center justify-content-end pe-3">
+                            <div class="width-5 height-5 bg-dark bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="fad fa-car h4 text-primary m-0"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <p class="card-text">Some quick example text to build on the card title and make
-                        up the bulk of the card's content.</p>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Address</th>
-                                    <th>City</th>
-                                    <th>State</th>
-                                    <th>Zip</th>
-                                    <th>Country</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>John Doe</td>
-                                    <td>john.doe@example.com</td>
-                                    <td>123-456-7890</td>
-                                    <td>123 Main St</td>
-                                    <td>Anytown</td>
-                                    <td>CA</td>
-                                    <td>12345</td>
-                                    <td>USA</td>
-                                    <td>Edit</td>
-                                </tr>
-                                <tr>
-                                    <td>Jane Smith</td>
-                                    <td>jane.smith@example.com</td>
-                                    <td>987-654-3210</td>
-                                    <td>123 Main St</td>
-                                    <td>Anytown</td>
-                                    <td>CA</td>
-                                    <td>12345</td>
-                                    <td>USA</td>
-                                    <td>Edit</td>
-                                </tr>
-                                <tr>
-                                    <td>Bob Johnson</td>
-                                    <td>bob.johnson@example.com</td>
-                                    <td>555-123-4567</td>
-                                    <td>123 Main St</td>
-                                    <td>Anytown</td>
-                                    <td>CA</td>
-                                    <td>12345</td>
-                                    <td>USA</td>
-                                    <td>Edit</td>
-                                </tr>
-                            </tbody>
-                        </table>
+            </div>
+        </div>
+        <!-- Ordenes Activas -->
+        <div class="col-xs-12 col-sm-6 col-xl-3 mb-g">
+            <div class="card">
+                <div class="row">
+                    <div class="col-7">
+                        <div class="p-3">
+                            <p class="p-0 mb-3 text-muted text-truncate">Ordenes Activas</p>
+                            <span class="h5 text-nowrap" id="kpi-ordenes-activas">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="d-flex h-100 align-items-center justify-content-end pe-3">
+                            <div class="width-5 height-5 bg-dark bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="fad fa-clipboard-list h4 text-warning m-0"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Citas Hoy -->
+        <div class="col-xs-12 col-sm-6 col-xl-3 mb-g">
+            <div class="card">
+                <div class="row">
+                    <div class="col-7">
+                        <div class="p-3">
+                            <p class="p-0 mb-3 text-muted text-truncate">Citas Hoy</p>
+                            <span class="h5 text-nowrap" id="kpi-citas-total">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </span>
+                            <div class="fs-sm text-muted mt-1">
+                                <span id="kpi-citas-completadas">0</span> completadas |
+                                <span id="kpi-citas-noshow">0</span> no-show
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="d-flex h-100 align-items-center justify-content-end pe-3">
+                            <div class="width-5 height-5 bg-dark bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="fad fa-calendar-check h4 text-success m-0"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Ocupacion Taller -->
+        <div class="col-xs-12 col-sm-6 col-xl-3 mb-g">
+            <div class="card">
+                <div class="row">
+                    <div class="col-7">
+                        <div class="p-3">
+                            <p class="p-0 mb-3 text-muted text-truncate">Ocupacion Taller</p>
+                            <span class="h5 text-nowrap" id="kpi-ocupacion">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </span>
+                            <div class="fs-sm text-muted mt-1" id="kpi-minutos-info"></div>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="d-flex h-100 align-items-center justify-content-end pe-3">
+                            <div class="width-5 height-5 bg-dark bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="fad fa-wrench h4 text-info m-0"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Vehiculos por Estado (badges) -->
+    <div class="row mb-g">
+        <div class="col-12">
+            <div class="d-flex flex-wrap gap-2 align-items-center" id="kpi-vehiculos-estado">
+                <span class="fs-sm fw-500 text-muted me-2">Inventario:</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================
+         SECCION 2: Taller y Tecnicos
+         ============================================= -->
+    <div class="row">
+        <!-- Ordenes por Estado -->
+        <div class="col-xl-6">
+            <div class="panel" id="panel-ordenes-estado">
+                <div class="panel-hdr">
+                    <h2>Ordenes <span class="fw-light"><i>por Estado</i></span></h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div id="chart-ordenes-estado" style="min-height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Productividad por Tecnico -->
+        <div class="col-xl-6">
+            <div class="panel" id="panel-productividad">
+                <div class="panel-hdr">
+                    <h2>Productividad <span class="fw-light"><i>por Tecnico</i></span></h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div id="chart-productividad" style="min-height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Capacidad del Taller (tendencia) -->
+        <div class="col-xl-8">
+            <div class="panel" id="panel-capacidad">
+                <div class="panel-hdr">
+                    <h2>Capacidad <span class="fw-light"><i>del Taller</i></span></h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div id="chart-capacidad" style="min-height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Eficiencia del Taller (gauge) -->
+        <div class="col-xl-4">
+            <div class="panel" id="panel-eficiencia">
+                <div class="panel-hdr">
+                    <h2>Eficiencia <span class="fw-light"><i>del Taller</i></span></h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content text-center">
+                        <div id="chart-eficiencia" style="min-height: 250px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================
+         SECCION 3: Ventas e Inventario
+         ============================================= -->
+    <div class="row">
+        <!-- Pipeline de Inventario -->
+        <div class="col-xl-6">
+            <div class="panel" id="panel-pipeline">
+                <div class="panel-hdr">
+                    <h2>Pipeline <span class="fw-light"><i>de Inventario</i></span></h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div id="chart-pipeline" style="min-height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Ventas por Mes -->
+        <div class="col-xl-6">
+            <div class="panel" id="panel-ventas-mes">
+                <div class="panel-hdr">
+                    <h2>Ventas <span class="fw-light"><i>por Mes</i></span></h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div id="chart-ventas-mes" style="min-height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Envejecimiento de Inventario -->
+        <div class="col-xl-12">
+            <div class="panel" id="panel-envejecimiento">
+                <div class="panel-hdr">
+                    <h2>Envejecimiento <span class="fw-light"><i>de Inventario (dias promedio)</i></span></h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div id="chart-envejecimiento" style="min-height: 280px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @section scripts
 {
-    <script src="~/scripts/pages/blank.js"></script>
+    <script type="module" src="~/scripts/pages/dashboardgerencial.js"></script>
 }

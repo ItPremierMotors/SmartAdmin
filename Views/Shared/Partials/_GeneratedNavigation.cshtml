@@ -202,7 +202,9 @@
 
     @* ============ OPERACIONES ============ *@
     @if (User.TienePermiso("Cliente.Ver") ||
-         User.TienePermiso("Inventario.Ver"))
+         User.TienePermiso("Inventario.Ver") ||
+         User.TienePermiso("Venta.Ver") ||
+         User.TienePermiso("Flota.Ver"))
     {
         <li class="nav-item">
             <a href="#" title="Operaciones" data-filter-tags>
@@ -227,11 +229,17 @@
                             <span class="nav-link-text" data-i18n>Inventario</span>
                         </a>
                     </li>
+                }
+                @if (User.TienePermiso("Venta.Ver"))
+                {
                     <li>
                         <a href=@Url.Action("Index", "Ventas")>
                             <span class="nav-link-text" data-i18n>Ventas</span>
                         </a>
                     </li>
+                }
+                @if (User.TienePermiso("Flota.Ver"))
+                {
                     <li>
                         <a href=@Url.Action("Index", "Flota")>
                             <span class="nav-link-text" data-i18n>Flota</span>

@@ -5,12 +5,15 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0"><i class="fas fa-warehouse me-2"></i>@ViewData["Title"]</h1>
         <div class="btn-group">
-            <button class="btn btn-success" id="btnCargaMasiva">
-                <i class="fas fa-file-excel me-2"></i>Carga Masiva
-            </button>
-            <button class="btn btn-primary" id="btnNuevo">
-                <i class="fas fa-plus me-2"></i>Nuevo Vehículo
-            </button>
+            @if (User.TienePermiso("Inventario.Crear"))
+            {
+                <button class="btn btn-success" id="btnCargaMasiva">
+                    <i class="fas fa-file-excel me-2"></i>Carga Masiva
+                </button>
+                <button class="btn btn-primary" id="btnNuevo">
+                    <i class="fas fa-plus me-2"></i>Nuevo Vehículo
+                </button>
+            }
         </div>
     </div>
 
@@ -55,6 +58,9 @@
             <table class="table table-hover table-sm d-none" id="tablaInventario" style="width:100%">
                 <thead class="table-light">
                     <tr>
+                        <th class="text-center" style="width:40px;">
+                            <input type="checkbox" id="chkSelectAll" class="form-check-input" title="Seleccionar todos" />
+                        </th>
                         <th>Identificador</th>
                         <th>Descripción</th>
                         <th>Color</th>
@@ -70,6 +76,30 @@
         </div>
     </div>
 </div>
+
+<!-- Toolbar flotante para operaciones masivas -->
+@if (User.TienePermiso("Inventario.Editar"))
+{
+<div id="bulkToolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-3 d-none" style="z-index:1050; max-width:700px; width:95%;">
+    <div class="card shadow-lg border-primary">
+        <div class="card-body py-2 px-3 d-flex align-items-center gap-3 flex-wrap">
+            <span class="badge bg-primary fs-6" id="bulkCount">0</span>
+            <span class="text-muted small text-truncate" id="bulkModelInfo" style="max-width:200px;">--</span>
+            <div class="vr d-none d-md-block"></div>
+            <button class="btn btn-sm btn-outline-warning" id="btnBulkEstado" disabled>
+                <i class="fas fa-exchange-alt me-1"></i>Estado
+            </button>
+            <button class="btn btn-sm btn-outline-info" id="btnBulkEditar" disabled>
+                <i class="fas fa-edit me-1"></i>Editar
+            </button>
+            <div class="vr d-none d-md-block"></div>
+            <button class="btn btn-sm btn-outline-danger" id="btnBulkDeselect">
+                <i class="fas fa-times me-1"></i>Deseleccionar
+            </button>
+        </div>
+    </div>
+</div>
+}
 
 <!-- Modal Seleccionar Ubicación para Cambio de Estado -->
 <div class="modal fade" id="modalUbicacionEstado" tabindex="-1" aria-hidden="true">
@@ -117,6 +147,11 @@
 
 @section Scripts {
 <script>
+    const PERMISOS = {
+        crear: @Json.Serialize(User.TienePermiso("Inventario.Crear")),
+        editar: @Json.Serialize(User.TienePermiso("Inventario.Editar")),
+        eliminar: @Json.Serialize(User.TienePermiso("Inventario.Eliminar"))
+    };
     const URLS = {
         getAll: '@Url.Action("GetAll", "Inventario")',
         getMarcas: '@Url.Action("GetMarcas", "Inventario")',
@@ -141,7 +176,11 @@
         getVersionesByModelo: '@Url.Action("GetByModelo", "VersionesVehiculo")',
         getUbicaciones: '@Url.Action("GetUbicaciones", "Inventario")',
         getVendedores: '@Url.Action("GetVendedores", "Inventario")',
-        getClientes: '@Url.Action("GetAll", "Clientes")'
+        getClientes: '@Url.Action("GetAll", "Clientes")',
+        bulkEstadoPartial: '@Url.Action("BulkEstadoPartial", "Inventario")',
+        bulkEditarPartial: '@Url.Action("BulkEditarPartial", "Inventario")',
+        bulkCambiarEstado: '@Url.Action("BulkCambiarEstado", "Inventario")',
+        bulkEditar: '@Url.Action("BulkEditar", "Inventario")'
     };
 
     const estadoColors = {
@@ -155,16 +194,22 @@
 
     const ESTADOS_INVENTARIO = [1, 2, 3, 4, 5];
 
+    // Transiciones pre-venta válidas
+    const TRANSICIONES = { 1:[2,3], 2:[3], 3:[4,5], 4:[5,3], 5:[4] };
+
     let dtInventario = null;
     let datosOriginales = [];
+    let selectedVehicles = new Map();
 
     $(document).ready(function () {
         cancelarReservasVencidas();
         cargarDatos();
         cargarMarcasFiltro();
         cargarSucursalesFiltro();
-        $('#btnNuevo').on('click', abrirModalCrear);
-        $('#btnCargaMasiva').on('click', abrirModalCargaMasiva);
+        if (PERMISOS.crear) {
+            $('#btnNuevo').on('click', abrirModalCrear);
+            $('#btnCargaMasiva').on('click', abrirModalCargaMasiva);
+        }
 
         // Select2 en filtros
         $('#filtroEstado').select2({ theme: 'bootstrap-5', allowClear: true, placeholder: 'Todos', width: '100%' });
@@ -229,6 +274,18 @@
             data: datos,
             columns: [
                 {
+                    data: null,
+                    orderable: false,
+                    className: 'text-center',
+                    render: (data, type, row) => `<input type="checkbox" class="form-check-input chk-vehiculo"
+                        data-id="${row.vehiculoId}"
+                        data-marca-id="${row.marcaId}" data-marca="${row.marcaNombre}"
+                        data-modelo-id="${row.modeloId}" data-modelo="${row.modeloNombre}"
+                        data-version-id="${row.versionId || ''}" data-version="${row.versionNombre || ''}"
+                        data-estado="${row.estado}" data-ubicacion-id="${row.ubicacionId || ''}"
+                        ${selectedVehicles.has(row.vehiculoId) ? 'checked' : ''} />`
+                },
+                {
                     data: 'identificador',
                     render: data => `<strong>${data}</strong>`
                 },
@@ -269,12 +326,8 @@
                             <button class="btn btn-outline-info" onclick="abrirModalDetalle(${data})" title="Ver detalles">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-outline-danger" onclick="abrirModalEliminar(${data})" title="Eliminar">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            ${PERMISOS.editar ? `<button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
+                            ${PERMISOS.eliminar ? `<button class="btn btn-outline-danger" onclick="abrirModalEliminar(${data})" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
                         </div>
                     `
                 }
@@ -282,8 +335,19 @@
             language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
             pageLength: 10,
             lengthMenu: [5, 10, 25, 50],
-            order: [[0, 'asc']],
-            responsive: true
+            order: [[1, 'asc']],
+            responsive: true,
+            drawCallback: function () {
+                // Restaurar checkboxes después de paginación/redraw
+                $('#tablaInventario tbody .chk-vehiculo').each(function () {
+                    const id = parseInt($(this).data('id'));
+                    if (selectedVehicles.has(id)) $(this).prop('checked', true);
+                });
+                // Actualizar estado del "select all"
+                const visibles = $('#tablaInventario tbody .chk-vehiculo').length;
+                const checkeados = $('#tablaInventario tbody .chk-vehiculo:checked').length;
+                $('#chkSelectAll').prop('checked', visibles > 0 && visibles === checkeados);
+            }
         });
 
         $('#tablaInventario').removeClass('d-none');
@@ -634,6 +698,223 @@
                 Toast.error(xhr.responseJSON?.message || 'Error al procesar la venta');
             },
             complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    // ══════════════════════════════════════════════
+    // SELECCIÓN MASIVA
+    // ══════════════════════════════════════════════
+
+    $(document).on('change', '.chk-vehiculo', function () {
+        const $chk = $(this);
+        const id = parseInt($chk.data('id'));
+        if ($chk.is(':checked')) {
+            selectedVehicles.set(id, {
+                vehiculoId: id,
+                marcaId: parseInt($chk.data('marca-id')),
+                marcaNombre: $chk.data('marca'),
+                modeloId: parseInt($chk.data('modelo-id')),
+                modeloNombre: $chk.data('modelo'),
+                versionId: $chk.data('version-id') ? parseInt($chk.data('version-id')) : null,
+                versionNombre: $chk.data('version') || '',
+                estado: parseInt($chk.data('estado')),
+                ubicacionId: $chk.data('ubicacion-id') ? parseInt($chk.data('ubicacion-id')) : null
+            });
+        } else {
+            selectedVehicles.delete(id);
+        }
+        actualizarToolbar();
+    });
+
+    $('#chkSelectAll').on('change', function () {
+        const checked = $(this).is(':checked');
+        $('#tablaInventario tbody .chk-vehiculo').each(function () {
+            if ($(this).is(':checked') !== checked) {
+                $(this).prop('checked', checked).trigger('change');
+            }
+        });
+    });
+
+    function actualizarToolbar() {
+        const count = selectedVehicles.size;
+        if (count === 0) {
+            $('#bulkToolbar').addClass('d-none');
+            $('#chkSelectAll').prop('checked', false);
+            return;
+        }
+
+        const values = Array.from(selectedVehicles.values());
+        const key = v => `${v.marcaId}-${v.modeloId}-${v.versionId}`;
+        const uniqueKeys = new Set(values.map(key));
+        const sameModel = uniqueKeys.size === 1;
+
+        $('#bulkCount').text(count + ' seleccionado(s)');
+
+        if (sameModel) {
+            const ref = values[0];
+            $('#bulkModelInfo').html(`${ref.marcaNombre} ${ref.modeloNombre} ${ref.versionNombre}`.trim());
+            $('#btnBulkEstado, #btnBulkEditar').prop('disabled', false);
+        } else {
+            $('#bulkModelInfo').html('<span class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Deben ser misma Marca/Modelo/Versión</span>');
+            $('#btnBulkEstado, #btnBulkEditar').prop('disabled', true);
+        }
+
+        $('#bulkToolbar').removeClass('d-none');
+    }
+
+    $('#btnBulkDeselect').on('click', function () {
+        selectedVehicles.clear();
+        $('.chk-vehiculo').prop('checked', false);
+        $('#chkSelectAll').prop('checked', false);
+        actualizarToolbar();
+    });
+
+    function getSelectedIds() {
+        return Array.from(selectedVehicles.keys());
+    }
+
+    // ── Bulk Cambiar Estado ──
+    $('#btnBulkEstado').on('click', function () {
+        const values = Array.from(selectedVehicles.values());
+        const estados = [...new Set(values.map(v => v.estado))];
+
+        // Calcular transiciones válidas comunes
+        let comunes = TRANSICIONES[estados[0]] || [];
+        for (let i = 1; i < estados.length; i++) {
+            const t = TRANSICIONES[estados[i]] || [];
+            comunes = comunes.filter(e => t.includes(e));
+        }
+
+        if (comunes.length === 0) {
+            Toast.error('Los vehículos seleccionados no comparten transiciones de estado válidas');
+            return;
+        }
+
+        // Para Reservar: validar misma ubicación
+        const ubicaciones = [...new Set(values.map(v => v.ubicacionId))];
+        if (ubicaciones.length > 1) {
+            // Quitar Reservado de opciones si ubicaciones distintas
+            comunes = comunes.filter(e => e !== 5);
+            if (comunes.length === 0) {
+                Toast.error('Para reservar en lote, los vehículos deben estar en la misma ubicación');
+                return;
+            }
+        }
+
+        // Guardar transiciones comunes para el partial
+        window._bulkTransicionesComunes = comunes;
+
+        AppModal.open({
+            title: '<i class="fas fa-exchange-alt me-2"></i>Cambio de Estado Masivo (' + selectedVehicles.size + ' vehículos)',
+            url: URLS.bulkEstadoPartial,
+            size: 'md',
+            onLoaded: function () {
+                // Llenar select de estados
+                const $sel = $('#bulkNuevoEstado');
+                $sel.html('<option value="">-- Seleccione --</option>');
+                comunes.forEach(e => {
+                    $sel.append(`<option value="${e}">${estadoNames[e]}</option>`);
+                });
+            }
+        });
+    });
+
+    function ejecutarBulkEstado() {
+        const nuevoEstado = parseInt($('#bulkNuevoEstado').val());
+        if (!nuevoEstado) { Toast.error('Seleccione un estado'); return; }
+
+        const ubicacionId = $('#bulkUbicacionId').val() ? parseInt($('#bulkUbicacionId').val()) : null;
+        if (!ubicacionId) { Toast.error('Debe seleccionar una ubicación'); return; }
+
+        const data = {
+            vehiculoIds: getSelectedIds(),
+            nuevoEstado: nuevoEstado,
+            ubicacionId: ubicacionId,
+            clienteId: $('#bulkClienteId').val() ? parseInt($('#bulkClienteId').val()) : null,
+            vendedorId: $('#bulkVendedorId').val() || null
+        };
+
+        if (nuevoEstado === 5 && !data.vendedorId) {
+            Toast.error('Debe seleccionar un vendedor');
+            return;
+        }
+
+        enviarBulkOperacion(URLS.bulkCambiarEstado, data, '#btnEjecutarBulkEstado');
+    }
+
+    // ── Bulk Editar ──
+    $('#btnBulkEditar').on('click', function () {
+        AppModal.open({
+            title: '<i class="fas fa-edit me-2"></i>Edición Masiva (' + selectedVehicles.size + ' vehículos)',
+            url: URLS.bulkEditarPartial,
+            size: 'lg'
+        });
+    });
+
+    function ejecutarBulkEditar() {
+        const data = { vehiculoIds: getSelectedIds() };
+        let hayCampos = false;
+
+        // Importacion
+        if ($('#chkNumeroImportacion').is(':checked')) { data.numeroImportacion = $('#bulkNumeroImportacion').val(); hayCampos = true; }
+        if ($('#chkNumeroPoliza').is(':checked')) { data.numeroPoliza = $('#bulkNumeroPoliza').val(); hayCampos = true; }
+        if ($('#chkCostoImportacion').is(':checked')) { data.costoImportacion = parseFloat($('#bulkCostoImportacion').val()) || 0; hayCampos = true; }
+        if ($('#chkFechaIngresoPais').is(':checked')) { data.fechaIngresoPais = $('#bulkFechaIngresoPais').val() || null; hayCampos = true; }
+        if ($('#chkFechaRecepcion').is(':checked')) { data.fechaRecepcion = $('#bulkFechaRecepcion').val() || null; hayCampos = true; }
+
+        // Comercial
+        if ($('#chkPrecioLista').is(':checked')) { data.precioLista = parseFloat($('#bulkPrecioLista').val()) || 0; hayCampos = true; }
+        if ($('#chkColor').is(':checked')) { data.color = $('#bulkColor').val(); hayCampos = true; }
+
+        // Taller
+        if ($('#chkKilometrajeActual').is(':checked')) { data.kilometrajeActual = parseInt($('#bulkKilometrajeActual').val()) || 0; hayCampos = true; }
+        if ($('#chkFechaPrimeraMatricula').is(':checked')) { data.fechaPrimeraMatricula = $('#bulkFechaPrimeraMatricula').val() || null; hayCampos = true; }
+        if ($('#chkGarantiaHasta').is(':checked')) { data.garantiaHasta = $('#bulkGarantiaHasta').val() || null; hayCampos = true; }
+
+        if (!hayCampos) {
+            Toast.error('Debe marcar al menos un campo para aplicar');
+            return;
+        }
+
+        enviarBulkOperacion(URLS.bulkEditar, data, '#btnEjecutarBulkEditar');
+    }
+
+    // ── Envío genérico ──
+    function enviarBulkOperacion(url, data, btnSelector) {
+        const btn = document.querySelector(btnSelector);
+        const btnOriginal = btn ? btn.innerHTML : '';
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: () => { if (btn) $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...'); },
+            success: function (response) {
+                if (response.success) {
+                    AppModal.close();
+                    const r = response.data;
+                    selectedVehicles.clear();
+                    actualizarToolbar();
+                    recargarTabla();
+                    if (r.fallidos === 0) {
+                        Toast.success(response.message || `${r.exitosos} vehículo(s) actualizados.`);
+                    } else {
+                        // Mostrar detalle de errores
+                        let errMsg = `${r.exitosos} exitosos, ${r.fallidos} con errores:\n`;
+                        r.detalle.filter(d => !d.exitoso).forEach(d => {
+                            errMsg += `\n- ${d.vin}: ${d.error}`;
+                        });
+                        Toast.warning(errMsg);
+                    }
+                } else {
+                    Toast.error(response.message || 'Error en operación masiva');
+                }
+            },
+            error: function (xhr) {
+                Toast.error(xhr.responseJSON?.message || 'Error al ejecutar operación masiva');
+            },
+            complete: () => { if (btn) $(btn).prop('disabled', false).html(btnOriginal); }
         });
     }
 

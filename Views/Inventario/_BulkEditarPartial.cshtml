@@ -1,0 +1,134 @@
+<div class="p-3">
+    <div class="alert alert-info small mb-3">
+        <i class="fas fa-info-circle me-1"></i>
+        Marque la casilla <strong>"Aplicar"</strong> en los campos que desea modificar. Solo los campos marcados se actualizarán.
+    </div>
+
+    <input type="hidden" id="bulkEditarIds" />
+
+    <ul class="nav nav-tabs" id="bulkEditTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-importacion" data-bs-toggle="tab" data-bs-target="#panel-importacion" type="button" role="tab">
+                <i class="fas fa-ship me-1"></i>Importación
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-comercial" data-bs-toggle="tab" data-bs-target="#panel-comercial" type="button" role="tab">
+                <i class="fas fa-dollar-sign me-1"></i>Comercial
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-taller" data-bs-toggle="tab" data-bs-target="#panel-taller" type="button" role="tab">
+                <i class="fas fa-wrench me-1"></i>Taller
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom p-3" id="bulkEditTabContent">
+        <!-- Tab Importación -->
+        <div class="tab-pane fade show active" id="panel-importacion" role="tabpanel">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input chk-aplicar" type="checkbox" id="chkNumeroImportacion" data-field="bulkNumeroImportacion">
+                        <label class="form-check-label small fw-bold" for="chkNumeroImportacion">Aplicar - Número de Importación</label>
+                    </div>
+                    <input type="text" class="form-control form-control-sm" id="bulkNumeroImportacion" maxlength="50" disabled>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input chk-aplicar" type="checkbox" id="chkNumeroPoliza" data-field="bulkNumeroPoliza">
+                        <label class="form-check-label small fw-bold" for="chkNumeroPoliza">Aplicar - Número de Póliza</label>
+                    </div>
+                    <input type="text" class="form-control form-control-sm" id="bulkNumeroPoliza" maxlength="50" disabled>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input chk-aplicar" type="checkbox" id="chkCostoImportacion" data-field="bulkCostoImportacion">
+                        <label class="form-check-label small fw-bold" for="chkCostoImportacion">Aplicar - Costo de Importación</label>
+                    </div>
+                    <input type="number" class="form-control form-control-sm" id="bulkCostoImportacion" step="0.01" min="0" disabled>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input chk-aplicar" type="checkbox" id="chkFechaIngresoPais" data-field="bulkFechaIngresoPais">
+                        <label class="form-check-label small fw-bold" for="chkFechaIngresoPais">Aplicar - Fecha Ingreso al País</label>
+                    </div>
+                    <input type="date" class="form-control form-control-sm" id="bulkFechaIngresoPais" disabled>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input chk-aplicar" type="checkbox" id="chkFechaRecepcion" data-field="bulkFechaRecepcion">
+                        <label class="form-check-label small fw-bold" for="chkFechaRecepcion">Aplicar - Fecha de Recepción</label>
+                    </div>
+                    <input type="date" class="form-control form-control-sm" id="bulkFechaRecepcion" disabled>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Comercial -->
+        <div class="tab-pane fade" id="panel-comercial" role="tabpanel">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input chk-aplicar" type="checkbox" id="chkPrecioLista" data-field="bulkPrecioLista">
+                        <label class="form-check-label small fw-bold" for="chkPrecioLista">Aplicar - Precio de Lista</label>
+                    </div>
+                    <input type="number" class="form-control form-control-sm" id="bulkPrecioLista" step="0.01" min="0" disabled>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input chk-aplicar" type="checkbox" id="chkColor" data-field="bulkColor">
+                        <label class="form-check-label small fw-bold" for="chkColor">Aplicar - Color</label>
+                    </div>
+                    <input type="text" class="form-control form-control-sm" id="bulkColor" maxlength="50" disabled>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Taller -->
+        <div class="tab-pane fade" id="panel-taller" role="tabpanel">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input chk-aplicar" type="checkbox" id="chkKilometrajeActual" data-field="bulkKilometrajeActual">
+                        <label class="form-check-label small fw-bold" for="chkKilometrajeActual">Aplicar - Kilometraje</label>
+                    </div>
+                    <input type="number" class="form-control form-control-sm" id="bulkKilometrajeActual" min="0" disabled>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input chk-aplicar" type="checkbox" id="chkFechaPrimeraMatricula" data-field="bulkFechaPrimeraMatricula">
+                        <label class="form-check-label small fw-bold" for="chkFechaPrimeraMatricula">Aplicar - Primera Matrícula</label>
+                    </div>
+                    <input type="date" class="form-control form-control-sm" id="bulkFechaPrimeraMatricula" disabled>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input chk-aplicar" type="checkbox" id="chkGarantiaHasta" data-field="bulkGarantiaHasta">
+                        <label class="form-check-label small fw-bold" for="chkGarantiaHasta">Aplicar - Garantía Hasta</label>
+                    </div>
+                    <input type="date" class="form-control form-control-sm" id="bulkGarantiaHasta" disabled>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-secondary" onclick="AppModal.close()">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnEjecutarBulkEditar" onclick="ejecutarBulkEditar()">
+            <i class="fas fa-save me-1"></i> Guardar Cambios
+        </button>
+    </div>
+</div>
+
+<script>
+    (function () {
+        // Habilitar/deshabilitar campo según checkbox "Aplicar"
+        $('.chk-aplicar').on('change', function () {
+            const fieldId = $(this).data('field');
+            $('#' + fieldId).prop('disabled', !this.checked);
+            if (this.checked) $('#' + fieldId).focus();
+        });
+    })();
+</script>

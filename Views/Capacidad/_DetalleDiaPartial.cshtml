@@ -17,7 +17,7 @@
             </div>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         }
-        else
+        else if (User.TienePermiso("Capacidad.Crear"))
         {
             <hr />
             <form id="formCrearCapacidad">
@@ -155,7 +155,7 @@ else
     <div class="card mb-3">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <h6 class="mb-0"><i class="fas fa-th me-2"></i>Bloques Horarios (@bloques.Count)</h6>
-            @if (!esFechaPasada)
+            @if (!esFechaPasada && User.TienePermiso("Capacidad.Crear"))
             {
                 <div class="btn-group btn-group-sm">
                     <button class="btn btn-outline-success" onclick="abrirCrearBloque(@Model.CapacidadId)">
@@ -202,14 +202,20 @@ else
                                     @if (!esFechaPasada)
                                     {
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-primary btn-sm" title="Editar"
-                                                    onclick="abrirEditarBloque(@b.BloqueId, '@b.HoraInicioFormateada', '@b.HoraFinFormateada', @b.CapacidadMaximaVehiculos, @((int)b.TipoBloque))">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-outline-danger btn-sm" title="Eliminar"
-                                                    onclick="eliminarBloque(@b.BloqueId, '@b.HoraInicioFormateada - @b.HoraFinFormateada')">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                            @if (User.TienePermiso("Capacidad.Editar"))
+                                            {
+                                                <button class="btn btn-outline-primary btn-sm" title="Editar"
+                                                        onclick="abrirEditarBloque(@b.BloqueId, '@b.HoraInicioFormateada', '@b.HoraFinFormateada', @b.CapacidadMaximaVehiculos, @((int)b.TipoBloque))">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            }
+                                            @if (User.TienePermiso("Capacidad.Eliminar"))
+                                            {
+                                                <button class="btn btn-outline-danger btn-sm" title="Eliminar"
+                                                        onclick="eliminarBloque(@b.BloqueId, '@b.HoraInicioFormateada - @b.HoraFinFormateada')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            }
                                         </div>
                                     }
                                 </td>
@@ -230,7 +236,7 @@ else
     <!-- Action Buttons -->
     <div class="d-flex justify-content-between mt-3 pt-3 border-top">
         <div>
-            @if (!esFechaPasada)
+            @if (!esFechaPasada && User.TienePermiso("Capacidad.Editar"))
             {
                 if (Model.PermiteAgendamiento)
                 {
@@ -245,14 +251,14 @@ else
                     </button>
                 }
             }
-            else
+            else if (esFechaPasada)
             {
                 <span class="badge bg-secondary"><i class="fas fa-lock me-1"></i>Fecha pasada - solo lectura</span>
             }
         </div>
         <div class="d-flex gap-2">
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
-            @if (!esFechaPasada)
+            @if (!esFechaPasada && User.TienePermiso("Capacidad.Editar"))
             {
                 <button type="button" class="btn btn-primary btn-sm" onclick="abrirEditarCapacidad(@Model.CapacidadId)">
                     <i class="fas fa-edit me-1"></i> Editar

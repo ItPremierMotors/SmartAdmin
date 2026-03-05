@@ -319,6 +319,29 @@ namespace SmartAdmin.Controllers
         }
 
         [HttpGet]
+        public IActionResult BulkEstadoPartial() => PartialView("_BulkEstadoPartial");
+
+        [HttpGet]
+        public IActionResult BulkEditarPartial() => PartialView("_BulkEditarPartial");
+
+        [HttpPost]
+        public async Task<IActionResult> BulkCambiarEstado([FromBody] BulkCambiarEstadoRequest request)
+        {
+            if (request.NuevoEstado == 5 && !User.IsInRole("JefeVentas"))
+                return StatusCode(403, new { success = false, message = "Solo el rol 'Jefe Ventas' puede reservar vehículos." });
+
+            var response = await vehiculoServices.BulkCambiarEstadoAsync(request);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BulkEditar([FromBody] BulkEditarRequest request)
+        {
+            var response = await vehiculoServices.BulkEditarAsync(request);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpGet]
         public IActionResult CargaMasivaPartial()
         {
             return PartialView("_CargaMasivaPartial");

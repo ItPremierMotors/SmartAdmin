@@ -98,5 +98,15 @@ namespace SmartAdmin.Services
         {
             return await apiClient.PostAsync<ResultadoImportacionViewModel>("api/Vehiculos/CrearLote", vehiculos);
         }
+
+        public async Task<ApiResponse<ResultadoBulkViewModel>> BulkCambiarEstadoAsync(BulkCambiarEstadoRequest request)
+        {
+            return await apiClient.PatchAsync<ResultadoBulkViewModel>("api/Vehiculos/BulkCambiarEstado", request);
+        }
+
+        public async Task<ApiResponse<ResultadoBulkViewModel>> BulkEditarAsync(BulkEditarRequest request)
+        {
+            return await apiClient.PatchAsync<ResultadoBulkViewModel>("api/Vehiculos/BulkEditar", request);
+        }
     }
 }

@@ -4,9 +4,12 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0"><i class="fas fa-users me-2"></i>@ViewData["Title"]</h1>
-        <button class="btn btn-primary" id="btnNuevo">
-            <i class="fas fa-plus me-2"></i>Nuevo Cliente
-        </button>
+        @if (User.TienePermiso("Cliente.Crear"))
+        {
+            <button class="btn btn-primary" id="btnNuevo">
+                <i class="fas fa-plus me-2"></i>Nuevo Cliente
+            </button>
+        }
     </div>
 
     <div class="card shadow-sm">
@@ -48,6 +51,11 @@
 
 @section Scripts {
 <script>
+    const PERMISOS = {
+        crear: @Json.Serialize(User.TienePermiso("Cliente.Crear")),
+        editar: @Json.Serialize(User.TienePermiso("Cliente.Editar")),
+        eliminar: @Json.Serialize(User.TienePermiso("Cliente.Eliminar"))
+    };
     const URLS = {
         getAll: '@Url.Action("GetAll")',
         search: '@Url.Action("Search")',
@@ -65,7 +73,7 @@
 
     $(document).ready(function () {
         cargarDatos();
-        $('#btnNuevo').on('click', abrirModalCrear);
+        if (PERMISOS.crear) $('#btnNuevo').on('click', abrirModalCrear);
         $('#filtroTipo').on('change', aplicarFiltros);
     });
 
@@ -133,12 +141,8 @@
                             <button class="btn btn-outline-info" onclick="abrirModalDetalle(${data})" title="Ver detalles">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-outline-danger" onclick="abrirModalEliminar(${data})" title="Eliminar">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            ${PERMISOS.editar ? `<button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
+                            ${PERMISOS.eliminar ? `<button class="btn btn-outline-danger" onclick="abrirModalEliminar(${data})" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
                         </div>
                     `
                 }

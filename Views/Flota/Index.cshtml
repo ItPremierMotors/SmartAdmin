@@ -51,6 +51,10 @@
 
 @section Scripts {
 <script>
+    const PERMISOS = {
+        editar: @Json.Serialize(User.TienePermiso("Inventario.Editar")),
+        verHistorial: @Json.Serialize(User.TienePermiso("Flota.VerHistorial"))
+    };
     const URLS = {
         getAll: '@Url.Action("GetAll", "Flota")',
         getDetail: '@Url.Action("DetailPartial", "Flota")',
@@ -171,9 +175,7 @@
                             <button class="btn btn-outline-info" onclick="abrirModalDetalle(${data})" title="Ver detalles">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
+                            ${PERMISOS.editar ? `<button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
                         </div>
                     `
                 }

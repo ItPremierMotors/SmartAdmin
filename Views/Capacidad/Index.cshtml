@@ -11,9 +11,12 @@
                     <option value="">Cargando...</option>
                 </select>
             </div>
-            <button class="btn btn-primary" onclick="abrirGenerarSemana()">
-                <i class="fas fa-bolt me-1"></i> Generar Semana
-            </button>
+            @if (User.TienePermiso("Capacidad.Crear"))
+            {
+                <button class="btn btn-primary" onclick="abrirGenerarSemana()">
+                    <i class="fas fa-bolt me-1"></i> Generar Semana
+                </button>
+            }
         </div>
     </div>
 
@@ -44,6 +47,11 @@
 </style>
 
 <script>
+    const PERMISOS = {
+        crear: @Json.Serialize(User.TienePermiso("Capacidad.Crear")),
+        editar: @Json.Serialize(User.TienePermiso("Capacidad.Editar")),
+        eliminar: @Json.Serialize(User.TienePermiso("Capacidad.Eliminar"))
+    };
     const URLS = {
         getRango: '@Url.Action("GetByRangoFechas", "Capacidad")',
         detalleDia: '@Url.Action("DetalleDiaPartial", "Capacidad")',
