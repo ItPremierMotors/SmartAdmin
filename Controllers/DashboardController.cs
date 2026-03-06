@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartAdmin.Helpers;
 using SmartAdmin.Interfaces;
 
 namespace Smartadmin.Controllers
@@ -16,65 +17,80 @@ namespace Smartadmin.Controllers
 
         public IActionResult Index()
         {
+            if (!User.TienePermiso("Dashboard.Ver"))
+                return Forbid();
+
             return View();
         }
 
         // =============================================
-        // Proxy endpoints para el Dashboard Gerencial
+        // Proxy endpoints para Resumen Operativo
         // =============================================
 
         [HttpGet]
-        public async Task<IActionResult> Resumen()
+        public async Task<IActionResult> Resumen(int? sucursalId = null)
         {
-            var result = await _apiClient.GetAsync<object>("api/Dashboard/Resumen");
+            if (!User.TienePermiso("Dashboard.Ver"))
+                return Forbid();
+
+            var url = "api/Dashboard/Resumen";
+            if (sucursalId.HasValue)
+                url += $"?sucursalId={sucursalId.Value}";
+
+            var result = await _apiClient.GetAsync<object>(url);
             return Json(result);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Taller(DateTime fechaInicio, DateTime fechaFin)
+        public async Task<IActionResult> Taller(DateTime fechaInicio, DateTime fechaFin, int? sucursalId = null)
         {
-            var result = await _apiClient.GetAsync<object>(
-                $"api/Dashboard/Taller?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}");
+            if (!User.TienePermiso("Dashboard.Ver"))
+                return Forbid();
+
+            var url = $"api/Dashboard/Taller?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}";
+            if (sucursalId.HasValue)
+                url += $"&sucursalId={sucursalId.Value}";
+
+            var result = await _apiClient.GetAsync<object>(url);
             return Json(result);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Ventas(DateTime fechaInicio, DateTime fechaFin)
+        public async Task<IActionResult> Ventas(DateTime fechaInicio, DateTime fechaFin, int? sucursalId = null)
         {
-            var result = await _apiClient.GetAsync<object>(
-                $"api/Dashboard/Ventas?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}");
+            if (!User.TienePermiso("Dashboard.Ver"))
+                return Forbid();
+
+            var url = $"api/Dashboard/Ventas?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}";
+            if (sucursalId.HasValue)
+                url += $"&sucursalId={sucursalId.Value}";
+
+            var result = await _apiClient.GetAsync<object>(url);
             return Json(result);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Inventario()
+        public async Task<IActionResult> Inventario(int? sucursalId = null)
         {
-            var result = await _apiClient.GetAsync<object>("api/Dashboard/Inventario");
+            if (!User.TienePermiso("Dashboard.Ver"))
+                return Forbid();
+
+            var url = "api/Dashboard/Inventario";
+            if (sucursalId.HasValue)
+                url += $"?sucursalId={sucursalId.Value}";
+
+            var result = await _apiClient.GetAsync<object>(url);
             return Json(result);
         }
 
-        // =============================================
-        // Dashboards de ejemplo (existentes)
-        // =============================================
-
-        public IActionResult ProjectManagement()
+        [HttpGet]
+        public async Task<IActionResult> Sucursales()
         {
-            return View();
-        }
+            if (!User.TienePermiso("Dashboard.Ver"))
+                return Forbid();
 
-        public IActionResult ControlCenter()
-        {
-            return View();
-        }
-
-        public IActionResult Subscription()
-        {
-            return View();
-        }
-
-        public IActionResult Marketing()
-        {
-            return View();
+            var result = await _apiClient.GetAsync<object>("api/Sucursales/GetAll");
+            return Json(result);
         }
     }
 }

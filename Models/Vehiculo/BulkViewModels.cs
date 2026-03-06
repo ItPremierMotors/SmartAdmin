@@ -7,6 +7,7 @@ namespace SmartAdmin.Models.Vehiculo
         public int? UbicacionId { get; set; }
         public int? ClienteId { get; set; }
         public string? VendedorId { get; set; }
+        public decimal? PrecioVenta { get; set; }
     }
 
     public class BulkEditarRequest

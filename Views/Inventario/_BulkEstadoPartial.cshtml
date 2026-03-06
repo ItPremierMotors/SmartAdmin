@@ -48,6 +48,14 @@
     (function () {
         const $modal = $('#globalModal');
 
+        // Poblar select de estados desde las transiciones calculadas en Index.cshtml
+        const comunes = window._bulkTransicionesComunes || [];
+        const $selEstado = $('#bulkNuevoEstado');
+        $selEstado.html('<option value="">-- Seleccione --</option>');
+        comunes.forEach(function (e) {
+            $selEstado.append('<option value="' + e + '">' + (estadoNames[e] || e) + '</option>');
+        });
+
         // Cargar ubicaciones
         $.get(URLS.getUbicaciones, function (r) {
             if (r.success && r.data) {

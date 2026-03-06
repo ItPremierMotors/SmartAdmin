@@ -1,6 +1,6 @@
 import ApexCharts from '../thirdparty/apexchartsWrapper.js';
 
-// Dashboard Gerencial - PremierFlow
+// Resumen Operativo - PremierFlow
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // =============================================
     async function fetchDashboard(endpoint, params = {}) {
         const url = new URL(`/Dashboard/${endpoint}`, window.location.origin);
+        // Agregar sucursalId si hay filtro seleccionado
+        const sucursalId = document.getElementById('sucursalFilter').value;
+        if (sucursalId) params.sucursalId = sucursalId;
+
         Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
         const resp = await fetch(url, { credentials: 'same-origin' });
@@ -59,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return fallback;
     }
 
-    // Colores del tema
     function colors() {
         return {
             primary: getColor('primary.500', '#886ab5'),
@@ -71,6 +74,28 @@ document.addEventListener('DOMContentLoaded', function () {
             dark: getColor('primary.700', '#5f4b8b'),
             body: '#ccc'
         };
+    }
+
+    // =============================================
+    // Cargar sucursales
+    // =============================================
+    async function loadSucursales() {
+        try {
+            const resp = await fetch('/Dashboard/Sucursales', { credentials: 'same-origin' });
+            if (!resp.ok) return;
+            const json = await resp.json();
+            if (!json.success || !json.data) return;
+
+            const select = document.getElementById('sucursalFilter');
+            json.data.forEach(function (s) {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.nombre;
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            console.error('Error cargando sucursales:', e);
+        }
     }
 
     // =============================================
@@ -415,14 +440,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function startAutoRefresh() {
         if (refreshTimer) clearInterval(refreshTimer);
-        refreshTimer = setInterval(loadAll, 5 * 60 * 1000); // cada 5 min
+        refreshTimer = setInterval(loadAll, 5 * 60 * 1000);
     }
 
     // Event listeners
     document.getElementById('dateRange').addEventListener('change', loadAll);
+    document.getElementById('sucursalFilter').addEventListener('change', loadAll);
     document.getElementById('btnRefresh').addEventListener('click', loadAll);
 
-    // Init
-    loadAll();
+    // Init: cargar sucursales primero, luego datos
+    loadSucursales().then(loadAll);
     startAutoRefresh();
 });

@@ -18,8 +18,7 @@ namespace SmartAdmin.Models.Taller
         public bool EsGarantia { get; set; }
         public string? ObservacionesApertura { get; set; }
         public string? ObservacionesCierre { get; set; }
-        public string? AsesorId { get; set; }
-        public string? CoordinadorId { get; set; }
+
         public decimal TotalManoObra { get; set; }
         public decimal TotalRepuestos { get; set; }
         public decimal TotalGeneral { get; set; }
@@ -61,8 +60,7 @@ namespace SmartAdmin.Models.Taller
         public decimal? NivelCombustible { get; set; }
         public bool EsGarantia { get; set; }
         public string? ObservacionesApertura { get; set; }
-        public string? AsesorId { get; set; }
-        public string? CoordinadorId { get; set; }
+
     }
 
     public class CreateOsWalkInViewModel
@@ -73,8 +71,7 @@ namespace SmartAdmin.Models.Taller
         public decimal? NivelCombustible { get; set; }
         public bool EsGarantia { get; set; }
         public string? ObservacionesApertura { get; set; }
-        public string? AsesorId { get; set; }
-        public string? CoordinadorId { get; set; }
+
         public int? SucursalId { get; set; }
     }
 
@@ -85,8 +82,7 @@ namespace SmartAdmin.Models.Taller
         public decimal? NivelCombustible { get; set; }
         public bool EsGarantia { get; set; }
         public string? ObservacionesApertura { get; set; }
-        public string? AsesorId { get; set; }
-        public string? CoordinadorId { get; set; }
+
     }
 
     public class CambiarEstadoOsViewModel

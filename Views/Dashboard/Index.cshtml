@@ -1,5 +1,5 @@
 @{
-    ViewBag.Title = "Dashboard Gerencial";
+    ViewBag.Title = "Resumen Operativo";
 }
 
 @section styles
@@ -9,13 +9,16 @@
 <div class="d-flex align-items-end mb-4">
     <div>
         @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml", new {
-            pageTitle = "Dashboard Gerencial",
+            pageTitle = "Resumen Operativo",
             pageSubTitle1 = "PremierFlow",
             pageSubTitle2 = "Insights",
             pageSubText = (string?)null
         })
     </div>
     <div class="ms-auto d-flex align-items-center gap-2">
+        <select id="sucursalFilter" class="form-select form-select-sm" style="width:auto">
+            <option value="">Todas las sucursales</option>
+        </select>
         <select id="dateRange" class="form-select form-select-sm" style="width:auto">
             <option value="7">Ultimos 7 dias</option>
             <option value="30" selected>Ultimos 30 dias</option>

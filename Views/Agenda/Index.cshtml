@@ -13,7 +13,7 @@
             </div>
             @if (User.TienePermiso("Recepcion.Crear"))
             {
-                <a href="@Url.Action("WizardWalkIn", "Recepcion")" class="btn btn-warning">
+                <a id="btnRecepcionDirecta" href="@Url.Action("WizardWalkIn", "Recepcion")" class="btn btn-warning">
                     <i class="fas fa-walking me-1"></i> Recepcion Directa
                 </a>
             }
@@ -161,6 +161,7 @@
         searchVehiculos: '@Url.Action("Search", "Flota")',
         getSucursales: '@Url.Action("GetSucursales", "Agenda")',
         wizardRecepcion: '@Url.Action("Wizard", "Recepcion")',
+        wizardWalkIn: '@Url.Action("WizardWalkIn", "Recepcion")',
         getEvidenciasByOs: '@Url.Action("GetEvidenciasByOs", "Agenda")'
     };
 </script>

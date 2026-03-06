@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using SmartAdmin.Helpers;
 using SmartAdmin.Interfaces;
 using SmartAdmin.Models.Vehiculo;
 
@@ -263,6 +264,9 @@ namespace SmartAdmin.Controllers
         [HttpPost]
         public async Task<IActionResult> ProcesarVenta([FromBody] ProcesarVentaViewModel model)
         {
+            if (!User.IsInRole("Gerencia"))
+                return StatusCode(403, new { success = false, message = "Solo el rol 'Gerencia' puede procesar ventas." });
+
             if (!ModelState.IsValid) return BadRequest(new { success = false, message = ObtenerErroresValidacion() });
 
             // 1. Obtener detalle actual
@@ -324,11 +328,20 @@ namespace SmartAdmin.Controllers
         [HttpGet]
         public IActionResult BulkEditarPartial() => PartialView("_BulkEditarPartial");
 
+        [HttpGet]
+        public IActionResult BulkVentaPartial() => PartialView("_BulkVentaPartial");
+
         [HttpPost]
         public async Task<IActionResult> BulkCambiarEstado([FromBody] BulkCambiarEstadoRequest request)
         {
+            if (!User.TienePermiso("Inventario.Editar"))
+                return StatusCode(403, new { success = false, message = "No tiene permisos para editar inventario." });
+
             if (request.NuevoEstado == 5 && !User.IsInRole("JefeVentas"))
                 return StatusCode(403, new { success = false, message = "Solo el rol 'Jefe Ventas' puede reservar vehículos." });
+
+            if (request.NuevoEstado == 6 && !User.IsInRole("Gerencia"))
+                return StatusCode(403, new { success = false, message = "Solo el rol 'Gerencia' puede procesar ventas." });
 
             var response = await vehiculoServices.BulkCambiarEstadoAsync(request);
             return StatusCode(response.StatusCode, response);
@@ -337,6 +350,9 @@ namespace SmartAdmin.Controllers
         [HttpPost]
         public async Task<IActionResult> BulkEditar([FromBody] BulkEditarRequest request)
         {
+            if (!User.TienePermiso("Inventario.Editar"))
+                return StatusCode(403, new { success = false, message = "No tiene permisos para editar inventario." });
+
             var response = await vehiculoServices.BulkEditarAsync(request);
             return StatusCode(response.StatusCode, response);
         }

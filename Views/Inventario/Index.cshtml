@@ -92,6 +92,9 @@
             <button class="btn btn-sm btn-outline-info" id="btnBulkEditar" disabled>
                 <i class="fas fa-edit me-1"></i>Editar
             </button>
+            <button class="btn btn-sm btn-success d-none" id="btnBulkVenta" disabled>
+                <i class="fas fa-handshake me-1"></i>Venta
+            </button>
             <div class="vr d-none d-md-block"></div>
             <button class="btn btn-sm btn-outline-danger" id="btnBulkDeselect">
                 <i class="fas fa-times me-1"></i>Deseleccionar
@@ -150,7 +153,8 @@
     const PERMISOS = {
         crear: @Json.Serialize(User.TienePermiso("Inventario.Crear")),
         editar: @Json.Serialize(User.TienePermiso("Inventario.Editar")),
-        eliminar: @Json.Serialize(User.TienePermiso("Inventario.Eliminar"))
+        eliminar: @Json.Serialize(User.TienePermiso("Inventario.Eliminar")),
+        venta: @Json.Serialize(User.IsInRole("Gerencia"))
     };
     const URLS = {
         getAll: '@Url.Action("GetAll", "Inventario")',
@@ -180,7 +184,8 @@
         bulkEstadoPartial: '@Url.Action("BulkEstadoPartial", "Inventario")',
         bulkEditarPartial: '@Url.Action("BulkEditarPartial", "Inventario")',
         bulkCambiarEstado: '@Url.Action("BulkCambiarEstado", "Inventario")',
-        bulkEditar: '@Url.Action("BulkEditar", "Inventario")'
+        bulkEditar: '@Url.Action("BulkEditar", "Inventario")',
+        bulkVentaPartial: '@Url.Action("BulkVentaPartial", "Inventario")'
     };
 
     const estadoColors = {
@@ -195,7 +200,14 @@
     const ESTADOS_INVENTARIO = [1, 2, 3, 4, 5];
 
     // Transiciones pre-venta válidas
-    const TRANSICIONES = { 1:[2,3], 2:[3], 3:[4,5], 4:[5,3], 5:[4] };
+    const esJefeVentas = @(User.IsInRole("JefeVentas") ? "true" : "false");
+    const TRANSICIONES_BASE = { 1:[2,3], 2:[3], 3:[4,5], 4:[5,3], 5:[4] };
+    // Si no es JefeVentas, filtrar Reservado (5) de las transiciones
+    const TRANSICIONES = esJefeVentas
+        ? TRANSICIONES_BASE
+        : Object.fromEntries(
+            Object.entries(TRANSICIONES_BASE).map(([k, v]) => [k, v.filter(e => e !== 5)])
+          );
 
     let dtInventario = null;
     let datosOriginales = [];
@@ -283,6 +295,7 @@
                         data-modelo-id="${row.modeloId}" data-modelo="${row.modeloNombre}"
                         data-version-id="${row.versionId || ''}" data-version="${row.versionNombre || ''}"
                         data-estado="${row.estado}" data-ubicacion-id="${row.ubicacionId || ''}"
+                        data-cliente-id="${row.clienteId || ''}" data-cliente-nombre="${row.clienteNombre || ''}"
                         ${selectedVehicles.has(row.vehiculoId) ? 'checked' : ''} />`
                 },
                 {
@@ -718,7 +731,9 @@
                 versionId: $chk.data('version-id') ? parseInt($chk.data('version-id')) : null,
                 versionNombre: $chk.data('version') || '',
                 estado: parseInt($chk.data('estado')),
-                ubicacionId: $chk.data('ubicacion-id') ? parseInt($chk.data('ubicacion-id')) : null
+                ubicacionId: $chk.data('ubicacion-id') ? parseInt($chk.data('ubicacion-id')) : null,
+                clienteId: $chk.data('cliente-id') ? parseInt($chk.data('cliente-id')) : null,
+                clienteNombre: $chk.data('cliente-nombre') || ''
             });
         } else {
             selectedVehicles.delete(id);
@@ -759,6 +774,16 @@
             $('#btnBulkEstado, #btnBulkEditar').prop('disabled', true);
         }
 
+        // Mostrar botón Venta solo si: permiso, todos Reservado, mismo modelo, mismo cliente
+        const todosReservados = values.every(v => v.estado === 5);
+        const clienteIds = [...new Set(values.map(v => v.clienteId).filter(c => c))];
+        const mismoCliente = todosReservados && clienteIds.length === 1;
+        if (PERMISOS.venta && todosReservados && sameModel && mismoCliente) {
+            $('#btnBulkVenta').removeClass('d-none').prop('disabled', false);
+        } else {
+            $('#btnBulkVenta').addClass('d-none').prop('disabled', true);
+        }
+
         $('#bulkToolbar').removeClass('d-none');
     }
 
@@ -778,6 +803,13 @@
         const values = Array.from(selectedVehicles.values());
         const estados = [...new Set(values.map(v => v.estado))];
 
+        // Validar misma ubicación actual para cambio de estado
+        const ubicaciones = [...new Set(values.map(v => v.ubicacionId))];
+        if (ubicaciones.length > 1) {
+            Toast.error('Para cambiar estado en lote, todos los vehículos deben estar en la misma ubicación');
+            return;
+        }
+
         // Calcular transiciones válidas comunes
         let comunes = TRANSICIONES[estados[0]] || [];
         for (let i = 1; i < estados.length; i++) {
@@ -790,32 +822,13 @@
             return;
         }
 
-        // Para Reservar: validar misma ubicación
-        const ubicaciones = [...new Set(values.map(v => v.ubicacionId))];
-        if (ubicaciones.length > 1) {
-            // Quitar Reservado de opciones si ubicaciones distintas
-            comunes = comunes.filter(e => e !== 5);
-            if (comunes.length === 0) {
-                Toast.error('Para reservar en lote, los vehículos deben estar en la misma ubicación');
-                return;
-            }
-        }
-
-        // Guardar transiciones comunes para el partial
+        // Guardar transiciones comunes para que el partial las lea
         window._bulkTransicionesComunes = comunes;
 
         AppModal.open({
             title: '<i class="fas fa-exchange-alt me-2"></i>Cambio de Estado Masivo (' + selectedVehicles.size + ' vehículos)',
             url: URLS.bulkEstadoPartial,
-            size: 'md',
-            onLoaded: function () {
-                // Llenar select de estados
-                const $sel = $('#bulkNuevoEstado');
-                $sel.html('<option value="">-- Seleccione --</option>');
-                comunes.forEach(e => {
-                    $sel.append(`<option value="${e}">${estadoNames[e]}</option>`);
-                });
-            }
+            size: 'md'
         });
     });
 
@@ -877,6 +890,42 @@
         }
 
         enviarBulkOperacion(URLS.bulkEditar, data, '#btnEjecutarBulkEditar');
+    }
+
+    // ── Bulk Venta ──
+    $('#btnBulkVenta').on('click', function () {
+        // Detectar si todos comparten el mismo cliente de reserva
+        const values = Array.from(selectedVehicles.values());
+        const clienteIds = [...new Set(values.map(v => v.clienteId).filter(c => c))];
+        if (clienteIds.length === 1) {
+            const ref = values.find(v => v.clienteId === clienteIds[0]);
+            window._bulkVentaCliente = { id: clienteIds[0], nombre: ref.clienteNombre };
+        } else {
+            window._bulkVentaCliente = null;
+        }
+
+        AppModal.open({
+            title: '<i class="fas fa-handshake me-2"></i>Procesar Venta Masiva (' + selectedVehicles.size + ' vehículos)',
+            url: URLS.bulkVentaPartial,
+            size: 'md'
+        });
+    });
+
+    function ejecutarBulkVenta() {
+        const clienteId = $('#bulkVentaClienteId').val() ? parseInt($('#bulkVentaClienteId').val()) : null;
+        const precioVenta = $('#bulkVentaPrecio').val() ? parseFloat($('#bulkVentaPrecio').val()) : null;
+
+        if (!clienteId) { Toast.error('Debe seleccionar un cliente'); return; }
+        if (!precioVenta || precioVenta <= 0) { Toast.error('Debe ingresar un precio de venta válido'); return; }
+
+        const data = {
+            vehiculoIds: getSelectedIds(),
+            nuevoEstado: 6,
+            clienteId: clienteId,
+            precioVenta: precioVenta
+        };
+
+        enviarBulkOperacion(URLS.bulkCambiarEstado, data, '#btnEjecutarBulkVenta');
     }
 
     // ── Envío genérico ──

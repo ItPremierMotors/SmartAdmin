@@ -41,6 +41,7 @@ function cargarSucursales() {
             $sel.empty().append('<option value="">Sin sucursales</option>');
         }
         actualizarFechaTitulo();
+        actualizarLinkRecepcionDirecta();
         cargarCitas();
     }).fail(function () {
         $('#filtroSucursal').empty().append('<option value="">Error</option>');
@@ -50,6 +51,7 @@ function cargarSucursales() {
 
     $('#filtroSucursal').on('change', function () {
         localStorage.setItem('sucursalAgenda', $(this).val());
+        actualizarLinkRecepcionDirecta();
         cargarCitas();
     });
 
@@ -57,6 +59,14 @@ function cargarSucursales() {
         actualizarFechaTitulo();
         cargarCitas();
     });
+}
+
+function actualizarLinkRecepcionDirecta() {
+    const $btn = $('#btnRecepcionDirecta');
+    if (!$btn.length) return;
+    const baseUrl = URLS.wizardWalkIn || $btn.data('base-url');
+    const sId = getSucursalId();
+    $btn.attr('href', sId ? baseUrl + '?sucursalId=' + sId : baseUrl);
 }
 
 // ─── Data ───
@@ -243,8 +253,8 @@ function obtenerAcciones(cita) {
                     </button>`;
             }
             break;
-        case 3: // En Proceso - solo transferir, completar se hace desde la OS
-            if (PERMISOS.editar) btns += `
+        case 3: // En Proceso - solo transferir (no en fechas futuras), completar se hace desde la OS
+            if (PERMISOS.editar && (esHoy || esFechaPasada)) btns += `
                 <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(${cita.citaId})" title="Transferir a manana">
                     <i class="fas fa-exchange-alt"></i>
                 </button>`;

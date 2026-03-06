@@ -156,10 +156,13 @@
             <!-- Vehículo Reservado: mostrar botón Procesar Venta -->
             <hr />
             <div class="d-flex align-items-center gap-2">
+                @if (User.IsInRole("Gerencia"))
+                {
                 <button class="btn btn-success" onclick="abrirModalVenta(@Model.VehiculoId)">
                     <i class="fas fa-handshake me-1"></i> Procesar Venta
                 </button>
                 <span class="text-muted small">o</span>
+                }
                 <input type="hidden" id="stateChangeVehiculoId" value="@Model.VehiculoId" />
                 <input type="hidden" id="nuevoEstado" value="4" />
                 <button class="btn btn-sm btn-outline-warning" id="btnConfirmarEstado" onclick="confirmarCambioEstado()">

@@ -728,7 +728,8 @@
         kilometrajeActual: @Model.KilometrajeActual,
         segmentoVehiculo: @Model.SegmentoVehiculo,
         clienteNombre: '@Html.Raw(Model.ClienteNombre.Replace("'", "\\'"))',
-        isWalkIn: @(Model.IsWalkIn ? "true" : "false")
+        isWalkIn: @(Model.IsWalkIn ? "true" : "false"),
+        sucursalId: @Model.SucursalId
     };
     const URLS = {
         iniciarRecepcion: '@Url.Action("IniciarRecepcion", "Recepcion")',

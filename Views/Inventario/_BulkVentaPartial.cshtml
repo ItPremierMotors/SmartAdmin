@@ -1,0 +1,75 @@
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-1"></i>
+    Los vehículos seleccionados pasarán a estado <strong>Vendido</strong> y se moverán al módulo de Ventas.
+</div>
+
+<form id="formBulkVenta">
+    <div class="mb-3">
+        <label class="form-label">Cliente <span class="text-danger">*</span></label>
+        <select class="form-select" id="bulkVentaClienteId" required>
+            <option value="">Buscar cliente...</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Precio de Venta <span class="text-danger">*</span></label>
+        <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input type="number" class="form-control" id="bulkVentaPrecio" step="0.01" min="0.01" required />
+        </div>
+        <div class="form-text">Se aplicará el mismo precio a todos los vehículos seleccionados.</div>
+    </div>
+
+    <div class="alert alert-light border small mb-0">
+        <i class="fas fa-info-circle me-1 text-primary"></i>
+        La fecha de venta se registrará automáticamente. Plazo de entrega: <strong>7 días hábiles</strong>.
+    </div>
+</form>
+
+<div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="fas fa-times me-1"></i> Cancelar
+    </button>
+    <button type="button" class="btn btn-success" id="btnEjecutarBulkVenta" onclick="ejecutarBulkVenta()">
+        <i class="fas fa-handshake me-1"></i> Procesar Venta
+    </button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var $cliente = $('#bulkVentaClienteId');
+        $cliente.select2({
+            dropdownParent: $('.modal'),
+            theme: 'bootstrap-5',
+            placeholder: 'Buscar cliente...',
+            allowClear: true,
+            minimumInputLength: 2,
+            language: { inputTooShort: () => 'Escriba al menos 2 caracteres...' },
+            ajax: {
+                url: '@Url.Action("Search", "Clientes")',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) {
+                    return { term: params.term };
+                },
+                processResults: function (data) {
+                    if (data.success && data.data) {
+                        return {
+                            results: data.data.map(c => ({
+                                id: c.clienteId,
+                                text: c.nombreCompleto + ' (' + (c.dni || c.rtn || c.telefono) + ')'
+                            }))
+                        };
+                    }
+                    return { results: [] };
+                }
+            }
+        });
+
+        // Pre-llenar cliente si todos los vehículos comparten el mismo cliente de reserva
+        if (window._bulkVentaCliente) {
+            var opt = new Option(window._bulkVentaCliente.nombre, window._bulkVentaCliente.id, true, true);
+            $cliente.append(opt).trigger('change');
+        }
+    });
+</script>

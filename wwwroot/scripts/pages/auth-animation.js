@@ -1,11 +1,14 @@
-VANTA.HALO({
+VANTA.NET({
     el: "#net",
-    mouseControls: false,
-    touchControls: false,
+    mouseControls: true,
+    touchControls: true,
     gyroControls: false,
-    color: 0xfd3995,
-    size: 1.6,
-    scale: 0.75,
-    xOffset: 0.22,
-    scaleMobile: 0.50,
+    color: 0x3b82f6,
+    backgroundColor: 0x0f172a,
+    points: 12,
+    maxDistance: 22,
+    spacing: 16,
+    showDots: true,
+    scale: 1.0,
+    scaleMobile: 0.75,
 });

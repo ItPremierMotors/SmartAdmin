@@ -14,6 +14,7 @@ namespace SmartAdmin.Models.Taller
         public string TipoServicioNombre { get; set; } = null!;
         public string MotivoVisita { get; set; } = null!;
         public bool IsWalkIn { get; set; }
+        public int SucursalId { get; set; }
     }
 
     public class IniciarRecepcionRequest

@@ -22,7 +22,7 @@
     });
 
     // ===================== WALK-IN SELECTORS =====================
-    let walkInData = { clienteId: null, vehiculoId: null, tipoServicioId: null, sucursalId: 1 };
+    let walkInData = { clienteId: null, vehiculoId: null, tipoServicioId: null, sucursalId: WIZARD_DATA.sucursalId || 1 };
 
     function initWalkInSelectors() {
         // Select2 para cliente

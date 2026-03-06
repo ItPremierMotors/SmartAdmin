@@ -37,8 +37,8 @@ namespace SmartAdmin.Controllers
             }
         }
 
-        // GET: /Recepcion/WizardWalkIn
-        public IActionResult WizardWalkIn()
+        // GET: /Recepcion/WizardWalkIn?sucursalId=2
+        public IActionResult WizardWalkIn(int? sucursalId = null)
         {
             var model = new RecepcionWizardViewModel
             {
@@ -50,7 +50,8 @@ namespace SmartAdmin.Controllers
                 TipoServicioNombre = "",
                 MotivoVisita = "",
                 KilometrajeActual = 0,
-                SegmentoVehiculo = 1
+                SegmentoVehiculo = 1,
+                SucursalId = sucursalId ?? 0
             };
             return View("Wizard", model);
         }
