@@ -66,12 +66,10 @@ builder.Services.AddAuthentication(options =>
             },
             OnChallenge = context =>
             {
-                var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
-                    .CreateLogger("JwtAuth");
-                logger.LogWarning("JWT Challenge for {Path}. Error: {Error}. ErrorDescription: {Desc}",
-                    context.Request.Path, context.AuthenticateFailure?.Message, context.ErrorDescription);
+                var error = context.AuthenticateFailure?.Message ?? "NoToken";
+                var errorType = context.AuthenticateFailure?.GetType().Name ?? "None";
                 context.HandleResponse();
-                context.Response.Redirect("/Auth/Login");
+                context.Response.Redirect($"/Auth/Login?authError={Uri.EscapeDataString(errorType + ": " + error)}");
                 return Task.CompletedTask;
             }
         };
