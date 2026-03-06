@@ -25,6 +25,7 @@ nul
 
 ## Secrets
 appsettings.Development.json
+appsettings.Production.json
 *.pfx
 
 ## Publish

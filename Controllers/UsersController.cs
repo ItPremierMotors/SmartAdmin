@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using PremierFlow.Application.Dtos.User;
-using PremierFlow.Application.Interfaces.Auth;
 using SmartAdmin.Interfaces;
 using static SmartAdmin.Models.UserRole.RoleViewModels;
 using static SmartAdmin.Models.UserRole.UserViewModels;
