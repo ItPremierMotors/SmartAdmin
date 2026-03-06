@@ -33,7 +33,8 @@ builder.Services.AddAuthentication(options =>
              ValidIssuer = jwtSection.GetValue<string>("Issuer"), //emisor valido
              ValidAudience = jwtSection.GetValue<string>("Audience"), //audiencia valida
              IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key), //clave de firma
-             ClockSkew = TimeSpan.Zero //eliminar el tiempo de tolerancia para la expiracion del token
+             ClockSkew = TimeSpan.Zero, //eliminar el tiempo de tolerancia para la expiracion del token
+             TryAllIssuerSigningKeys = true //intentar todas las keys aunque no haya kid en el token
          };
 
         //leer el token desde la cookie
