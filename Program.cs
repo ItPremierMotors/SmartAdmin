@@ -48,9 +48,28 @@ builder.Services.AddAuthentication(options =>
                 }
                 return Task.CompletedTask;
             },
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JwtAuth");
+                logger.LogError(context.Exception, "JWT Authentication failed for {Path}", context.Request.Path);
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JwtAuth");
+                logger.LogInformation("JWT validated OK for {Path}. Claims: {Claims}",
+                    context.Request.Path,
+                    string.Join(", ", context.Principal!.Claims.Select(c => $"{c.Type}={c.Value}")));
+                return Task.CompletedTask;
+            },
             OnChallenge = context =>
             {
-                // Cuando el JWT expira o no es válido, redirigir al login
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JwtAuth");
+                logger.LogWarning("JWT Challenge for {Path}. Error: {Error}. ErrorDescription: {Desc}",
+                    context.Request.Path, context.AuthenticateFailure?.Message, context.ErrorDescription);
                 context.HandleResponse();
                 context.Response.Redirect("/Auth/Login");
                 return Task.CompletedTask;
