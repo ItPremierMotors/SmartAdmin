@@ -204,7 +204,7 @@
                 $('#detalleFotosContainer').removeClass('d-none');
 
                 fotos.forEach(function (foto) {
-                    var fullUrl = apiBase + foto.urlArchivo;
+                    var fullUrl = foto.urlArchivo.startsWith('http') ? foto.urlArchivo : apiBase + foto.urlArchivo;
                     var img = '<a href="' + fullUrl + '" target="_blank">' +
                         '<img src="' + fullUrl + '" class="rounded border" ' +
                         'style="width:80px; height:80px; object-fit:cover; cursor:pointer;" ' +

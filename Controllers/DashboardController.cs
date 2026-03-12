@@ -18,7 +18,7 @@ namespace Smartadmin.Controllers
         public IActionResult Index()
         {
             if (!User.TienePermiso("Dashboard.Ver"))
-                return Forbid();
+                return RedirectToAction("Index", "Home");
 
             return View();
         }

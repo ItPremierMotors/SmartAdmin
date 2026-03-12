@@ -287,7 +287,8 @@ function filtrarEstado(estado, btn) {
 
 function abrirAgendarCita() {
     const fecha = $('#fechaSeleccionada').val();
-    const hoy = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const hoy = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     if (fecha < hoy) {
         Toast.error('No se pueden agendar citas en fechas pasadas');
         return;
