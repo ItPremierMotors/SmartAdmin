@@ -37,6 +37,7 @@ namespace SmartAdmin.Models.Vehiculo
         public string DescripcionCompleta { get; set; } = null!;
         public bool EnGarantia { get; set; }
         public bool EstaVendido { get; set; }
+         public bool DisponibleParaVenta { get; set; }
       
         public string? UbicacionNombre { get; set; }
         public string? SucursalNombre { get; set; }

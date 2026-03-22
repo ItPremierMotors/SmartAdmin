@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using SmartAdmin.Interfaces;
+using SmartAdmin.Interfaces.Crm;
 using SmartAdmin.Services;
+using SmartAdmin.Services.Crm;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -105,6 +107,14 @@ builder.Services.AddScoped<IBloqueHorario, BloqueHorarioServices>();
 builder.Services.AddScoped<ICita, CitaServices>();
 builder.Services.AddScoped<IRecepcion, RecepcionServices>();
 builder.Services.AddScoped<IOrdenServicio, OrdenServicioServices>();
+
+// CRM
+builder.Services.AddScoped<ILeadClient, LeadClientServices>();
+builder.Services.AddScoped<IOportunidadClient, OportunidadClientServices>();
+builder.Services.AddScoped<IActividadCrmClient, ActividadCrmClientServices>();
+builder.Services.AddScoped<INotaCrmClient, NotaCrmClientServices>();
+builder.Services.AddScoped<ICotizacionVehiculoClient, CotizacionVehiculoClientServices>();
+
 // Para poder leer cookies en servicios
 builder.Services.AddHttpContextAccessor(); 
 

@@ -1,0 +1,22 @@
+@model SmartAdmin.Models.Crm.CreateNotaCrmViewModel
+<form id="formNota">
+    <div class="row g-3">
+        <div class="col-md-12">
+            <label class="form-label">Contenido <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="Contenido" rows="4" required maxlength="2000" placeholder="Escriba su nota..."></textarea>
+        </div>
+        <div class="col-md-12">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="EsPrivada" />
+                <label class="form-check-label" for="EsPrivada">Nota privada</label>
+            </div>
+        </div>
+    </div>
+    <hr />
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" onclick="AppModal.close()">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnGuardarNota" onclick="guardarNota()">
+            <i class="fas fa-save me-1"></i> Guardar
+        </button>
+    </div>
+</form>

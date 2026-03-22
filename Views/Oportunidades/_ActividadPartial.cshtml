@@ -1,0 +1,42 @@
+@model SmartAdmin.Models.Crm.CreateActividadCrmViewModel
+<form id="formActividad">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Tipo <span class="text-danger">*</span></label>
+            <select class="form-select" id="Tipo" required>
+                <option value="1">Llamada</option>
+                <option value="2">WhatsApp</option>
+                <option value="3">Email</option>
+                <option value="4">Visita</option>
+                <option value="5">Test Drive</option>
+                <option value="6">Reunión</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Dirección</label>
+            <select class="form-select" id="Direccion">
+                <option value="1">Entrante</option>
+                <option value="2">Saliente</option>
+            </select>
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Asunto <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="Asunto" required maxlength="200" />
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Descripción</label>
+            <textarea class="form-control" id="Descripcion" rows="3" maxlength="1000"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Fecha Programada</label>
+            <input type="datetime-local" class="form-control" id="FechaProgramada" />
+        </div>
+    </div>
+    <hr />
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" onclick="AppModal.close()">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnGuardarActividad" onclick="guardarActividad()">
+            <i class="fas fa-save me-1"></i> Guardar
+        </button>
+    </div>
+</form>

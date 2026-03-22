@@ -1,0 +1,69 @@
+@model SmartAdmin.Models.Crm.CreateCotizacionVehiculoViewModel
+<form id="formCotizacion">
+    <div class="row g-3">
+        <div class="col-md-12">
+            <label class="form-label">Vehículo <span class="text-danger">*</span></label>
+            <select class="form-select" id="CotVehiculoId" required>
+                <option value="">Seleccione un vehículo...</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Precio Lista</label>
+            <input type="text" class="form-control" id="PrecioLista" readonly />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Descuento</label>
+            <input type="number" class="form-control" id="Descuento" value="0" step="0.01" min="0" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Precio Ofertado <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="PrecioOfertado" required step="0.01" min="0.01" />
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Condiciones de Pago</label>
+            <textarea class="form-control" id="CondicionesPago" rows="2" maxlength="500"></textarea>
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" id="Observaciones" rows="2" maxlength="1000"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Fecha de Vencimiento <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="FechaVencimiento" required />
+        </div>
+    </div>
+    <hr />
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" onclick="AppModal.close()">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnGuardarCotizacion" onclick="guardarCotizacion()">
+            <i class="fas fa-save me-1"></i> Guardar
+        </button>
+    </div>
+</form>
+
+<script>
+    (function () {
+        $.get('@Url.Action("GetAll", "Inventario")', function (res) {
+            if (res.success && res.data) {
+                res.data.filter(v => v.disponibleParaVenta || v.estado === 3 || v.estado === 4).forEach(v => {
+                    $('#CotVehiculoId').append(`<option value="${v.vehiculoId}" data-precio="${v.precioLista}">${v.modeloNombre} ${v.anio} - ${v.vin}</option>`);
+                });
+            }
+        });
+        
+        $('#CotVehiculoId').on('change', function () {
+             const precio    = parseFloat($(this).find(':selected').attr('data-precio')) || 0;
+            const descuento = parseFloat($('#Descuento').val()) || 0;
+
+            $('#PrecioLista').val(precio.toFixed(2));
+            $('#PrecioOfertado').val(Math.max(0, precio - descuento).toFixed(2));
+        });
+        
+        $('#Descuento').on('input', function () {
+             const precio    = parseFloat($('#PrecioLista').val()) || 0;
+            const descuento = parseFloat($(this).val()) || 0;
+
+            $('#PrecioOfertado').val(Math.max(0, precio - descuento).toFixed(2));
+        });
+    })();
+</script>

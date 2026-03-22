@@ -1,0 +1,25 @@
+@model SmartAdmin.Models.Crm.CompletarActividadViewModel
+<form id="formCompletarActividad">
+    <input type="hidden" id="ActividadCrmId" value="@Model.ActividadCrmId" />
+    <div class="row g-3">
+        <div class="col-md-12">
+            <label class="form-label">Resultado <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="Resultado" rows="3" required maxlength="500" placeholder="Describa el resultado de la actividad..."></textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Duración (minutos)</label>
+            <input type="number" class="form-control" id="DuracionMinutos" min="1" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Próximo Contacto</label>
+            <input type="datetime-local" class="form-control" id="ProximoContacto" />
+        </div>
+    </div>
+    <hr />
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" onclick="AppModal.close()">Cancelar</button>
+        <button type="button" class="btn btn-success" id="btnCompletarActividad" onclick="completarActividad()">
+            <i class="fas fa-check me-1"></i> Completar
+        </button>
+    </div>
+</form>

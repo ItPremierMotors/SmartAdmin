@@ -1,0 +1,90 @@
+@model SmartAdmin.Models.Crm.CreateLeadViewModel
+<form id="formCrearLead">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Nombre Completo <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="NombreCompleto" required maxlength="150" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Teléfono</label>
+            <input type="text" class="form-control" id="Telefono" maxlength="20" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-control" id="Email" maxlength="100" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Empresa</label>
+            <input type="text" class="form-control" id="Empresa" maxlength="150" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Ciudad</label>
+            <input type="text" class="form-control" id="Ciudad" maxlength="100" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Origen <span class="text-danger">*</span></label>
+            <select class="form-select" id="Origen" required>
+                <option value="1">Web</option>
+                <option value="2">WhatsApp</option>
+                <option value="3">Llamada</option>
+                <option value="4">Showroom</option>
+                <option value="5">Referido</option>
+                <option value="6">Redes Sociales</option>
+                <option value="7">Evento</option>
+                <option value="8">Recompra</option>
+                <option value="99">Otro</option>
+            </select>
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Detalle Origen</label>
+            <input type="text" class="form-control" id="DetalleOrigen" maxlength="250" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+            <select class="form-select" id="SucursalId" required>
+                <option value="">Seleccione...</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Vendedor</label>
+            <select class="form-select" id="VendedorAsignadoId">
+                <option value="">Sin asignar</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Vehículo de Interés</label>
+            <input type="text" class="form-control" id="VehiculoInteres" maxlength="200" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Presupuesto Estimado</label>
+            <input type="number" class="form-control" id="PresupuestoEstimado" step="0.01" min="0" />
+        </div>
+        <input type="hidden" id="ClienteId" />
+    </div>
+    <hr />
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" onclick="AppModal.close()">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnGuardarLead" onclick="guardarLead()">
+            <i class="fas fa-save me-1"></i> Guardar
+        </button>
+    </div>
+</form>
+
+<script>
+    (function () {
+        $.get('@Url.Action("GetSucursales", "Leads")', function (res) {
+            if (res.success && res.data) {
+                res.data.forEach(s => {
+                    $('#SucursalId').append(`<option value="${s.id}">${s.nombre}</option>`);
+                });
+            }
+        });
+        $.get('@Url.Action("GetVendedores", "Leads")', function (res) {
+            if (res.success && res.data) {
+                res.data.forEach(u => {
+                    $('#VendedorAsignadoId').append(`<option value="${u.id}">${u.nombreCompleto}</option>`);
+                });
+            }
+        });
+    })();
+</script>

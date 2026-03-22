@@ -1,0 +1,541 @@
+@model SmartAdmin.Models.Crm.OportunidadDetalleViewModel
+@{
+    ViewData["Title"] = $"Oportunidad {Model.CodigoOportunidad}";
+}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <span class="h3 mb-0">@Model.CodigoOportunidad</span>
+            <span class="badge bg-@(Model.EstaAbierta ? "primary" : "secondary") ms-2">
+                @(Model.EstaAbierta ? Model.EtapaNombre : Model.ResultadoNombre)
+            </span>
+        </div>
+        @if (Model.EstaAbierta)
+        {
+            <div class="d-flex gap-2 align-items-center">
+                <div class="btn-group">
+                    @if (Model.Etapa > 1)
+                    {
+                        <button class="btn btn-outline-secondary btn-sm" onclick="cambiarEtapa('retroceder')">
+                            <i class="fas fa-chevron-left me-1"></i>Retroceder
+                        </button>
+                    }
+                    @if (Model.Etapa < 7)
+                    {
+                        <button class="btn btn-outline-primary btn-sm" onclick="cambiarEtapa('avanzar')">
+                            Avanzar<i class="fas fa-chevron-right ms-1"></i>
+                        </button>
+                    }
+                </div>
+                @if (Model.Etapa == 7 && User.TienePermiso("Oportunidad.Cerrar"))
+                {
+                    <div class="btn-group">
+                        <button class="btn btn-success btn-sm" onclick="abrirCerrar('ganada')">
+                            <i class="fas fa-trophy me-1"></i>Ganada
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="abrirCerrar('perdida')">
+                            <i class="fas fa-times me-1"></i>Perdida
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="abrirCerrar('cancelar')">
+                            <i class="fas fa-ban me-1"></i>Cancelar
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Info general -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Lead</small>
+                            <strong>@Model.LeadNombre</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Vendedor</small>
+                            <strong>@Model.VendedorNombre</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Sucursal</small>
+                            @Model.SucursalNombre
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Modelo</small>
+                            @(Model.ModeloNombre ?? "Sin modelo")
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Probabilidad</small>
+                            <div class="progress" style="height:20px">
+                                <div class="progress-bar" style="width:@(Model.ProbabilidadCierre)%">@(Model.ProbabilidadCierre)%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Cierre Estimado</small>
+                            @(Model.FechaCierreEstimada?.ToString("dd/MM/yyyy") ?? "N/A")
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Última Actividad</small>
+                            @(Model.FechaUltimaActividad?.ToString("dd/MM/yyyy HH:mm") ?? "Sin actividad")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header"><i class="fas fa-chart-bar me-2"></i>Resumen</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-around text-center">
+                        <div>
+                            <h4 class="mb-0">@Model.CantidadActividades</h4>
+                            <small class="text-muted">Actividades</small>
+                        </div>
+                        <div>
+                            <h4 class="mb-0">@Model.Notas.Count</h4>
+                            <small class="text-muted">Notas</small>
+                        </div>
+                        <div>
+                            <h4 class="mb-0">@Model.CantidadCotizaciones</h4>
+                            <small class="text-muted">Cotizaciones</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs: Actividades | Notas | Cotizaciones -->
+    <ul class="nav nav-tabs" id="detalleTabs">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#tabActividades">
+                <i class="fas fa-tasks me-1"></i>Actividades
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#tabNotas">
+                <i class="fas fa-sticky-note me-1"></i>Notas
+            </a>
+        </li>
+        @if (Model.Etapa >=4)
+        {
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tabCotizaciones">
+                    <i class="fas fa-file-invoice-dollar me-1"></i>Cotizaciones
+                </a>
+            </li>
+        }
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white">
+        <!-- Tab Actividades -->
+        <div class="tab-pane fade show active" id="tabActividades">
+            <div class="d-flex justify-content-end mb-2">
+                <button class="btn btn-sm btn-primary" onclick="abrirModalActividad()">
+                    <i class="fas fa-plus me-1"></i>Nueva Actividad
+                </button>
+            </div>
+            <div id="listaActividades"></div>
+        </div>
+
+        <!-- Tab Notas -->
+        <div class="tab-pane fade" id="tabNotas">
+            <div class="d-flex justify-content-end mb-2">
+                <button class="btn btn-sm btn-primary" onclick="abrirModalNota()">
+                    <i class="fas fa-plus me-1"></i>Nueva Nota
+                </button>
+            </div>
+            <div id="listaNotas"></div>
+        </div>
+
+        <!-- Tab Cotizaciones (solo etapa Cotizacion=4 o Negociacion=5) -->
+        @if (Model.Etapa == 4 || Model.Etapa == 5)
+        {
+            <div class="tab-pane fade" id="tabCotizaciones">
+                <div class="d-flex justify-content-end mb-2">
+                    <button class="btn btn-sm btn-primary" onclick="abrirModalCotizacion()">
+                        <i class="fas fa-plus me-1"></i>Nueva Cotización
+                    </button>
+                </div>
+                <div id="listaCotizaciones"></div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const OP_ID = @Model.OportunidadId;
+    const ETAPA = @Model.Etapa;
+    const URLS = {
+        // Etapa
+        avanzarEtapa: '@Url.Action("AvanzarEtapa")',
+        retrocederEtapa: '@Url.Action("RetrocederEtapa")',
+        // Actividades
+        getActividades: '@Url.Action("GetActividades")',
+        actividadPartial: '@Url.Action("ActividadPartial")',
+        completarPartial: '@Url.Action("CompletarActividadPartial")',
+        createActividad: '@Url.Action("CreateActividad")',
+        completarActividad: '@Url.Action("CompletarActividad")',
+        cancelarActividad: '@Url.Action("CancelarActividad")',
+        // Notas
+        getNotas: '@Url.Action("GetNotas")',
+        notaPartial: '@Url.Action("NotaPartial")',
+        createNota: '@Url.Action("CreateNota")',
+        deleteNota: '@Url.Action("DeleteNota")',
+        // Cotizaciones
+        getCotizaciones: '@Url.Action("GetCotizaciones")',
+        cotizacionPartial: '@Url.Action("CotizacionPartial")',
+        createCotizacion: '@Url.Action("CreateCotizacion")',
+        aceptarCotizacion: '@Url.Action("AceptarCotizacion")',
+        rechazarCotizacion: '@Url.Action("RechazarCotizacion")',
+        // Cierre
+        cerrarPartial: '@Url.Action("CerrarPartial")',
+        cerrarGanada: '@Url.Action("CerrarGanada")',
+        cerrarPerdida: '@Url.Action("CerrarPerdida")',
+        cancelar: '@Url.Action("Cancelar")'
+    };
+
+    const TIPO_ACTIVIDAD = { 1: 'Llamada', 2: 'WhatsApp', 3: 'Email', 4: 'Visita', 5: 'Test Drive', 6: 'Reunión', 7: 'Seguimiento Auto' };
+    const ESTADO_ACTIVIDAD = { 1: 'Pendiente', 2: 'Completada', 3: 'Cancelada', 4: 'Vencida' };
+    const ESTADO_ACTIVIDAD_COLOR = { 1: 'warning', 2: 'success', 3: 'danger', 4: 'secondary' };
+    const ESTADO_COTIZACION = { 1: 'Vigente', 2: 'Aceptada', 3: 'Rechazada', 4: 'Vencida' };
+    const ESTADO_COTIZACION_COLOR = { 1: 'primary', 2: 'success', 3: 'danger', 4: 'secondary' };
+
+    $(document).ready(function () {
+        cargarActividades();
+        cargarNotas();
+        cargarCotizaciones();
+    });
+
+    // ═══ ACTIVIDADES ═══
+    function cargarActividades() {
+        $.get(URLS.getActividades, { oportunidadId: OP_ID }, function (r) {
+            if (r.success && r.data) renderActividades(r.data);
+        });
+    }
+
+    function renderActividades(items) {
+        if (items.length === 0) {
+            $('#listaActividades').html('<p class="text-muted text-center">No hay actividades registradas</p>');
+            return;
+        }
+        let html = '<div class="list-group">';
+        items.forEach(a => {
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>${a.asunto}</strong>
+                            <span class="badge bg-${ESTADO_ACTIVIDAD_COLOR[a.estado]} ms-1">${ESTADO_ACTIVIDAD[a.estado]}</span>
+                            <span class="badge bg-light text-dark ms-1">${a.tipoNombre}</span>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            ${a.estado === 1 ? `
+                                <button class="btn btn-outline-success" onclick="abrirCompletarActividad(${a.actividadCrmId})" title="Completar"><i class="fas fa-check"></i></button>
+                                <button class="btn btn-outline-danger" onclick="cancelarActividad(${a.actividadCrmId})" title="Cancelar"><i class="fas fa-times"></i></button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <small class="text-muted">${a.descripcion || ''}</small>
+                    <div class="mt-1">
+                        <small class="text-muted">
+                            ${a.fechaProgramada ? '<i class="fas fa-calendar me-1"></i>' + new Date(a.fechaProgramada).toLocaleDateString('es-HN') : ''}
+                            | ${a.realizadaPorNombre}
+                        </small>
+                        ${a.resultado ? `<br/><small class="text-success"><i class="fas fa-check-circle me-1"></i>${a.resultado}</small>` : ''}
+                    </div>
+                </div>`;
+        });
+        html += '</div>';
+        $('#listaActividades').html(html);
+    }
+
+    function abrirModalActividad() {
+        AppModal.open({
+            title: '<i class="fas fa-plus me-2"></i>Nueva Actividad',
+            url: URLS.actividadPartial, data: { oportunidadId: OP_ID }, size: 'lg'
+        });
+    }
+
+    function abrirCompletarActividad(id) {
+        AppModal.open({
+            title: '<i class="fas fa-check me-2"></i>Completar Actividad',
+            url: URLS.completarPartial, data: { id }, size: 'md'
+        });
+    }
+
+    function guardarActividad() {
+        const form = document.getElementById('formActividad');
+        const btn = document.getElementById('btnGuardarActividad');
+        const btnOriginal = btn.innerHTML;
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            oportunidadId: OP_ID,
+            tipo: parseInt($('#Tipo').val()),
+            direccion: parseInt($('#Direccion').val()),
+            asunto: $('#Asunto').val().trim(),
+            descripcion: $('#Descripcion').val()?.trim() || null,
+            fechaProgramada: $('#FechaProgramada').val() || null
+        };
+
+        $.ajax({
+            url: URLS.createActividad, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>'),
+            success: r => { if (r.success) { AppModal.close(); cargarActividades(); Toast.success('Actividad creada'); } else Toast.error(r.message); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function completarActividad() {
+        const form = document.getElementById('formCompletarActividad');
+        const btn = document.getElementById('btnCompletarActividad');
+        const btnOriginal = btn.innerHTML;
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            actividadCrmId: parseInt($('#ActividadCrmId').val()),
+            resultado: $('#Resultado').val().trim(),
+            duracionMinutos: $('#DuracionMinutos').val() ? parseInt($('#DuracionMinutos').val()) : null,
+            proximoContacto: $('#ProximoContacto').val() || null
+        };
+
+        $.ajax({
+            url: URLS.completarActividad, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>'),
+            success: r => { if (r.success) { AppModal.close(); cargarActividades(); Toast.success('Actividad completada'); } else Toast.error(r.message); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function cancelarActividad(id) {
+        if (!confirm('¿Cancelar esta actividad?')) return;
+        $.ajax({
+            url: URLS.cancelarActividad, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(id),
+            success: r => { if (r.success) { cargarActividades(); Toast.success('Actividad cancelada'); } else Toast.error(r.message); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error')
+        });
+    }
+
+    // ═══ NOTAS ═══
+    function cargarNotas() {
+        $.get(URLS.getNotas, { oportunidadId: OP_ID }, function (r) {
+            if (r.success && r.data) renderNotas(r.data);
+        });
+    }
+
+    function renderNotas(items) {
+        if (items.length === 0) {
+            $('#listaNotas').html('<p class="text-muted text-center">No hay notas</p>');
+            return;
+        }
+        let html = '';
+        items.forEach(n => {
+            html += `
+                <div class="card mb-2">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>${n.autorNombre}</strong>
+                                <small class="text-muted ms-2">${new Date(n.fechaCreacion).toLocaleString('es-HN')}</small>
+                                ${n.esPrivada ? '<span class="badge bg-warning ms-1">Privada</span>' : ''}
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="eliminarNota(${n.notaCrmId})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <p class="mb-0 mt-1">${n.contenido}</p>
+                    </div>
+                </div>`;
+        });
+        $('#listaNotas').html(html);
+    }
+
+    function abrirModalNota() {
+        AppModal.open({
+            title: '<i class="fas fa-sticky-note me-2"></i>Nueva Nota',
+            url: URLS.notaPartial, data: { oportunidadId: OP_ID }, size: 'md'
+        });
+    }
+
+    function guardarNota() {
+        const form = document.getElementById('formNota');
+        const btn = document.getElementById('btnGuardarNota');
+        const btnOriginal = btn.innerHTML;
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            oportunidadId: OP_ID,
+            contenido: $('#Contenido').val().trim(),
+            esPrivada: $('#EsPrivada').is(':checked')
+        };
+
+        $.ajax({
+            url: URLS.createNota, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>'),
+            success: r => { if (r.success) { AppModal.close(); cargarNotas(); Toast.success('Nota creada'); } else Toast.error(r.message); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function eliminarNota(id) {
+        if (!confirm('¿Eliminar esta nota?')) return;
+        $.ajax({
+            url: URLS.deleteNota, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(id),
+            success: r => { if (r.success) { cargarNotas(); Toast.success('Nota eliminada'); } else Toast.error(r.message); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error')
+        });
+    }
+
+    // ═══ COTIZACIONES ═══
+    function cargarCotizaciones() {
+        $.get(URLS.getCotizaciones, { oportunidadId: OP_ID }, function (r) {
+            if (r.success && r.data) renderCotizaciones(r.data);
+        });
+    }
+
+    function renderCotizaciones(items) {
+        if (items.length === 0) {
+            $('#listaCotizaciones').html('<p class="text-muted text-center">No hay cotizaciones</p>');
+            return;
+        }
+        let html = '<div class="table-responsive"><table class="table table-sm table-hover"><thead class="table-light"><tr><th>Código</th><th>Vehículo</th><th>Precio Lista</th><th>Descuento</th><th>Precio Ofertado</th><th>Vencimiento</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
+        items.forEach(c => {
+            html += `<tr>
+                <td>${c.codigoCotizacion}</td>
+                <td>${c.vehiculoDescripcion}</td>
+                <td>${formatMoney(c.vehiculoPrecioLista)}</td>
+                <td>${formatMoney(c.descuento)}</td>
+                <td><strong>${formatMoney(c.precioOfertado)}</strong></td>
+                <td>${new Date(c.fechaVencimiento).toLocaleDateString('es-HN')}</td>
+                <td><span class="badge bg-${ESTADO_COTIZACION_COLOR[c.estado]}">${ESTADO_COTIZACION[c.estado]}</span></td>
+                <td>
+                    ${c.estado === 1 ? `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-success" onclick="aceptarCotizacion(${c.cotizacionVehiculoId})" title="Aceptar"><i class="fas fa-check"></i></button>
+                            <button class="btn btn-outline-danger" onclick="rechazarCotizacion(${c.cotizacionVehiculoId})" title="Rechazar"><i class="fas fa-times"></i></button>
+                        </div>` : ''}
+                </td>
+            </tr>`;
+        });
+        html += '</tbody></table></div>';
+        $('#listaCotizaciones').html(html);
+    }
+
+    function abrirModalCotizacion() {
+        AppModal.open({
+            title: '<i class="fas fa-file-invoice-dollar me-2"></i>Nueva Cotización',
+            url: URLS.cotizacionPartial, data: { oportunidadId: OP_ID }, size: 'lg'
+        });
+    }
+
+    function guardarCotizacion() {
+        const form = document.getElementById('formCotizacion');
+        const btn = document.getElementById('btnGuardarCotizacion');
+        const btnOriginal = btn.innerHTML;
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            oportunidadId: OP_ID,
+            vehiculoId: parseInt($('#CotVehiculoId').val()),
+            descuento: parseFloat($('#Descuento').val() || 0),
+            precioOfertado: parseFloat($('#PrecioOfertado').val()),
+            condicionesPago: $('#CondicionesPago').val()?.trim() || null,
+            observaciones: $('#Observaciones').val()?.trim() || null,
+            fechaVencimiento: $('#FechaVencimiento').val()
+        };
+
+        $.ajax({
+            url: URLS.createCotizacion, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>'),
+            success: r => { if (r.success) { AppModal.close(); cargarCotizaciones(); Toast.success('Cotización creada'); } else Toast.error(r.message); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function aceptarCotizacion(id) {
+        if (!confirm('¿Aceptar esta cotización?')) return;
+        $.ajax({
+            url: URLS.aceptarCotizacion, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(id),
+            success: r => { if (r.success) { cargarCotizaciones(); Toast.success('Cotización aceptada'); } else Toast.error(r.message); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error')
+        });
+    }
+
+    function rechazarCotizacion(id) {
+        if (!confirm('¿Rechazar esta cotización?')) return;
+        $.ajax({
+            url: URLS.rechazarCotizacion, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(id),
+            success: r => { if (r.success) { cargarCotizaciones(); Toast.success('Cotización rechazada'); } else Toast.error(r.message); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error')
+        });
+    }
+
+    // ═══ ETAPA ═══
+    function cambiarEtapa(direccion) {
+        const url = direccion === 'avanzar' ? URLS.avanzarEtapa : URLS.retrocederEtapa;
+        const label = direccion === 'avanzar' ? 'avanzar' : 'retroceder';
+        if (!confirm(`¿Desea ${label} la etapa de esta oportunidad?`)) return;
+        $.post(url, { id: OP_ID }, function(r) {
+            if (r.success) { Toast.success(r.message || 'Etapa actualizada'); location.reload(); }
+            else Toast.error(r.message);
+        }).fail(xhr => Toast.error(xhr.responseJSON?.message || 'Error'));
+    }
+
+    // ═══ CIERRE ═══
+    function abrirCerrar(tipo) {
+        const titulos = { ganada: 'Cerrar como Ganada', perdida: 'Cerrar como Perdida', cancelar: 'Cancelar Oportunidad' };
+        AppModal.open({
+            title: `<i class="fas fa-flag-checkered me-2"></i>${titulos[tipo]}`,
+            url: URLS.cerrarPartial, data: { id: OP_ID, tipo }, size: 'md'
+        });
+    }
+
+    function cerrarOportunidad(tipo) {
+        const btn = document.getElementById('btnCerrar');
+        const btnOriginal = btn.innerHTML;
+        const data = {
+            oportunidadId: OP_ID,
+            motivoResultado: $('#MotivoResultado').val()?.trim() || null
+        };
+        const urlMap = { ganada: URLS.cerrarGanada, perdida: URLS.cerrarPerdida, cancelar: URLS.cancelar };
+
+        $.ajax({
+            url: urlMap[tipo], type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>'),
+            success: r => {
+                if (r.success) { Toast.success(r.message || 'Oportunidad cerrada'); location.reload(); }
+                else Toast.error(r.message);
+            },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function formatMoney(val) {
+        return new Intl.NumberFormat('es-HN', { style: 'currency', currency: 'HNL' }).format(val);
+    }
+</script>
+}

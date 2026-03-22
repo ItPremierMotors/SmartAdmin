@@ -1,0 +1,73 @@
+@model SmartAdmin.Models.Crm.LeadViewModel
+<div class="row g-3">
+    <div class="col-md-6">
+        <small class="text-muted d-block">Código</small>
+        <strong>@Model.CodigoLead</strong>
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Estado</small>
+        <span class="badge bg-@(Model.Estado switch { 1 => "info", 2 => "primary", 3 => "success", 5 => "danger", _ => "secondary" })">
+            @Model.EstadoNombre
+        </span>
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Nombre Completo</small>
+        <strong>@Model.NombreCompleto</strong>
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Teléfono</small>
+        @(Model.Telefono ?? "N/A")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Email</small>
+        @(Model.Email ?? "N/A")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Empresa</small>
+        @(Model.Empresa ?? "N/A")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Ciudad</small>
+        @(Model.Ciudad ?? "N/A")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Origen</small>
+        @Model.OrigenNombre
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Sucursal</small>
+        @(Model.SucursalNombre ?? "N/A")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Vendedor Asignado</small>
+        @(Model.VendedorNombre ?? "Sin asignar")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Vehículo de Interés</small>
+        @(Model.VehiculoInteres ?? "N/A")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Presupuesto Estimado</small>
+        @(Model.PresupuestoEstimado?.ToString("C") ?? "N/A")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Fecha Ingreso</small>
+        @Model.FechaIngreso.ToString("dd/MM/yyyy HH:mm")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Primera Respuesta</small>
+        @(Model.FechaPrimeraRespuesta?.ToString("dd/MM/yyyy HH:mm") ?? "Sin contactar")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Oportunidades</small>
+        <span class="badge bg-secondary">@Model.CantidadOportunidades</span>
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Actividades</small>
+        <span class="badge bg-secondary">@Model.CantidadActividades</span>
+    </div>
+</div>
+<hr />
+<div class="d-flex justify-content-end">
+    <button type="button" class="btn btn-secondary" onclick="AppModal.close()">Cerrar</button>
+</div>

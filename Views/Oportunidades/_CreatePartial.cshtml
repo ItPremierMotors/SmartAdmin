@@ -1,0 +1,93 @@
+@model SmartAdmin.Models.Crm.CreateOportunidadViewModel
+<form id="formCrearOportunidad">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Lead <span class="text-danger">*</span></label>
+            <select class="form-select" id="LeadId" required>
+                <option value="">Seleccione un lead...</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Vendedor <span class="text-danger">*</span></label>
+            <select class="form-select" id="VendedorId" required>
+                <option value="">Seleccione...</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+            <select class="form-select" id="SucursalId" required>
+                <option value="">Seleccione...</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Modelo de Interés <span class="text-danger">*</span></label>
+            <select class="form-select" id="ModeloId" required>
+                <option value="">Seleccione un modelo...</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Probabilidad de Cierre (%)</label>
+            <input type="number" class="form-control" id="ProbabilidadCierre" value="10" min="0" max="100" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Fecha Cierre Estimada</label>
+            <input type="date" class="form-control" id="FechaCierreEstimada" />
+        </div>
+        <input type="hidden" id="ClienteId" />
+    </div>
+    <hr />
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" onclick="AppModal.close()">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnGuardarOportunidad" onclick="guardarOportunidad()">
+            <i class="fas fa-save me-1"></i> Guardar
+        </button>
+    </div>
+</form>
+
+<script>
+    (function () {
+        let leadsData={}; //objeto para almacenar los leads calificados y acceder a su info al crear la oportunidad
+
+        $.get('@Url.Action("GetLeadsCalificados", "Oportunidades")', function (res) {
+            if (res.success && res.data) {
+                res.data.forEach(l => {
+                    leadsData[l.leadId] = l; //almaceno el lead en el objeto
+                    $('#LeadId').append(`<option value="${l.leadId}">${l.codigoLead} - ${l.nombreCompleto}</option>`);
+                });
+            }
+        });
+        $('#LeadId').change(function () {
+            const lead=leadsData[$(this).val()]; //obtengo el lead seleccionado del objeto 
+            if (lead) { 
+                $('#VendedorId').val(lead.vendedorAsignadoId).prop('disabled', true); //asigno el vendedor del lead a la oportunidad y deshabilito el select para evitar cambios
+                $('#SucursalId').val(lead.sucursalId).prop('disabled', true); //asigno la sucursal del lead a la oportunidad y deshabilito el select para evitar cambios
+            } else {
+                //si no hay lead seleccionado, habilito los selects para asignar vendedor y sucursal manualmente
+                $('#VendedorId').prop('disabled', false);
+                $('#SucursalId').prop('disabled', false);
+            }
+        });
+
+        $.get('@Url.Action("GetSucursales", "Oportunidades")', function (res) {
+            if (res.success && res.data) {
+                res.data.forEach(s => {
+                    $('#SucursalId').append(`<option value="${s.id}">${s.nombre}</option>`);
+                });
+            }
+        });
+        $.get('@Url.Action("GetVendedores", "Oportunidades")', function (res) {
+            if (res.success && res.data) {
+                res.data.forEach(u => {
+                    $('#VendedorId').append(`<option value="${u.id}">${u.nombreCompleto}</option>`);
+                });
+            }
+        });
+        $.get('@Url.Action("GetModelos", "Oportunidades")', function (res) {
+            if (res.success && res.data) {
+                res.data.forEach(m => {
+                    $('#ModeloId').append(`<option value="${m.modeloId}">${m.marcaNombre} ${m.nombre}</option>`);
+                });
+            }
+        });
+    })();
+</script>

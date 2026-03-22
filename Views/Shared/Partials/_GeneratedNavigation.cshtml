@@ -229,6 +229,38 @@
         </li>
     }
 
+    @* ============ CRM ============ *@
+    @if (User.TienePermiso("Lead.Ver") ||
+         User.TienePermiso("Oportunidad.Ver"))
+    {
+        <li class="nav-item">
+            <a href="#" title="CRM" data-filter-tags>
+                <svg class="sa-icon">
+                    <use href="/icons/sprite.svg#target"></use>
+                </svg>
+                <span class="nav-link-text" data-i18n>CRM</span>
+            </a>
+            <ul>
+                @if (User.TienePermiso("Lead.Ver"))
+                {
+                    <li>
+                        <a href=@Url.Action("Index", "Leads")>
+                            <span class="nav-link-text" data-i18n>Leads</span>
+                        </a>
+                    </li>
+                }
+                @if (User.TienePermiso("Oportunidad.Ver"))
+                {
+                    <li>
+                        <a href=@Url.Action("Index", "Oportunidades")>
+                            <span class="nav-link-text" data-i18n>Pipeline de Ventas</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </li>
+    }
+
     @* ============ TALLER ============ *@
     @if (User.TienePermiso("OrdenServicio.Ver") ||
          User.TienePermiso("Cita.Ver") ||

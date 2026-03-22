@@ -1,0 +1,371 @@
+@{
+    ViewData["Title"] = "Gestión de Leads";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-user-tag me-2"></i>@ViewData["Title"]</h1>
+        @if (User.TienePermiso("Lead.Crear"))
+        {
+            <button class="btn btn-primary" id="btnNuevo">
+                <i class="fas fa-plus me-2"></i>Nuevo Lead
+            </button>
+        }
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Filtros -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Estado</label>
+                    <select class="form-select form-select-sm" id="filtroEstado">
+                        <option value="">Todos</option>
+                        <option value="1">Nuevo</option>
+                        <option value="2">Contactado</option>
+                        <option value="3">Calificado</option>
+                        <option value="4">Convertido</option>
+                        <option value="5">Descartado</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Origen</label>
+                    <select class="form-select form-select-sm" id="filtroOrigen">
+                        <option value="">Todos</option>
+                        <option value="1">Web</option>
+                        <option value="2">WhatsApp</option>
+                        <option value="3">Llamada</option>
+                        <option value="4">Showroom</option>
+                        <option value="5">Referido</option>
+                        <option value="6">Redes Sociales</option>
+                        <option value="7">Evento</option>
+                        <option value="8">Recompra</option>
+                        <option value="99">Otro</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="loading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Cargando leads...</p>
+            </div>
+
+            <table class="table table-hover table-sm d-none" id="tabla" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Teléfono</th>
+                        <th>Origen</th>
+                        <th>Estado</th>
+                        <th>Vendedor</th>
+                        <th>Fecha Ingreso</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const PERMISOS = {
+        crear: @Json.Serialize(User.TienePermiso("Lead.Crear")),
+        editar: @Json.Serialize(User.TienePermiso("Lead.Editar")),
+        calificar: @Json.Serialize(User.TienePermiso("Lead.Editar")),
+        asignar: @Json.Serialize(User.TienePermiso("Lead.Asignar"))
+    };
+    const URLS = {
+        getAll: '@Url.Action("GetAll")',
+        getByEstado: '@Url.Action("GetByEstado")',
+        createPartial: '@Url.Action("CreatePartial")',
+        editPartial: '@Url.Action("EditPartial")',
+        detailPartial: '@Url.Action("DetailPartial")',
+        descartarPartial: '@Url.Action("DescartarPartial")',
+        asignarPartial: '@Url.Action("AsignarVendedorPartial")',
+        create: '@Url.Action("Create")',
+        edit: '@Url.Action("Edit")',
+        calificar: '@Url.Action("Calificar")',
+        descartar: '@Url.Action("Descartar")',
+        asignarVendedor: '@Url.Action("AsignarVendedor")'
+    };
+
+    const ESTADOS = { 1: 'Nuevo', 2: 'Contactado', 3: 'Calificado', 4: 'Convertido', 5: 'Descartado' };
+    const ESTADO_COLORS = { 1: 'info', 2: 'primary', 3: 'success', 4: 'secondary', 5: 'danger' };
+
+    let dataTable = null;
+    let datosOriginales = [];
+
+    $(document).ready(function () {
+        cargarDatos();
+        if (PERMISOS.crear) $('#btnNuevo').on('click', abrirModalCrear);
+        $('#filtroEstado, #filtroOrigen').on('change', aplicarFiltros);
+    });
+
+    function cargarDatos() {
+        $.ajax({
+            url: URLS.getAll,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    datosOriginales = response.data;
+                    inicializarDataTable(response.data);
+                } else {
+                    Toast.error('Error al cargar leads');
+                    $('#loading').addClass('d-none');
+                }
+            },
+            error: function () {
+                Toast.error('Error al conectar con el servidor');
+                $('#loading').addClass('d-none');
+            }
+        });
+    }
+
+    function inicializarDataTable(datos) {
+        if (dataTable) dataTable.destroy();
+
+        dataTable = $('#tabla').DataTable({
+            data: datos,
+            columns: [
+                { data: 'codigoLead' },
+                {
+                    data: 'nombreCompleto',
+                    render: function (data, type, row) {
+                        let html = `<strong>${data}</strong>`;
+                        if (row.sinContactar) {
+                            html += ` <span class="badge bg-warning" title="Sin contactar"><i class="fas fa-clock"></i></span>`;
+                        }
+                        return html;
+                    }
+                },
+                { data: 'telefono', render: d => d || '<span class="text-muted">N/A</span>' },
+                { data: 'origenNombre' },
+                {
+                    data: 'estado',
+                    render: (data) => `<span class="badge bg-${ESTADO_COLORS[data] || 'secondary'}">${ESTADOS[data] || data}</span>`
+                },
+                { data: 'vendedorNombre', render: d => d || '<span class="text-muted">Sin asignar</span>' },
+                {
+                    data: 'fechaIngreso',
+                    render: d => d ? new Date(d).toLocaleDateString('es-HN') : ''
+                },
+                {
+                    data: 'leadId',
+                    orderable: false,
+                    className: 'text-center',
+                    render: function (data, type, row) {
+                        let btns = `<div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" onclick="abrirDetalle(${data})" title="Ver detalle">
+                                <i class="fas fa-eye"></i>
+                            </button>`;
+                        if (PERMISOS.editar && row.estado <= 3) {
+                            btns += `<button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>`;
+                        }
+                        if (PERMISOS.calificar && row.estado === 2) {
+                            btns += `<button class="btn btn-outline-success" onclick="calificarLead(${data})" title="Calificar">
+                                <i class="fas fa-check"></i>
+                            </button>`;
+                        }
+                        if (PERMISOS.editar && row.estado <= 3) {
+                            btns += `<button class="btn btn-outline-danger" onclick="abrirModalDescartar(${data})" title="Descartar">
+                                <i class="fas fa-times"></i>
+                            </button>`;
+                        }
+                        if (PERMISOS.asignar && row.estado <= 3) {
+                            btns += `<button class="btn btn-outline-warning" onclick="abrirModalAsignar(${data})" title="Asignar vendedor">
+                                <i class="fas fa-user-plus"></i>
+                            </button>`;
+                        }
+                        btns += `</div>`;
+                        return btns;
+                    }
+                }
+            ],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            order: [[6, 'desc']],
+            responsive: true
+        });
+
+        $('#loading').addClass('d-none');
+        $('#tabla').removeClass('d-none');
+    }
+
+    function aplicarFiltros() {
+        const estado = $('#filtroEstado').val();
+        const origen = $('#filtroOrigen').val();
+        let filtrados = [...datosOriginales];
+        if (estado !== '') filtrados = filtrados.filter(l => l.estado == estado);
+        if (origen !== '') filtrados = filtrados.filter(l => l.origen == origen);
+        inicializarDataTable(filtrados);
+    }
+
+    function recargarTabla() {
+        $.ajax({
+            url: URLS.getAll, type: 'GET',
+            success: function (r) {
+                if (r.success && r.data) {
+                    datosOriginales = r.data;
+                    $('#filtroEstado').val('');
+                    $('#filtroOrigen').val('');
+                    inicializarDataTable(r.data);
+                }
+            }
+        });
+    }
+
+    // ── Modales ──
+    function abrirModalCrear() {
+        AppModal.open({ title: '<i class="fas fa-user-plus me-2"></i>Nuevo Lead', url: URLS.createPartial, size: 'lg' });
+    }
+    function abrirDetalle(id) {
+        window.location.href = '@Url.Action("Detalle", "Leads")/' + id;
+    }
+    function abrirModalEditar(id) {
+        AppModal.open({ title: '<i class="fas fa-edit me-2"></i>Editar Lead', url: URLS.editPartial, data: { id }, size: 'lg' });
+    }
+    function abrirModalDescartar(id) {
+        AppModal.open({ title: '<i class="fas fa-times me-2"></i>Descartar Lead', url: URLS.descartarPartial, data: { id }, size: 'md' });
+    }
+    function abrirModalAsignar(id) {
+        AppModal.open({ title: '<i class="fas fa-user-plus me-2"></i>Asignar Vendedor', url: URLS.asignarPartial, data: { id }, size: 'md' });
+    }
+
+    // ── CRUD ──
+    function guardarLead() {
+        const form = document.getElementById('formCrearLead');
+        const btn = document.getElementById('btnGuardarLead');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            nombreCompleto: $('#NombreCompleto').val().trim(),
+            telefono: $('#Telefono').val()?.trim() || null,
+            email: $('#Email').val()?.trim() || null,
+            empresa: $('#Empresa').val()?.trim() || null,
+            ciudad: $('#Ciudad').val()?.trim() || null,
+            origen: parseInt($('#Origen').val()),
+            detalleOrigen: $('#DetalleOrigen').val()?.trim() || null,
+            sucursalId: parseInt($('#SucursalId').val()),
+            vendedorAsignadoId: $('#VendedorAsignadoId').val() || null,
+            vehiculoInteres: $('#VehiculoInteres').val()?.trim() || null,
+            presupuestoEstimado: $('#PresupuestoEstimado').val() ? parseFloat($('#PresupuestoEstimado').val()) : null,
+            clienteId: $('#ClienteId').val() ? parseInt($('#ClienteId').val()) : null
+        };
+
+        $.ajax({
+            url: URLS.create, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'),
+            success: function (r) {
+                if (r.success) { AppModal.close(); recargarTabla(); Toast.success(r.message || 'Lead creado'); }
+                else Toast.error(r.message || 'Error al guardar');
+            },
+            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error al guardar'),
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function actualizarLead() {
+        const form = document.getElementById('formEditarLead');
+        const btn = document.getElementById('btnActualizarLead');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            leadId: parseInt($('#LeadId').val()),
+            nombreCompleto: $('#NombreCompleto').val().trim(),
+            telefono: $('#Telefono').val()?.trim() || null,
+            email: $('#Email').val()?.trim() || null,
+            empresa: $('#Empresa').val()?.trim() || null,
+            ciudad: $('#Ciudad').val()?.trim() || null,
+            detalleOrigen: $('#DetalleOrigen').val()?.trim() || null,
+            vehiculoInteres: $('#VehiculoInteres').val()?.trim() || null,
+            presupuestoEstimado: $('#PresupuestoEstimado').val() ? parseFloat($('#PresupuestoEstimado').val()) : null,
+            clienteId: $('#ClienteId').val() ? parseInt($('#ClienteId').val()) : null
+        };
+
+        $.ajax({
+            url: URLS.edit, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...'),
+            success: function (r) {
+                if (r.success) { AppModal.close(); recargarTabla(); Toast.success(r.message || 'Lead actualizado'); }
+                else Toast.error(r.message || 'Error al actualizar');
+            },
+            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error al actualizar'),
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function calificarLead(leadId) {
+        if (!confirm('¿Calificar este lead?')) return;
+        $.ajax({
+            url: URLS.calificar, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify({ leadId, clienteId: null }),
+            success: function (r) {
+                if (r.success) { recargarTabla(); Toast.success(r.message || 'Lead calificado'); }
+                else Toast.error(r.message || 'Error');
+            },
+            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error')
+        });
+    }
+
+    function descartarLead() {
+        const form = document.getElementById('formDescartarLead');
+        const btn = document.getElementById('btnDescartarLead');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            leadId: parseInt($('#DescartarLeadId').val()),
+            motivo: $('#Motivo').val().trim()
+        };
+
+        $.ajax({
+            url: URLS.descartar, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...'),
+            success: function (r) {
+                if (r.success) { AppModal.close(); recargarTabla(); Toast.success(r.message || 'Lead descartado'); }
+                else Toast.error(r.message || 'Error');
+            },
+            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error'),
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    function asignarVendedor() {
+        const form = document.getElementById('formAsignarVendedor');
+        const btn = document.getElementById('btnAsignarVendedor');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            leadId: parseInt($('#AsignarLeadId').val()),
+            vendedorId: $('#VendedorId').val()
+        };
+
+        $.ajax({
+            url: URLS.asignarVendedor, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Asignando...'),
+            success: function (r) {
+                if (r.success) { AppModal.close(); recargarTabla(); Toast.success(r.message || 'Vendedor asignado'); }
+                else Toast.error(r.message || 'Error');
+            },
+            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error'),
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+</script>
+}

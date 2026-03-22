@@ -1,0 +1,20 @@
+@model SmartAdmin.Models.Crm.CerrarOportunidadViewModel
+@{
+    var tipo = ViewBag.TipoCierre as string;
+    var label = tipo switch { "ganada" => "Ganada", "perdida" => "Perdida", _ => "Cancelada" };
+    var btnColor = tipo switch { "ganada" => "success", "perdida" => "danger", _ => "secondary" };
+}
+<div>
+    <p>¿Está seguro de cerrar esta oportunidad como <strong>@label</strong>?</p>
+    <div class="mb-3">
+        <label class="form-label">Motivo (opcional)</label>
+        <textarea class="form-control" id="MotivoResultado" rows="3" maxlength="500"></textarea>
+    </div>
+    <hr />
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" onclick="AppModal.close()">Cancelar</button>
+        <button type="button" class="btn btn-@btnColor" id="btnCerrar" onclick="cerrarOportunidad('@tipo')">
+            <i class="fas fa-flag-checkered me-1"></i> Confirmar
+        </button>
+    </div>
+</div>

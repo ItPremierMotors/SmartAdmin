@@ -1,0 +1,618 @@
+@{
+    ViewData["Title"] = "Pipeline de Ventas";
+}
+
+<style>
+    .bg-orange { background-color: #e67e22 !important; }
+    .text-orange { color: #e67e22 !important; }
+    .border-orange { border-color: #e67e22 !important; }
+    .bg-purple { background-color: #8e44ad !important; }
+    .text-purple { color: #8e44ad !important; }
+    .border-purple { border-color: #8e44ad !important; }
+
+    .pipeline-col {
+        min-width: 0;
+        flex: 1;
+    }
+    .pipeline-card {
+        transition: transform 0.15s, box-shadow 0.15s;
+        cursor: grab;
+        border-left: 3px solid transparent;
+    }
+    .pipeline-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,.15) !important;
+    }
+    .pipeline-card.sortable-ghost {
+        opacity: 0.4;
+        background: #e3f2fd !important;
+    }
+    .pipeline-card.sortable-drag {
+        box-shadow: 0 8px 25px rgba(0,0,0,.25) !important;
+        transform: rotate(2deg);
+    }
+    .pipeline-scroll.sortable-drop-allowed {
+        background: rgba(25, 135, 84, 0.05);
+        border: 2px dashed #198754;
+        border-radius: 4px;
+    }
+    .pipeline-scroll.sortable-drop-denied {
+        background: rgba(220, 53, 69, 0.05);
+        border: 2px dashed #dc3545;
+        border-radius: 4px;
+    }
+    .pipeline-scroll {
+        max-height: 500px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    .pipeline-scroll::-webkit-scrollbar { width: 4px; }
+    .pipeline-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+    .etapa-group { border-left: 4px solid #dee2e6; margin-bottom: 1rem; }
+    .etapa-group-header {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.15s;
+    }
+    .etapa-group-header:hover { background-color: #f0f0f0 !important; }
+
+    .vista-toggle .btn { padding: 0.25rem 0.75rem; font-size: 0.85rem; }
+    .vista-toggle .btn.active { pointer-events: none; }
+
+    .filtros-bar select { font-size: 0.85rem; }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0"><i class="fas fa-funnel-dollar me-2"></i>@ViewData["Title"]</h1>
+        <div class="d-flex gap-2 align-items-center">
+            <!-- Toggle Vista -->
+            <div class="btn-group vista-toggle">
+                <button class="btn btn-outline-secondary active" id="btnVistaKanban" onclick="cambiarVista('kanban')">
+                    <i class="fas fa-columns"></i>
+                </button>
+                <button class="btn btn-outline-secondary" id="btnVistaTabla" onclick="cambiarVista('tabla')">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+            @if (User.TienePermiso("Oportunidad.Crear"))
+            {
+                <button class="btn btn-primary" id="btnNueva">
+                    <i class="fas fa-plus me-2"></i>Nueva Oportunidad
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2 filtros-bar">
+            <div class="row g-2 align-items-end">
+                @if (!User.IsInRole("AsesorVentas"))
+                {
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-0">Vendedor</label>
+                    <select class="form-select form-select-sm" id="filtroVendedor">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                }
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-0">Sucursal</label>
+                    <select class="form-select form-select-sm" id="filtroSucursal">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted mb-0">Mostrar</label>
+                    <select class="form-select form-select-sm" id="filtroEstado">
+                        <option value="abiertas">Abiertas</option>
+                        <option value="todas">Todas</option>
+                        <option value="ganadas">Ganadas</option>
+                        <option value="perdidas">Perdidas</option>
+                    </select>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex gap-3 justify-content-end align-items-center pt-3">
+                        <span class="small text-muted" id="resumenTotal"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="text-center py-4">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Cargando pipeline...</p>
+    </div>
+
+    <!-- Vista Kanban -->
+    <div class="row g-2 d-none" id="vistaKanban" style="flex-wrap:nowrap; overflow-x:auto;">
+    </div>
+
+    <!-- Vista Tabla Agrupada -->
+    <div class="d-none" id="vistaTabla">
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<script>
+    const PERMISOS = {
+        crear: @Json.Serialize(User.TienePermiso("Oportunidad.Crear")),
+        editar: @Json.Serialize(User.TienePermiso("Oportunidad.Editar")),
+        cerrar: @Json.Serialize(User.TienePermiso("Oportunidad.Cerrar"))
+    };
+    const URLS = {
+        getAll: '@Url.Action("GetAll")',
+        getPipeline: '@Url.Action("GetPipeline")',
+        getByEtapa: '@Url.Action("GetByEtapa")',
+        detalle: '@Url.Action("Detalle")',
+        createPartial: '@Url.Action("CreatePartial")',
+        cerrarPartial: '@Url.Action("CerrarPartial")',
+        create: '@Url.Action("Create")',
+        cerrarGanada: '@Url.Action("CerrarGanada")',
+        cerrarPerdida: '@Url.Action("CerrarPerdida")',
+        cancelar: '@Url.Action("Cancelar")',
+        cambiarEtapa: '@Url.Action("CambiarEtapa")'
+    };
+
+    // Transiciones permitidas hacia adelante (hacia atrás siempre se permite)
+    const TRANSICIONES = {
+        1: [2, 3],       // Prospección → Contacto, Necesidades
+        2: [3, 4, 6],    // Contacto → Necesidades, Cotización, TestDrive
+        3: [4, 6],       // Necesidades → Cotización, TestDrive
+        4: [5, 6],       // Cotización → Negociación, TestDrive
+        5: [6, 7],       // Negociación → TestDrive, Cierre
+        6: [4, 5],       // TestDrive → Cotización, Negociación
+        7: []            // Cierre → (nada)
+    };
+
+    const ETAPAS = [
+        { id: 1, nombre: 'Prospeccion', label: 'Prospección', color: '#17a2b8', icon: 'fa-search' },
+        { id: 2, nombre: 'Contacto', label: 'Contacto', color: '#0d6efd', icon: 'fa-phone' },
+        { id: 3, nombre: 'Necesidades', label: 'Necesidades', color: '#fd7e14', icon: 'fa-clipboard-list' },
+        { id: 4, nombre: 'Cotizacion', label: 'Cotización', color: '#e67e22', icon: 'fa-file-invoice-dollar' },
+        { id: 5, nombre: 'Negociacion', label: 'Negociación', color: '#8e44ad', icon: 'fa-handshake' },
+        { id: 6, nombre: 'TestDrive', label: 'Test Drive', color: '#343a40', icon: 'fa-car' },
+        { id: 7, nombre: 'Cierre', label: 'Cierre', color: '#198754', icon: 'fa-trophy' }
+    ];
+
+    const RESULTADOS = { 1: { nombre: 'Ganada', color: '#198754' }, 2: { nombre: 'Perdida', color: '#dc3545' }, 3: { nombre: 'Cancelada', color: '#6c757d' } };
+
+    let vistaActual = 'kanban';
+    let oportunidadesTodas = [];
+    let gruposColapsados = {};
+
+    $(document).ready(function () {
+        cargarDatos();
+        if (PERMISOS.crear) $('#btnNueva').on('click', abrirModalCrear);
+        $('#filtroVendedor, #filtroSucursal, #filtroEstado').on('change', renderVistaActual);
+    });
+
+    async function cargarDatos() {
+        try {
+            const res = await $.ajax({ url: URLS.getAll, type: 'GET' });
+            if (!res.success) { Toast.error('Error al cargar oportunidades'); return; }
+
+            oportunidadesTodas = res.data || [];
+            llenarFiltros(oportunidadesTodas);
+            renderVistaActual();
+        } catch (e) {
+            Toast.error('Error al conectar con el servidor');
+        } finally {
+            $('#loading').addClass('d-none');
+        }
+    }
+
+    function llenarFiltros(datos) {
+        const vendedores = [...new Set(datos.map(o => o.vendedorNombre).filter(Boolean))].sort();
+        const sucursales = [...new Set(datos.map(o => o.sucursalNombre).filter(Boolean))].sort();
+
+        const $v = $('#filtroVendedor');
+        vendedores.forEach(v => $v.append(`<option value="${v}">${v}</option>`));
+
+        const $s = $('#filtroSucursal');
+        sucursales.forEach(s => $s.append(`<option value="${s}">${s}</option>`));
+    }
+
+    function getFiltradas() {
+        let datos = [...oportunidadesTodas];
+        const vendedor = $('#filtroVendedor').val();
+        const sucursal = $('#filtroSucursal').val();
+        const estado = $('#filtroEstado').val();
+
+        if (vendedor) datos = datos.filter(o => o.vendedorNombre === vendedor);
+        if (sucursal) datos = datos.filter(o => o.sucursalNombre === sucursal);
+
+        if (estado === 'abiertas') datos = datos.filter(o => o.estaAbierta);
+        else if (estado === 'ganadas') datos = datos.filter(o => o.resultado === 1);
+        else if (estado === 'perdidas') datos = datos.filter(o => o.resultado === 2 || o.resultado === 3);
+
+        // Resumen
+        const totalOps = datos.length;
+        $('#resumenTotal').html(`<strong>${totalOps}</strong> oportunidades`);
+
+        return datos;
+    }
+
+    function renderVistaActual() {
+        const datos = getFiltradas();
+        if (vistaActual === 'kanban') {
+            renderKanban(datos);
+            $('#vistaKanban').removeClass('d-none');
+            $('#vistaTabla').addClass('d-none');
+        } else {
+            renderTablaAgrupada(datos);
+            $('#vistaTabla').removeClass('d-none');
+            $('#vistaKanban').addClass('d-none');
+        }
+    }
+
+    // ══════════════════════════════════════════
+    //  VISTA KANBAN
+    // ══════════════════════════════════════════
+    function renderKanban(oportunidades) {
+        const $kanban = $('#vistaKanban').empty();
+
+        ETAPAS.forEach(etapa => {
+            const items = oportunidades.filter(o => o.etapa === etapa.id && o.estaAbierta);
+            const col = `
+                <div class="col pipeline-col" style="min-width:190px;">
+                    <div class="card h-100 shadow-sm" style="border-top: 3px solid ${etapa.color};">
+                        <div class="card-header py-2 px-2 bg-white border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold small" style="color:${etapa.color}">
+                                    <i class="fas ${etapa.icon} me-1"></i>${etapa.label}
+                                </span>
+                                <span class="badge rounded-pill etapa-count" data-etapa="${etapa.id}" style="background:${etapa.color}">${items.length}</span>
+                            </div>
+                        </div>
+                        <div class="card-body p-2 pipeline-scroll" data-etapa-id="${etapa.id}">
+                            ${items.length === 0
+                                ? '<p class="text-muted text-center small py-3 empty-msg"><i class="fas fa-inbox"></i><br>Sin oportunidades</p>'
+                                : items.map(o => tarjetaKanban(o, etapa)).join('')
+                            }
+                        </div>
+                    </div>
+                </div>`;
+            $kanban.append(col);
+        });
+
+        inicializarDragDrop();
+    }
+
+    function tarjetaKanban(o, etapa) {
+        const diasTexto = o.fechaCierreEstimada
+            ? `<small class="text-muted"><i class="fas fa-calendar me-1"></i>${new Date(o.fechaCierreEstimada).toLocaleDateString('es-HN', { day: '2-digit', month: 'short' })}</small>`
+            : '';
+
+        return `
+            <div class="card mb-2 pipeline-card" style="border-left-color:${etapa.color}" data-oportunidad-id="${o.oportunidadId}" data-etapa-origen="${etapa.id}" onclick="irDetalle(${o.oportunidadId})">
+                <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <small class="text-muted">${o.codigoOportunidad}</small>
+                        <span class="badge bg-light text-dark" style="font-size:0.7rem">${o.probabilidadCierre}%</span>
+                    </div>
+                    <div class="fw-bold small mt-1">${o.leadNombre || 'Sin lead'}</div>
+                    ${o.vehiculoDescripcion ? `<small class="text-primary d-block"><i class="fas fa-car me-1"></i>${o.vehiculoDescripcion}</small>` : ''}
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <small class="text-muted text-truncate" style="max-width:100px"><i class="fas fa-user me-1"></i>${o.vendedorNombre || 'N/A'}</small>
+                        ${diasTexto}
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    // ══════════════════════════════════════════
+    //  VISTA TABLA AGRUPADA
+    // ══════════════════════════════════════════
+    function renderTablaAgrupada(oportunidades) {
+        const $container = $('#vistaTabla').empty();
+
+        ETAPAS.forEach(etapa => {
+            const items = oportunidades.filter(o => o.etapa === etapa.id);
+            if (items.length === 0 && $('#filtroEstado').val() === 'abiertas') return;
+
+            const colapsado = gruposColapsados[etapa.id] === true;
+            const iconColapso = colapsado ? 'fa-chevron-right' : 'fa-chevron-down';
+
+            const grupo = `
+                <div class="etapa-group" style="border-left-color:${etapa.color}">
+                    <div class="etapa-group-header d-flex justify-content-between align-items-center p-2 bg-light rounded-end"
+                         onclick="toggleGrupo(${etapa.id})">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fas ${iconColapso} text-muted small"></i>
+                            <span class="fw-bold" style="color:${etapa.color}">
+                                <i class="fas ${etapa.icon} me-1"></i>${etapa.label}
+                            </span>
+                            <span class="badge rounded-pill" style="background:${etapa.color}">${items.length}</span>
+                        </div>
+                    </div>
+                    <div class="etapa-group-body ${colapsado ? 'd-none' : ''}" id="grupo-${etapa.id}">
+                        ${items.length === 0
+                            ? '<p class="text-muted small ps-4 py-2 mb-0">Sin oportunidades en esta etapa</p>'
+                            : tablaEtapa(items, etapa)
+                        }
+                    </div>
+                </div>`;
+            $container.append(grupo);
+        });
+
+        // Mostrar cerradas si aplica
+        if ($('#filtroEstado').val() !== 'abiertas') {
+            const cerradas = oportunidades.filter(o => !o.estaAbierta);
+            if (cerradas.length > 0) {
+                const colapsado = gruposColapsados['cerradas'] === true;
+                const iconColapso = colapsado ? 'fa-chevron-right' : 'fa-chevron-down';
+                const grupoCerradas = `
+                    <div class="etapa-group" style="border-left-color:#6c757d">
+                        <div class="etapa-group-header d-flex justify-content-between align-items-center p-2 bg-light rounded-end"
+                             onclick="toggleGrupo('cerradas')">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas ${iconColapso} text-muted small"></i>
+                                <span class="fw-bold text-secondary">
+                                    <i class="fas fa-lock me-1"></i>Cerradas
+                                </span>
+                                <span class="badge rounded-pill bg-secondary">${cerradas.length}</span>
+                            </div>
+                        </div>
+                        <div class="etapa-group-body ${colapsado ? 'd-none' : ''}" id="grupo-cerradas">
+                            ${tablaCerradas(cerradas)}
+                        </div>
+                    </div>`;
+                $container.append(grupoCerradas);
+            }
+        }
+    }
+
+    function tablaEtapa(items, etapa) {
+        let rows = items.map(o => `
+            <tr onclick="irDetalle(${o.oportunidadId})" style="cursor:pointer" class="hover-row">
+                <td><span class="text-muted">${o.codigoOportunidad}</span></td>
+                <td><strong>${o.leadNombre || 'Sin lead'}</strong></td>
+                <td>${o.vehiculoDescripcion || '<span class="text-muted">-</span>'}</td>
+                <td>${o.vendedorNombre || '<span class="text-muted">Sin asignar</span>'}</td>
+                <td class="text-center">
+                    <div class="progress" style="height:18px; min-width:80px">
+                        <div class="progress-bar" role="progressbar" style="width:${o.probabilidadCierre}%; background:${etapa.color}">${o.probabilidadCierre}%</div>
+                    </div>
+                </td>
+                <td>${o.fechaCierreEstimada ? new Date(o.fechaCierreEstimada).toLocaleDateString('es-HN') : '<span class="text-muted">-</span>'}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); irDetalle(${o.oportunidadId})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>`).join('');
+
+        return `
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead>
+                        <tr class="small text-muted">
+                            <th style="width:120px">Código</th>
+                            <th>Cliente / Lead</th>
+                            <th>Vehículo</th>
+                            <th>Vendedor</th>
+                            <th style="width:120px" class="text-center">Probabilidad</th>
+                            <th style="width:110px">Cierre Est.</th>
+                            <th style="width:60px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function tablaCerradas(items) {
+        let rows = items.map(o => {
+            const res = RESULTADOS[o.resultado] || { nombre: '?', color: '#999' };
+            return `
+                <tr onclick="irDetalle(${o.oportunidadId})" style="cursor:pointer" class="hover-row">
+                    <td><span class="text-muted">${o.codigoOportunidad}</span></td>
+                    <td>${o.leadNombre || 'Sin lead'}</td>
+                    <td>${o.vehiculoDescripcion || '-'}</td>
+                    <td><span class="badge" style="background:${res.color}">${res.nombre}</span></td>
+                    <td>${o.vendedorNombre || '-'}</td>
+                    <td>${o.fechaCierre ? new Date(o.fechaCierre).toLocaleDateString('es-HN') : '-'}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); irDetalle(${o.oportunidadId})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>`;
+        }).join('');
+
+        return `
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead>
+                        <tr class="small text-muted">
+                            <th style="width:120px">Código</th>
+                            <th>Cliente / Lead</th>
+                            <th>Vehículo</th>
+                            <th>Resultado</th>
+                            <th>Vendedor</th>
+                            <th style="width:110px">Fecha Cierre</th>
+                            <th style="width:60px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function toggleGrupo(etapaId) {
+        const $body = $(`#grupo-${etapaId}`);
+        $body.toggleClass('d-none');
+        gruposColapsados[etapaId] = $body.hasClass('d-none');
+        // Actualizar icono
+        const $icon = $body.prev().find('.fa-chevron-down, .fa-chevron-right');
+        $icon.toggleClass('fa-chevron-down fa-chevron-right');
+    }
+
+    // ══════════════════════════════════════════
+    //  CAMBIAR VISTA
+    // ══════════════════════════════════════════
+    function cambiarVista(vista) {
+        vistaActual = vista;
+        $('#btnVistaKanban').toggleClass('active', vista === 'kanban');
+        $('#btnVistaTabla').toggleClass('active', vista === 'tabla');
+        renderVistaActual();
+    }
+
+    function irDetalle(id) {
+        window.location.href = URLS.detalle + '/' + id;
+    }
+
+    // ══════════════════════════════════════════
+    //  CRUD
+    // ══════════════════════════════════════════
+    function abrirModalCrear() {
+        AppModal.open({ title: '<i class="fas fa-plus me-2"></i>Nueva Oportunidad', url: URLS.createPartial, size: 'lg' });
+    }
+
+    // ══════════════════════════════════════════
+    //  DRAG & DROP (SortableJS)
+    // ══════════════════════════════════════════
+    let sortableInstances = [];
+
+    function inicializarDragDrop() {
+        // Destruir instancias previas
+        sortableInstances.forEach(s => s.destroy());
+        sortableInstances = [];
+
+        document.querySelectorAll('.pipeline-scroll[data-etapa-id]').forEach(el => {
+            const instance = new Sortable(el, {
+                group: 'pipeline',
+                animation: 200,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                filter: '.empty-msg',
+                draggable: '.pipeline-card',
+                onStart: function (evt) {
+                    const origenId = parseInt(evt.from.dataset.etapaId);
+                    // Resaltar columnas permitidas
+                    document.querySelectorAll('.pipeline-scroll[data-etapa-id]').forEach(col => {
+                        const destinoId = parseInt(col.dataset.etapaId);
+                        if (destinoId === origenId) return;
+                        if (esTransicionPermitida(origenId, destinoId)) {
+                            col.classList.add('sortable-drop-allowed');
+                        } else {
+                            col.classList.add('sortable-drop-denied');
+                        }
+                    });
+                },
+                onEnd: function (evt) {
+                    // Limpiar resaltados
+                    document.querySelectorAll('.pipeline-scroll').forEach(col => {
+                        col.classList.remove('sortable-drop-allowed', 'sortable-drop-denied');
+                    });
+                },
+                onMove: function (evt) {
+                    const origenId = parseInt(evt.from.dataset.etapaId);
+                    const destinoId = parseInt(evt.to.dataset.etapaId);
+                    if (origenId === destinoId) return true;
+                    return esTransicionPermitida(origenId, destinoId);
+                },
+                onAdd: function (evt) {
+                    const oportunidadId = parseInt(evt.item.dataset.oportunidadId);
+                    const nuevaEtapa = parseInt(evt.to.dataset.etapaId);
+                    const etapaOrigen = parseInt(evt.item.dataset.etapaOrigen);
+
+                    if (etapaOrigen === nuevaEtapa) return;
+
+                    cambiarEtapaOportunidad(oportunidadId, nuevaEtapa, evt);
+                }
+            });
+            sortableInstances.push(instance);
+        });
+    }
+
+    function esTransicionPermitida(origenId, destinoId) {
+        // Retroceder siempre está permitido
+        if (destinoId < origenId) return true;
+        // Avanzar: solo transiciones definidas
+        const permitidas = TRANSICIONES[origenId] || [];
+        return permitidas.includes(destinoId);
+    }
+
+    async function cambiarEtapaOportunidad(oportunidadId, nuevaEtapa, evt) {
+        try {
+            const res = await $.ajax({
+                url: URLS.cambiarEtapa,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ oportunidadId: oportunidadId, nuevaEtapa: nuevaEtapa })
+            });
+
+            if (res.success) {
+                // Actualizar datos locales
+                const op = oportunidadesTodas.find(o => o.oportunidadId === oportunidadId);
+                if (op) op.etapa = nuevaEtapa;
+                // Actualizar contadores
+                actualizarContadores();
+                // Actualizar data-etapa-origen de la tarjeta movida
+                evt.item.dataset.etapaOrigen = nuevaEtapa;
+                // Quitar mensajes vacíos si hay tarjetas
+                evt.to.querySelectorAll('.empty-msg').forEach(m => m.remove());
+                // Agregar mensaje vacío si la columna origen quedó sin tarjetas
+                if (evt.from.querySelectorAll('.pipeline-card').length === 0) {
+                    evt.from.innerHTML = '<p class="text-muted text-center small py-3 empty-msg"><i class="fas fa-inbox"></i><br>Sin oportunidades</p>';
+                }
+
+                const etapaInfo = ETAPAS.find(e => e.id === nuevaEtapa);
+                Toast.success(`Movida a ${etapaInfo?.label || 'nueva etapa'}`);
+            } else {
+                Toast.error(res.message || 'No se pudo cambiar la etapa');
+                cargarDatos(); // Recargar para revertir visualmente
+            }
+        } catch (e) {
+            Toast.error(e.responseJSON?.message || 'Error al cambiar etapa');
+            cargarDatos(); // Recargar para revertir visualmente
+        }
+    }
+
+    function actualizarContadores() {
+        const filtradas = getFiltradas();
+        ETAPAS.forEach(etapa => {
+            const count = filtradas.filter(o => o.etapa === etapa.id && o.estaAbierta).length;
+            $(`.etapa-count[data-etapa="${etapa.id}"]`).text(count);
+        });
+    }
+
+    function guardarOportunidad() {
+        const form = document.getElementById('formCrearOportunidad');
+        const btn = document.getElementById('btnGuardarOportunidad');
+        const btnOriginal = btn.innerHTML;
+
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const data = {
+            leadId: parseInt($('#LeadId').val()),
+            clienteId: $('#ClienteId').val() ? parseInt($('#ClienteId').val()) : null,
+            modeloId: $('#ModeloId').val() ? parseInt($('#ModeloId').val()) : null,
+            vendedorId: $('#VendedorId').val(),
+            sucursalId: parseInt($('#SucursalId').val()),
+            probabilidadCierre: parseInt($('#ProbabilidadCierre').val() || 0),
+            fechaCierreEstimada: $('#FechaCierreEstimada').val() || null
+        };
+
+        $.ajax({
+            url: URLS.create, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'),
+            success: function (r) {
+                if (r.success) { AppModal.close(); cargarDatos(); Toast.success(r.message || 'Oportunidad creada'); }
+                else Toast.error(r.message || 'Error');
+            },
+            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error'),
+            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+</script>
+}
