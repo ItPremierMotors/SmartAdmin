@@ -1,10 +1,25 @@
+@*
+    ══════════════════════════════════════════════════════════════
+    Vista Parcial: Transferir Cita a Manana
+    ──────────────────────────────────────────────────────────────
+    Se usa cuando una cita "En Proceso" no se completa en el dia.
+    Permite registrar los minutos trabajados hoy; el sistema
+    creara automaticamente una nueva cita para manana con los
+    minutos pendientes.
+
+    Modelo: CitaViewModel (cita en proceso a transferir)
+    Dependencias JS: confirmarTransferirCita() en agenda.js
+    ══════════════════════════════════════════════════════════════
+*@
 @model SmartAdmin.Models.Taller.CitaViewModel
 
+@* ── Alerta informativa ── *@
 <div class="alert alert-info mb-3">
     <i class="fas fa-info-circle me-1"></i>
     El vehiculo permanecera en taller. Se creara una nueva cita para manana con los minutos pendientes.
 </div>
 
+@* ── Resumen de la cita actual (solo lectura) ── *@
 <div class="card mb-3">
     <div class="card-body">
         <table class="table table-sm table-borderless mb-0">
@@ -32,14 +47,22 @@
     </div>
 </div>
 
+@* ── Formulario de transferencia ── *@
 <form id="formTransferirCita">
     <input type="hidden" id="TransferirCitaId" value="@Model.CitaId" />
+
     <div class="mb-3">
-        <label class="form-label fw-bold">Minutos trabajados hoy <span class="text-danger">*</span></label>
+        <label for="TransferirMinutosTrabajados" class="form-label fw-bold">
+            Minutos trabajados hoy <span class="text-danger">*</span>
+        </label>
         <input type="number" class="form-control" id="TransferirMinutosTrabajados"
-               min="1" max="@(Model.DuracionMinutos - 1)" value="@(Model.DuracionMinutos / 2)" required />
-        <small class="text-muted">Maximo: @(Model.DuracionMinutos - 1) min (debe quedar al menos 1 min pendiente)</small>
+               min="1" max="@(Model.DuracionMinutos - 1)"
+               value="@(Model.DuracionMinutos / 2)" required />
+        <small class="text-muted">
+            Maximo: @(Model.DuracionMinutos - 1) min (debe quedar al menos 1 min pendiente)
+        </small>
     </div>
+
     <div class="mb-3">
         <label class="form-label text-muted">Minutos pendientes para manana:</label>
         <div class="fs-5 fw-bold text-primary" id="minutosPendientes">
@@ -48,6 +71,7 @@
     </div>
 </form>
 
+@* ── Botones de accion ── *@
 <div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
     <button type="button" class="btn btn-primary" id="btnTransferir" onclick="confirmarTransferirCita()">
@@ -55,9 +79,15 @@
     </button>
 </div>
 
+@* ══════════════════════════════════════════════════════════════
+   Script: Calcula en tiempo real los minutos pendientes
+   conforme el usuario ajusta los minutos trabajados.
+   ══════════════════════════════════════════════════════════════ *@
 <script>
     $(document).ready(function () {
         const duracionTotal = @Model.DuracionMinutos;
+
+        // Actualizar minutos pendientes en tiempo real
         $('#TransferirMinutosTrabajados').on('input', function () {
             const trabajados = parseInt($(this).val()) || 0;
             const pendientes = duracionTotal - trabajados;

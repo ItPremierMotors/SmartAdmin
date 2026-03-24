@@ -22,6 +22,7 @@ namespace SmartAdmin.Controllers
         }
 
         public IActionResult Index() => View();
+        public IActionResult Historial() => View();
 
         [HttpGet]
         public async Task<IActionResult> GetSucursales()

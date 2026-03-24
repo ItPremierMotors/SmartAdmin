@@ -1,7 +1,21 @@
+@*
+    ══════════════════════════════════════════════════════════════
+    Vista/Parcial: Index (VersionesVehiculo)
+    ──────────────────────────────────────────────────────────────
+    Página principal de administración de versiones de vehículo.
+    DataTable con filas expandibles mostrando detalles de motor y
+    características. Filtros cascada por Marca y Modelo (Select2).
+    CRUD completo mediante modales AJAX.
+
+    Modelo: Ninguno (datos vía AJAX)
+    Dependencias JS: jQuery, DataTables, AppModal, Toast, Select2
+    ══════════════════════════════════════════════════════════════
+*@
 @{
     ViewData["Title"] = "Administración de Versiones de Vehículo";
 }
 <div class="container-fluid">
+    @* ── Encabezado y boton de nueva version ── *@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0"><i class="fas fa-car me-2"></i>@ViewData["Title"]</h1>
         @if (User.TienePermiso("Catalogo.Version.Crear"))
@@ -12,18 +26,19 @@
         }
     </div>
 
+    @* ── Tarjeta contenedora con filtros y tabla ── *@
     <div class="card shadow-sm">
         <div class="card-body">
-            <!-- Filtros -->
+            @* ── Filtros avanzados en cascada (Marca -> Modelo) ── *@
             <div class="row g-3 mb-3" id="filtrosAvanzados">
                 <div class="col-md-5">
-                    <label class="form-label small text-muted">Marca</label>
+                    <label class="form-label small text-muted" for="filtroMarca">Marca</label>
                     <select class="form-select form-select-sm" id="filtroMarca">
                         <option value="">Todas las marcas</option>
                     </select>
                 </div>
                 <div class="col-md-5">
-                    <label class="form-label small text-muted">Modelo</label>
+                    <label class="form-label small text-muted" for="filtroModelo">Modelo</label>
                     <select class="form-select form-select-sm" id="filtroModelo">
                         <option value="">Todos los modelos</option>
                     </select>
@@ -35,11 +50,13 @@
                 </div>
             </div>
 
+            @* Spinner de carga inicial *@
             <div id="loading" class="text-center py-4">
                 <div class="spinner-border text-primary"></div>
                 <p class="mt-2 text-muted">Cargando versiones...</p>
             </div>
 
+            @* ── Tabla DataTable de versiones (con child rows) ── *@
             <table class="table table-hover table-sm d-none" id="tabla" style="width:100%">
                 <thead class="table-light">
                     <tr>
@@ -61,6 +78,7 @@
 </div>
 
 @section Scripts {
+@* ── Estilos para el control de expansion de filas ── *@
 <style>
     /* Ocultar la flecha automática de DataTables, solo mostrar nuestro ícono */
     td.dt-control:before {
@@ -73,11 +91,13 @@
     }
 </style>
 <script>
+    /* ── Permisos del usuario actual (inyectados desde el servidor) ── */
     const PERMISOS = {
         crear: @Json.Serialize(User.TienePermiso("Catalogo.Version.Crear")),
         editar: @Json.Serialize(User.TienePermiso("Catalogo.Version.Editar")),
         eliminar: @Json.Serialize(User.TienePermiso("Catalogo.Version.Eliminar"))
     };
+    /* ── URLs de endpoints del controlador ── */
     const URLS = {
         getAll: '@Url.Action("GetAll")',
         getDetail: '@Url.Action("VersionDetailPartial")',
@@ -91,18 +111,25 @@
         getModelos: '@Url.Action("GetByMarca", "Modelos")'
     };
 
+    /* ── Mapas de nombres para enums de transmision y traccion ── */
     const TRANSMISION_NOMBRES = { 1: 'Manual', 2: 'Automática', 3: 'CVT', 4: 'Dual Clutch', 5: 'Semiautomática' };
     const TRACCION_NOMBRES = { 1: 'FWD', 2: 'RWD', 3: 'AWD', 4: '4WD' };
 
     let dataTable = null;
-    let datosOriginales = [];
+    let datosOriginales = [];  // Cache local para filtrado del lado cliente
 
+    /* ── Inicializacion al cargar la pagina ── */
     $(document).ready(function () {
         cargarDatos();
         cargarFiltros();
         if (PERMISOS.crear) $('#btnNuevo').on('click', abrirModalCrear);
     });
 
+    /**
+     * cargarDatos
+     * Obtiene todas las versiones via AJAX y almacena en datosOriginales
+     * para permitir filtrado del lado cliente sin re-consultar.
+     */
     function cargarDatos() {
         $.ajax({
             url: URLS.getAll,
@@ -123,6 +150,13 @@
         });
     }
 
+    /**
+     * inicializarDataTable
+     * Configura el DataTable con columna de expansion (dt-control),
+     * codigo, nombre, marca-modelo, motor, transmision, potencia,
+     * precio y botones de acciones. Registra evento click para
+     * expandir/colapsar filas hijas con detalles tecnicos.
+     */
     function inicializarDataTable(datos) {
         dataTable = $('#tabla').DataTable({
             data: datos,
@@ -189,7 +223,8 @@
         $('#loading').addClass('d-none');
         $('#tabla').removeClass('d-none');
 
-        // Agregar evento para expandir/colapsar filas (off para evitar duplicados al recargar)
+        /* ── Evento de expansion/colapse de filas hijas (child rows) ── */
+        // off() previene duplicados al reinicializar tras filtrado
         $('#tabla tbody').off('click', 'td.dt-control').on('click', 'td.dt-control', function () {
             var tr = $(this).closest('tr');
             var row = dataTable.row(tr);
@@ -206,6 +241,11 @@
         });
     }
 
+    /**
+     * formatearDetalles
+     * Genera el HTML de la fila expandida con dos cards:
+     * Motor y Rendimiento, Caracteristicas, y texto libre.
+     */
     function formatearDetalles(d) {
         return `
             <div class="p-3 bg-light border rounded">
@@ -289,6 +329,16 @@
         `;
     }
 
+    /* ══════════════════════════════════════════════════════════════
+       Filtros en cascada (Marca -> Modelo)
+       ══════════════════════════════════════════════════════════════ */
+
+    /**
+     * cargarFiltros
+     * Inicializa los Select2 de Marca y Modelo, carga las marcas
+     * via AJAX, y configura la cascada: al cambiar marca se cargan
+     * los modelos correspondientes y se aplica el filtro.
+     */
     function cargarFiltros() {
         // Inicializar Select2 en Marca
         $('#filtroMarca').select2({
@@ -348,6 +398,7 @@
         });
     }
 
+    /** Filtra datosOriginales por marca y/o modelo seleccionado */
     function aplicarFiltros() {
         const marcaNombre = $('#filtroMarca option:selected').text().trim();
         const modeloId = $('#filtroModelo').val();
@@ -368,6 +419,7 @@
         inicializarDataTable(datosFiltrados);
     }
 
+    /** Limpia ambos filtros y restaura todos los datos originales */
     function limpiarFiltros() {
         $('#filtroMarca').val('').trigger('change.select2');
         $('#filtroModelo').html('<option value="">Todos los modelos</option>').val('').trigger('change.select2');
@@ -378,6 +430,7 @@
         inicializarDataTable(datosOriginales);
     }
 
+    /** Destruye y recarga el DataTable completo desde el servidor */
     function recargarTabla() {
         if (dataTable) {
             dataTable.destroy();
@@ -385,7 +438,11 @@
         cargarDatos();
     }
 
-    // Funciones para abrir modales
+    /* ══════════════════════════════════════════════════════════════
+       Funciones para abrir modales (crear, editar, eliminar)
+       ══════════════════════════════════════════════════════════════ */
+
+    /** Abre el modal de creacion de version */
     function abrirModalCrear() {
         AppModal.open({
             title: '<i class="fas fa-car me-2"></i>Nueva Versión',
@@ -412,7 +469,15 @@
         });
     }
 
-    // Guardar nueva versión
+    /* ══════════════════════════════════════════════════════════════
+       Acciones AJAX – Crear, Editar, Eliminar
+       ══════════════════════════════════════════════════════════════ */
+
+    /**
+     * guardarVersion
+     * Recoge todos los campos del formulario de creacion (3 tabs),
+     * valida con HTML5 y envia POST JSON al servidor.
+     */
     function guardarVersion() {
         const form = document.getElementById('formCrearVersion');
         const btn = document.getElementById('btnGuardarVersion');
@@ -466,7 +531,11 @@
         });
     }
 
-    // Actualizar versión existente
+    /**
+     * actualizarVersion
+     * Recoge todos los campos del formulario de edicion (3 tabs),
+     * incluyendo VersionId, valida con HTML5 y envia POST JSON.
+     */
     function actualizarVersion() {
         const form = document.getElementById('formEditarVersion');
         const btn = document.getElementById('btnActualizarVersion');
@@ -521,7 +590,11 @@
         });
     }
 
-    // Eliminar versión
+    /**
+     * confirmarEliminar
+     * Obtiene el id oculto del formulario de eliminacion y envia
+     * POST JSON para borrar la version. Recarga tabla al exito.
+     */
     function confirmarEliminar() {
         const id = parseInt($('#deleteId').val());
         const btn = document.getElementById('btnEliminarVersion');

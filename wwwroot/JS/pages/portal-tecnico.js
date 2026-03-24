@@ -1,4 +1,11 @@
-// ─── portal-tecnico.js — Portal del Tecnico ───
+// ============================================================
+// portal-tecnico.js - Portal del Técnico
+// ============================================================
+// Controla el portal del técnico autenticado. Muestra órdenes
+// asignadas con estados de asignación, permite actualizar
+// estado de trabajos y gestionar evidencias.
+// Requiere: jQuery, URLS y TECNICO_ID (definidos en la vista), Toast
+// ============================================================
 
 const estadoAsignacionBadge = {
     1: { cls: 'bg-info',              nombre: 'Asignado',   icon: 'fal fa-clock' },

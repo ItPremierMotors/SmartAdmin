@@ -1,4 +1,15 @@
-﻿@model SmartAdmin.Models.UserRole.UserViewModels.CreateUserViewModel
+﻿@*
+    ══════════════════════════════════════════════════════════════
+    Vista/Parcial: _Create (Users)
+    ──────────────────────────────────────────────────────────────
+    Formulario para crear un nuevo usuario. Incluye datos personales,
+    credenciales, selección de rol y cargo.
+
+    Modelo: CreateUserViewModel
+    Dependencias JS: guardarUsuario() definida en Index.cshtml
+    ══════════════════════════════════════════════════════════════
+*@
+@model SmartAdmin.Models.UserRole.UserViewModels.CreateUserViewModel
 @{
     var rolesDisponibles = ViewBag.RolesDisponibles as List<SmartAdmin.Models.UserRole.RoleViewModels.RoleViewModel> ?? new List<SmartAdmin.Models.UserRole.RoleViewModels.RoleViewModel>();
     var cargosDisponibles = ViewBag.CargosDisponibles as List<string> ?? new List<string>();

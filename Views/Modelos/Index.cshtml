@@ -1,7 +1,20 @@
+@*
+    ══════════════════════════════════════════════════════════════
+    Vista/Parcial: Index (Modelos)
+    ──────────────────────────────────────────────────────────────
+    Página principal de administración de modelos de vehículo.
+    Incluye DataTable con columnas: Código, Nombre, Marca, Segmento,
+    Años y Estado. CRUD completo mediante modales AJAX.
+
+    Modelo: Ninguno (datos vía AJAX)
+    Dependencias JS: jQuery, DataTables, AppModal, Toast, Select2
+    ══════════════════════════════════════════════════════════════
+*@
 @{
     ViewData["Title"] = "Administración de Modelos";
 }
 <div class="container-fluid">
+    @* ── Encabezado y boton de nuevo modelo ── *@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0"><i class="fas fa-car me-2"></i>@ViewData["Title"]</h1>
         @if (User.TienePermiso("Catalogo.Modelo.Crear"))
@@ -12,13 +25,16 @@
         }
     </div>
 
+    @* ── Tarjeta contenedora de la tabla ── *@
     <div class="card shadow-sm">
         <div class="card-body">
+            @* Spinner de carga inicial *@
             <div id="loading" class="text-center py-4">
                 <div class="spinner-border text-primary"></div>
                 <p class="mt-2 text-muted">Cargando modelos...</p>
             </div>
 
+            @* ── Tabla DataTable de modelos ── *@
             <table class="table table-hover table-sm d-none" id="tabla" style="width:100%">
                 <thead class="table-light">
                     <tr>
@@ -38,11 +54,13 @@
 </div>
 @section Scripts {
 <script>
+    /* ── Permisos del usuario actual (inyectados desde el servidor) ── */
     const PERMISOS = {
         crear: @Json.Serialize(User.TienePermiso("Catalogo.Modelo.Crear")),
         editar: @Json.Serialize(User.TienePermiso("Catalogo.Modelo.Editar")),
         eliminar: @Json.Serialize(User.TienePermiso("Catalogo.Modelo.Eliminar"))
     };
+    /* ── URLs de endpoints del controlador ── */
     const URLS = {
         getAll: '@Url.Action("GetAll")',
         getDetail: '@Url.Action("ModeloDetailPartial")',
@@ -138,12 +156,16 @@
         });
     }
 
-    // Funciones para recargar datatable
+    /* ── Recargar DataTable sin perder la pagina actual ── */
     function recargarTabla() {
         dataTable.ajax.reload(null, false);
     }
 
-    // Funciones para abrir modales
+    /* ══════════════════════════════════════════════════════════════
+       Funciones para abrir modales (crear, detalle, editar, eliminar)
+       ══════════════════════════════════════════════════════════════ */
+
+    /** Abre el modal de creacion de modelo */
     function abrirModalCrear() {
         AppModal.open({
             title: '<i class="fas fa-car me-2"></i>Nuevo Modelo',
@@ -179,7 +201,15 @@
         });
     }
 
-    // Guardar nuevo modelo
+    /* ══════════════════════════════════════════════════════════════
+       Acciones AJAX – Crear, Editar, Eliminar
+       ══════════════════════════════════════════════════════════════ */
+
+    /**
+     * guardarModelo
+     * Recoge los datos del formulario de creacion, valida con HTML5 y
+     * envia POST JSON al servidor. Al exito cierra modal y recarga tabla.
+     */
     function guardarModelo() {
         const form = document.getElementById('formCrearModelo');
         const btn = document.getElementById('btnGuardarModelo');
@@ -226,7 +256,11 @@
         });
     }
 
-    // Actualizar modelo existente
+    /**
+     * actualizarModelo
+     * Recoge los datos del formulario de edicion (incluyendo ModeloId),
+     * valida con HTML5 y envia POST JSON al servidor.
+     */
     function actualizarModelo() {
         const form = document.getElementById('formEditarModelo');
         const btn = document.getElementById('btnEditarModelo');
@@ -274,7 +308,11 @@
         });
     }
 
-    // Eliminar modelo
+    /**
+     * confirmarEliminar
+     * Obtiene el id oculto del formulario de eliminacion y envia
+     * POST JSON para borrar el modelo. Recarga tabla al exito.
+     */
     function confirmarEliminar() {
         const id = parseInt($('#deleteId').val());
         const btn = document.getElementById('btnEliminarModelo');

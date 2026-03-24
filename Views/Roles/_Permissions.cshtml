@@ -1,3 +1,15 @@
+@*
+    ══════════════════════════════════════════════════════════════
+    Vista/Parcial: _Permissions (Roles)
+    ──────────────────────────────────────────────────────────────
+    Gestión de permisos para un rol. Muestra todos los permisos
+    disponibles con checkboxes para asignar/desasignar permisos
+    al rol seleccionado.
+
+    Modelo: Ninguno (usa ViewBag: AllPermissions, RolePermissions, RoleId, RoleName)
+    Dependencias JS: guardarPermisos() definida en Index.cshtml
+    ══════════════════════════════════════════════════════════════
+*@
 @{
     var allPermissions = (List<string>)ViewBag.AllPermissions;
     var rolePermissions = (List<string>)ViewBag.RolePermissions;

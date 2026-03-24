@@ -1,4 +1,11 @@
-// ─── orden-servicio.js — Index de Ordenes de Servicio ───
+// ============================================================
+// orden-servicio.js - Index de Órdenes de Servicio
+// ============================================================
+// Controla la página principal de órdenes de servicio.
+// DataTable con filtros por estado, badges de estado y acciones
+// para ver detalle de cada orden.
+// Requiere: jQuery, DataTables, URLS y PERMISOS (definidos en la vista), Toast
+// ============================================================
 
 const estadoOsBadge = {
     'ABIERTA':      'bg-primary',

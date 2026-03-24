@@ -1,7 +1,18 @@
-﻿@model SmartAdmin.Models.Catalogo.Marca.MarcaViewModel
+﻿@*
+    ══════════════════════════════════════════════════════════════
+    Vista/Parcial: _DetailPartial (Marca)
+    ──────────────────────────────────────────────────────────────
+    Muestra los detalles de una marca: logo, código, nombre,
+    país de origen, si es marca propia y observaciones.
+
+    Modelo: MarcaViewModel
+    Dependencias JS: Ninguna
+    ══════════════════════════════════════════════════════════════
+*@
+@model SmartAdmin.Models.Catalogo.Marca.MarcaViewModel
 <div class="container-fluid">
     <div class="row g-3">
-        <!-- Logo -->
+        @* ── Logo de la marca ── *@
         <div class="col-md-4 text-center">
             <div class="card h-100">
                 <div class="card-body d-flex align-items-center justify-content-center">
@@ -22,7 +33,7 @@
                 </div>
             </div>
         </div>
-        <!-- Información principal -->
+        @* ── Informacion principal ── *@
         <div class="col-md-8">
             <div class="card h-100">
                 <div class="card-body">
@@ -53,7 +64,7 @@
                 </div>
             </div>
         </div>
-        <!-- Observaciones -->
+        @* ── Observaciones ── *@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
@@ -66,7 +77,7 @@
                 </div>
             </div>
         </div>
-        <!-- Botón al final, separado de los cards -->
+        @* ── Boton cerrar modal ── *@
         <div class="col-12 d-flex justify-content-end mt-2">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                 <i class="fas fa-times me-1"></i> Cerrar

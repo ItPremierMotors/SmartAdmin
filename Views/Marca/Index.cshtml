@@ -1,7 +1,20 @@
-﻿@{
+﻿@*
+    ══════════════════════════════════════════════════════════════
+    Vista Principal: Administracion de Marcas
+    ──────────────────────────────────────────────────────────────
+    CRUD completo de marcas de vehiculos con DataTables.
+    Permite crear, editar, ver detalle y eliminar marcas
+    mediante modales (AppModal).
+
+    Permisos: Catalogo.Marca.Crear/Editar/Eliminar
+    Dependencias JS: jQuery, DataTables, AppModal, Toast
+    ══════════════════════════════════════════════════════════════
+*@
+@{
     ViewData["Title"] = "Administración de Marcas";
 }
 <div class="container-fluid">
+    @* ── Encabezado y boton de nueva marca ── *@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0"><i class="fas fa-tags me-2"></i>@ViewData["Title"]</h1>
         @if (User.TienePermiso("Catalogo.Marca.Crear"))
@@ -12,12 +25,15 @@
         }
     </div>
 
+    @* ── Tarjeta contenedora de la tabla ── *@
     <div class="card">
         <div class="card-body">
+            @* Spinner de carga inicial *@
             <div id="loading" class="text-center py-4">
                 <div class="spinner-border text-primary"></div>
             </div>
 
+            @* ── Tabla DataTable de marcas ── *@
             <table class="table table-hover d-none" id="tabla" style="width:100%">
                 <thead class="table-light">
                     <tr>
@@ -36,11 +52,13 @@
 </div>
 @section Scripts {
 <script>
+    /* ── Permisos del usuario actual (inyectados desde el servidor) ── */
     const PERMISOS = {
         crear: @Json.Serialize(User.TienePermiso("Catalogo.Marca.Crear")),
         editar: @Json.Serialize(User.TienePermiso("Catalogo.Marca.Editar")),
         eliminar: @Json.Serialize(User.TienePermiso("Catalogo.Marca.Eliminar"))
     };
+    /* ── URLs de endpoints del controlador ── */
     const URLS={
        getAll: '@Url.Action("GetAll")',
        getDetail: '@Url.Action("MarcaDetailPartial")',
@@ -103,11 +121,15 @@
            order: [[0, 'asc']]
            });
     }
-    //funiones para recargar datatable
+    /* ── Recargar DataTable sin perder la pagina actual ── */
     function recargarTabla() {
         dataTable.ajax.reload(null, false);
     }
-    //funciones para abrir modales
+    /* ══════════════════════════════════════════════════════════════
+       Funciones para abrir modales (crear, detalle, editar, eliminar)
+       ══════════════════════════════════════════════════════════════ */
+
+    /** Abre el modal de creacion de marca */
     function abrirModalCrear() {
             AppModal.open({
                 title: '<i class="fas fa-tag me-2"></i>Nueva Marca',
@@ -139,8 +161,15 @@
                 size: 'sm'
             });
     }
-    //acciones por modal
+    /* ══════════════════════════════════════════════════════════════
+       Acciones AJAX – Crear, Editar, Eliminar
+       ══════════════════════════════════════════════════════════════ */
 
+    /**
+     * guardarMarca
+     * Recoge los datos del formulario de creacion, valida con HTML5 y
+     * envia POST JSON al servidor. Al exito cierra modal y recarga tabla.
+     */
     function guardarMarca(){
      const form = document.getElementById('formCrearMarca');
      const btn = document.getElementById('btnGuardarMarca');
@@ -190,8 +219,11 @@
         }
       });
     }
-    //
-    //editar marca 
+    /**
+     * actualizarMarca
+     * Recoge los datos del formulario de edicion (incluyendo MarcaId),
+     * valida con HTML5 y envia POST JSON al servidor.
+     */
      function actualizarMarca(){
      const form = document.getElementById('formEditarMarca');
      const btn = document.getElementById('btnEditarMarca');
@@ -242,8 +274,11 @@
         }
       });
     }
-    //
-    //ELIMINAR MARCA
+    /**
+     * confirmarEliminar
+     * Obtiene el id oculto del formulario de eliminacion y envia
+     * POST JSON para borrar la marca. Recarga tabla al exito.
+     */
       function confirmarEliminar() {
         const id =parseInt($('#deleteId').val());
         const btn = document.getElementById('btnEliminarMarca');

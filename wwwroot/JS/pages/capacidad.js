@@ -1,5 +1,11 @@
-// Capacidad del Taller - Page JS
+// ============================================================
+// capacidad.js - Gestión de Capacidad del Taller
+// ============================================================
+// Controla el calendario de capacidad del taller con FullCalendar.
+// Gestiona semanas, bloques horarios, edición de turnos y
+// visualización de disponibilidad por día.
 // Requiere: URLS (definido en la vista), FullCalendar, AppModal, AppAlert, Toast
+// ============================================================
 
 let calendar;
 let _fechaActualDetalle = null;

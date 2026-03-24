@@ -254,6 +254,11 @@
                             <span class="nav-link-text" data-i18n>Agenda de Citas</span>
                         </a>
                     </li>
+                    <li>
+                        <a href=@Url.Action("Historial", "Agenda")>
+                            <span class="nav-link-text" data-i18n>Historial de Citas</span>
+                        </a>
+                    </li>
                 }
                 @if (User.TienePermiso("OrdenServicio.Ver"))
                 {
@@ -267,7 +272,7 @@
         </li>
     }
 
-    @if (User.IsInRole("TECNICO"))
+    @if (User.IsInRole("Tecnico"))
     {
         <li class="nav-item">
             <a href="@Url.Action("Index", "PortalTecnico")" title="Portal Tecnico" data-filter-tags>

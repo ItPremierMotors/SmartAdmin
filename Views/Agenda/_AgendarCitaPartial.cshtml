@@ -1,3 +1,16 @@
+@*
+    ══════════════════════════════════════════════════════════════
+    Vista Parcial: Agendar Nueva Cita
+    ──────────────────────────────────────────────────────────────
+    Se carga dentro de AppModal desde la Agenda.
+    Permite seleccionar cliente (Select2 con busqueda AJAX),
+    vehiculo (dependiente del cliente), tipo de servicio,
+    fecha, bloque horario y tipo de ingreso.
+
+    Dependencias JS: confirmarAgendar() definida en agenda.js
+    Datos de entrada: ViewBag.FechaPreseleccionada, ViewBag.SucursalId
+    ══════════════════════════════════════════════════════════════
+*@
 @{
     var fechaPreseleccionada = ViewBag.FechaPreseleccionada as string;
     var sucursalId = ViewBag.SucursalId as int?;
@@ -5,41 +18,51 @@
 
 <form id="formAgendarCita">
     <input type="hidden" id="CitaSucursalId" value="@(sucursalId?.ToString() ?? "")" />
+
     <div class="row">
-        <!-- Left column: Client & Vehicle -->
+        @* ── Columna Izquierda: Cliente, Vehiculo y Servicio ── *@
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">Cliente <span class="text-danger">*</span></label>
-                <select class="form-select" id="CitaClienteId" required>
+                <label for="CitaClienteId" class="form-label">
+                    Cliente <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="CitaClienteId" name="ClienteId" required>
                     <option value="">Buscar cliente...</option>
                 </select>
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Vehiculo <span class="text-danger">*</span></label>
-                <select class="form-select" id="CitaVehiculoId" required>
+                <label for="CitaVehiculoId" class="form-label">
+                    Vehiculo <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="CitaVehiculoId" name="VehiculoId" required>
                     <option value="">Seleccione un cliente primero</option>
                 </select>
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Tipo de Servicio <span class="text-danger">*</span></label>
-                <select class="form-select" id="CitaTipoServicioId" required>
+                <label for="CitaTipoServicioId" class="form-label">
+                    Tipo de Servicio <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="CitaTipoServicioId" name="TipoServicioId" required>
                     <option value="">Cargando...</option>
                 </select>
             </div>
         </div>
 
-        <!-- Right column: Schedule -->
+        @* ── Columna Derecha: Fecha, Bloque Horario, Tipo Ingreso ── *@
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">Fecha <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" id="CitaFecha" value="@fechaPreseleccionada" required />
+                <label for="CitaFecha" class="form-label">
+                    Fecha <span class="text-danger">*</span>
+                </label>
+                <input type="date" class="form-control" id="CitaFecha" name="FechaHoraInicio"
+                       value="@fechaPreseleccionada" required />
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Bloque Horario</label>
-                <select class="form-select" id="CitaBloqueHorario">
+                <label for="CitaBloqueHorario" class="form-label">Bloque Horario</label>
+                <select class="form-select" id="CitaBloqueHorario" name="BloqueHorarioId">
                     <option value="">Cargando bloques...</option>
                 </select>
                 <div class="alert alert-warning py-1 px-2 mt-1 mb-0 d-none" id="bloqueWarning">
@@ -48,13 +71,15 @@
             </div>
 
             <div class="mb-3" id="horaManualGroup" style="display:none;">
-                <label class="form-label">Hora Manual</label>
+                <label for="CitaHoraManual" class="form-label">Hora Manual</label>
                 <input type="time" class="form-control" id="CitaHoraManual" value="08:00" />
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Tipo de Ingreso <span class="text-danger">*</span></label>
-                <select class="form-select" id="CitaTipoIngreso" required>
+                <label for="CitaTipoIngreso" class="form-label">
+                    Tipo de Ingreso <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="CitaTipoIngreso" name="TipoIngreso" required>
                     <option value="1" selected>Cita</option>
                     <option value="2">Walk-In</option>
                     <option value="3">Garantia</option>
@@ -63,19 +88,23 @@
         </div>
     </div>
 
+    @* ── Motivo y Observaciones ── *@
     <div class="mb-3">
-        <label class="form-label">Motivo de Visita <span class="text-danger">*</span></label>
-        <textarea class="form-control" id="CitaMotivoVisita" rows="2" required
+        <label for="CitaMotivoVisita" class="form-label">
+            Motivo de Visita <span class="text-danger">*</span>
+        </label>
+        <textarea class="form-control" id="CitaMotivoVisita" name="MotivoVisita" rows="2" required
                   placeholder="Describa el motivo de la visita..."></textarea>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Observaciones</label>
-        <textarea class="form-control" id="CitaObservaciones" rows="2"
+        <label for="CitaObservaciones" class="form-label">Observaciones</label>
+        <textarea class="form-control" id="CitaObservaciones" name="Observaciones" rows="2"
                   placeholder="Notas adicionales (opcional)"></textarea>
     </div>
 </form>
 
+@* ── Botones de accion ── *@
 <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
         <i class="fas fa-times me-1"></i> Cancelar
@@ -85,9 +114,14 @@
     </button>
 </div>
 
+@* ══════════════════════════════════════════════════════════════
+   Scripts: Inicializacion de Select2, carga de catalogos
+   y logica de bloques horarios.
+   ══════════════════════════════════════════════════════════════ *@
 <script>
-    // Almacén de datos de tipos de servicio para filtrado
+    // Cache de tipos de servicio para filtrado por tipo de ingreso
     window._tiposServicioData = [];
+    // Indica si hay bloques horarios configurados para la fecha
     window._hayBloquesActivos = false;
 
     $(document).ready(function () {
@@ -95,10 +129,12 @@
         cargarTiposServicio();
         cargarBloquesDisponibles();
 
+        // Recargar bloques al cambiar fecha
         $('#CitaFecha').on('change', function () {
             cargarBloquesDisponibles();
         });
 
+        // Opcion "hora manual" al final del select de bloques
         $('#CitaBloqueHorario').on('change', function () {
             if ($(this).val() === '__manual__') {
                 $('#horaManualGroup').show();
@@ -108,12 +144,14 @@
             }
         });
 
+        // Filtrar servicios y visibilidad de hora manual segun tipo de ingreso
         $('#CitaTipoIngreso').on('change', function () {
             filtrarTiposServicio();
             actualizarVisibilidadHoraManual();
         });
     });
 
+    // ── Select2: Busqueda de clientes via AJAX ──
     function initClienteSelect() {
         $('#CitaClienteId').select2({
             dropdownParent: $('.modal'),
@@ -144,6 +182,7 @@
         });
     }
 
+    // ── Carga vehiculos asociados al cliente seleccionado ──
     function cargarVehiculosCliente(clienteId) {
         const $sel = $('#CitaVehiculoId');
         $sel.empty().append('<option value="">Cargando...</option>');
@@ -170,6 +209,7 @@
         });
     }
 
+    // ── Carga catalogo de tipos de servicio ──
     function cargarTiposServicio() {
         $.get('@Url.Action("GetAll", "TiposServicio")', function (response) {
             if (response.success && response.data) {
@@ -179,6 +219,8 @@
         });
     }
 
+    // ── Filtra tipos de servicio segun el tipo de ingreso seleccionado ──
+    // Walk-In: solo servicios con PermiteWalkIn=true y RequiereCita=false
     function filtrarTiposServicio() {
         const tipoIngreso = parseInt($('#CitaTipoIngreso').val());
         const $sel = $('#CitaTipoServicioId');
@@ -188,9 +230,7 @@
 
         let count = 0;
         window._tiposServicioData.forEach(ts => {
-            // Walk-In: solo servicios con PermiteWalkIn=true y RequiereCita=false
             if (tipoIngreso === 2 && (!ts.permiteWalkIn || ts.requiereCita)) return;
-
             $sel.append(`<option value="${ts.tipoServicioId}">${ts.nombre} (${ts.duracionFormateada})</option>`);
             count++;
         });
@@ -200,11 +240,13 @@
         }
     }
 
+    // ── Carga bloques horarios disponibles para la fecha seleccionada ──
     function cargarBloquesDisponibles() {
         const fecha = $('#CitaFecha').val();
         const params = { fecha: fecha };
         const sId = $('#CitaSucursalId').val();
         if (sId) params.sucursalId = sId;
+
         $.get('@Url.Action("GetBloquesDisponibles", "Agenda")', params, function (response) {
             const $sel = $('#CitaBloqueHorario');
             $sel.empty();
@@ -223,23 +265,25 @@
         });
     }
 
+    // ── Controla visibilidad de hora manual y validacion de bloques ──
+    // Reglas:
+    //   - Con bloques activos: obligatorio seleccionar bloque (todos los tipos)
+    //   - Walk-In sin bloques: permite hora manual
+    //   - Cita/Garantia sin bloques: deshabilita el boton de agendar
     function actualizarVisibilidadHoraManual() {
         const tipoIngreso = parseInt($('#CitaTipoIngreso').val());
         const $warning = $('#bloqueWarning');
         const $warningText = $('#bloqueWarningText');
 
         if (window._hayBloquesActivos) {
-            // Hay bloques configurados → obligatorio para todos los tipos de ingreso
             $('#horaManualGroup').hide();
             $warning.addClass('d-none');
             $('#btnAgendar').prop('disabled', false);
         } else if (tipoIngreso === 2) {
-            // Walk-In sin bloques → hora manual
             $('#horaManualGroup').show();
             $warning.addClass('d-none');
             $('#btnAgendar').prop('disabled', false);
         } else {
-            // Cita (1) o Garantia (3) sin bloques → no se puede agendar
             $('#horaManualGroup').hide();
             $warningText.text('No hay bloques configurados para esta fecha. Configure bloques o cambie a Walk-In.');
             $warning.removeClass('d-none');

@@ -1,71 +1,51 @@
-@*
-    ══════════════════════════════════════════════════════════════
-    Agenda de Citas - Vista Principal
-    ──────────────────────────────────────────────────────────────
-    Panel de gestion diaria de citas del taller. Permite:
-    - Seleccionar fecha y sucursal para filtrar citas
-    - Ver resumen estadistico del dia (conteo por estado)
-    - Filtrar citas por estado (Agendadas, Confirmadas, etc.)
-    - Ejecutar acciones: Agendar, Confirmar, Cancelar,
-      Iniciar Atencion, Reprogramar, Transferir, Completar
-    - Acceso directo a Recepcion Directa (Walk-In)
-
-    JS: ~/JS/pages/agenda.js
-    Permisos requeridos: Cita.Ver, Cita.Crear, Cita.Editar,
-        Cita.Eliminar, Recepcion.Crear
-    ══════════════════════════════════════════════════════════════
-*@
 @{
-    ViewData["Title"] = "Agenda de Citas";
+    ViewData["Title"] = "Historial de Citas";
 }
-
 <div class="container-fluid">
-    @* ── Header: Titulo + Filtro Sucursal + Acciones rapidas ── *@
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0"><i class="fas fa-calendar-check me-2"></i>@ViewData["Title"]</h1>
+        <h1 class="h3 mb-0"><i class="fas fa-history me-2"></i>@ViewData["Title"]</h1>
         <div class="d-flex align-items-center gap-3">
-            @* Selector de sucursal *@
             <div class="d-flex align-items-center gap-2">
                 <label class="form-label mb-0 text-muted small text-nowrap">Sucursal:</label>
                 <select class="form-select form-select-sm" id="filtroSucursal" style="width:200px">
                     <option value="">Cargando...</option>
                 </select>
             </div>
-
-            @* Boton: Recepcion directa (Walk-In) *@
-            @if (User.TienePermiso("Recepcion.Crear"))
-            {
-                <a id="btnRecepcionDirecta" href="@Url.Action("WizardWalkIn", "Recepcion")" class="btn btn-warning">
-                    <i class="fas fa-walking me-1"></i> Recepcion Directa
-                </a>
-            }
-
-            @* Boton: Nueva cita *@
-            @if (User.TienePermiso("Cita.Crear"))
-            {
-                <button class="btn btn-primary" onclick="abrirAgendarCita()">
-                    <i class="fas fa-plus me-1"></i> Nueva Cita
-                </button>
-            }
         </div>
     </div>
 
     <div class="row">
-        @* ── Columna Izquierda: Selector de fecha + Resumen del dia ── *@
+        <!-- Izquierda: Filtro de fechas + Resumen -->
         <div class="col-lg-3 mb-4">
-            @* Card: Seleccionar Fecha *@
+            <!-- Rango de fechas -->
             <div class="card shadow-sm mb-3">
                 <div class="card-body">
-                    <label for="fechaSeleccionada" class="form-label fw-bold">Seleccionar Fecha</label>
-                    <input type="date" class="form-control" id="fechaSeleccionada"
-                           value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    <label class="form-label fw-bold">Rango de Fechas</label>
+                    <div class="mb-2">
+                        <label class="form-label small text-muted mb-1">Desde</label>
+                        <input type="date" class="form-control form-control-sm" id="fechaInicio" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Hasta</label>
+                        <input type="date" class="form-control form-control-sm" id="fechaFin" />
+                    </div>
+                    <button class="btn btn-primary btn-sm w-100 mb-2" onclick="cargarCitas()">
+                        <i class="fas fa-search me-1"></i> Buscar
+                    </button>
+                    <!-- Presets rapidos -->
+                    <div class="d-flex flex-wrap gap-1">
+                        <button class="btn btn-outline-secondary btn-sm flex-fill" onclick="setRangoPreset('hoy')">Hoy</button>
+                        <button class="btn btn-outline-secondary btn-sm flex-fill" onclick="setRangoPreset('semana')">Semana</button>
+                        <button class="btn btn-outline-secondary btn-sm flex-fill" onclick="setRangoPreset('mes')">Mes</button>
+                        <button class="btn btn-outline-secondary btn-sm flex-fill" onclick="setRangoPreset('mesAnterior')">Mes Anterior</button>
+                    </div>
                 </div>
             </div>
 
-            @* Card: Resumen estadistico del dia *@
-            <div class="card shadow-sm" id="statsCard">
+            <!-- Resumen del periodo -->
+            <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Resumen del Dia</h6>
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Resumen del Periodo</h6>
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-between mb-2">
@@ -96,14 +76,13 @@
             </div>
         </div>
 
-        @* ── Columna Derecha: Tabla de citas ── *@
+        <!-- Derecha: Tabla de citas -->
         <div class="col-lg-9">
             <div class="card shadow-sm">
-                @* Header: Titulo con fecha + Filtros por estado *@
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">
                         <i class="fas fa-list me-2"></i>Citas del
-                        <span id="fechaTitulo" class="text-primary"></span>
+                        <span id="rangoTitulo" class="text-primary"></span>
                     </h6>
                     <div class="btn-group btn-group-sm" role="group">
                         <button class="btn btn-outline-secondary active" onclick="filtrarEstado(null, this)">Todas</button>
@@ -113,29 +92,20 @@
                         <button class="btn btn-outline-success" onclick="filtrarEstado(4, this)">Completadas</button>
                     </div>
                 </div>
-
-                @* Body: Loading, estado vacio y tabla *@
                 <div class="card-body p-0">
                     <div id="loadingCitas" class="text-center py-4 d-none">
                         <div class="spinner-border spinner-border-sm text-primary"></div>
                         <span class="ms-2 text-muted">Cargando citas...</span>
                     </div>
-
                     <div id="sinCitas" class="text-center py-5 d-none">
                         <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">No hay citas para este dia</p>
-                        @if (User.TienePermiso("Cita.Crear"))
-                        {
-                            <button class="btn btn-sm btn-primary" onclick="abrirAgendarCita()">
-                                <i class="fas fa-plus me-1"></i> Agendar Cita
-                            </button>
-                        }
+                        <p class="text-muted">No hay citas en este rango de fechas</p>
                     </div>
-
                     <div class="table-responsive">
                         <table class="table table-hover mb-0" id="tablaCitas">
                             <thead class="table-light">
                                 <tr>
+                                    <th>Fecha</th>
                                     <th>Horario</th>
                                     <th>Codigo</th>
                                     <th>Cliente</th>
@@ -162,41 +132,12 @@
 </style>
 
 <script>
-    // Permisos del usuario actual (evaluados en servidor, inyectados como JS)
-    const PERMISOS = {
-        crear: @Json.Serialize(User.TienePermiso("Cita.Crear")),
-        editar: @Json.Serialize(User.TienePermiso("Cita.Editar")),
-        eliminar: @Json.Serialize(User.TienePermiso("Cita.Eliminar")),
-        recepcionCrear: @Json.Serialize(User.TienePermiso("Recepcion.Crear"))
-    };
-
-    // URLs generadas por el servidor para las acciones AJAX
+    // URLs para los endpoints del controlador Agenda
     const URLS = {
-        getByFecha: '@Url.Action("GetByFecha", "Agenda")',
         getRango: '@Url.Action("GetByRangoFechas", "Agenda")',
-        bloquesDisponibles: '@Url.Action("GetBloquesDisponibles", "Agenda")',
-        agendarPartial: '@Url.Action("AgendarPartial", "Agenda")',
         detallePartial: '@Url.Action("DetalleCitaPartial", "Agenda")',
-        postAgendar: '@Url.Action("Agendar", "Agenda")',
-        postConfirmar: '@Url.Action("Confirmar", "Agenda")',
-        postCancelar: '@Url.Action("Cancelar", "Agenda")',
-        postNoShow: '@Url.Action("MarcarNoShow", "Agenda")',
-        postIniciar: '@Url.Action("IniciarAtencion", "Agenda")',
-        postCompletar: '@Url.Action("Completar", "Agenda")',
-        completarPartial: '@Url.Action("CompletarPartial", "Agenda")',
-        subirEvidencia: '@Url.Action("SubirEvidencia", "Agenda")',
-        transferirPartial: '@Url.Action("TransferirPartial", "Agenda")',
-        postTransferir: '@Url.Action("Transferir", "Agenda")',
-        reprogramarPartial: '@Url.Action("ReprogramarPartial", "Agenda")',
-        postReprogramar: '@Url.Action("Reprogramar", "Agenda")',
-        tiposServicio: '@Url.Action("GetAll", "TiposServicio")',
-        searchClientes: '@Url.Action("Search", "Clientes")',
-        searchVehiculos: '@Url.Action("Search", "Flota")',
-        getSucursales: '@Url.Action("GetSucursales", "Agenda")',
-        wizardRecepcion: '@Url.Action("Wizard", "Recepcion")',
-        wizardWalkIn: '@Url.Action("WizardWalkIn", "Recepcion")',
-        getEvidenciasByOs: '@Url.Action("GetEvidenciasByOs", "Agenda")'
+        getSucursales: '@Url.Action("GetSucursales", "Agenda")'
     };
 </script>
-<script src="~/JS/pages/agenda.js"></script>
+<script src="~/JS/pages/historial-citas.js"></script>
 }

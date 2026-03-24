@@ -1,8 +1,21 @@
+@* ══════════════════════════════════════════════════════════════
+   Vista:        VersionesVehiculo/_DetailPartial
+   Descripcion:  Vista parcial de solo lectura que muestra el detalle
+                 completo de una Version de Vehiculo: informacion principal
+                 (nombre, codigo, marca, modelo), motor y rendimiento
+                 (motor, cilindraje, potencia, torque, combustible,
+                 traccion), caracteristicas del vehiculo (transmision,
+                 anio, puertas, pasajeros, precio) y caracteristicas
+                 principales (texto libre).
+                 Se carga dentro de un modal via AppModal.
+   Model:        SmartAdmin.Models.Catalogo.VersionVehiculo.VersionVehiculoViewModel
+   JS Deps:      Ninguna (vista de solo lectura)
+   ══════════════════════════════════════════════════════════════ *@
 @model SmartAdmin.Models.Catalogo.VersionVehiculo.VersionVehiculoViewModel
 
 <div class="container-fluid">
     <div class="row g-3">
-        <!-- Información Principal -->
+        @* ── Informacion Principal (nombre, codigo, marca, modelo) ── *@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-body">
@@ -40,7 +53,7 @@
             </div>
         </div>
 
-        <!-- Motor y Rendimiento -->
+        @* ── Motor y Rendimiento ── *@
         <div class="col-md-6">
             <div class="card h-100 shadow-sm">
                 <div class="card-header bg-primary text-white">
@@ -71,7 +84,7 @@
                             <strong>@Model.TipoCombustibleNombre</strong>
                         </div>
                         <div class="col-6">
-                            <small class="text-muted d-block">Tracción</small>
+                            <small class="text-muted d-block">Traccion</small>
                             <strong>@Model.TraccionNombre</strong>
                         </div>
                     </div>
@@ -79,30 +92,30 @@
             </div>
         </div>
 
-        <!-- Características del Vehículo -->
+        @* ── Caracteristicas del Vehiculo ── *@
         <div class="col-md-6">
             <div class="card h-100 shadow-sm">
                 <div class="card-header bg-success text-white">
                     <h6 class="mb-0">
-                        <i class="fas fa-car-side me-2"></i>Características del Vehículo
+                        <i class="fas fa-car-side me-2"></i>Caracteristicas del Vehiculo
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="row g-2">
                         <div class="col-6">
-                            <small class="text-muted d-block">Transmisión</small>
+                            <small class="text-muted d-block">Transmision</small>
                             <strong>@Model.TransmisionNombre</strong>
                         </div>
                         <div class="col-6">
-                            <small class="text-muted d-block">Año Versión</small>
+                            <small class="text-muted d-block">Anio Version</small>
                             <strong>@(Model.AnioVersion?.ToString() ?? "N/A")</strong>
                         </div>
                         <div class="col-6">
-                            <small class="text-muted d-block">Número de Puertas</small>
+                            <small class="text-muted d-block">Numero de Puertas</small>
                             <strong>@(Model.NumPuertas?.ToString() ?? "N/A")</strong>
                         </div>
                         <div class="col-6">
-                            <small class="text-muted d-block">Número de Pasajeros</small>
+                            <small class="text-muted d-block">Numero de Pasajeros</small>
                             <strong>@(Model.NumPasajeros?.ToString() ?? "N/A")</strong>
                         </div>
                         <div class="col-12">
@@ -116,14 +129,14 @@
             </div>
         </div>
 
-        <!-- Características Principales -->
+        @* ── Caracteristicas Principales (texto libre, si existe) ── *@
         @if (!string.IsNullOrEmpty(Model.CaracteristicasPrincipales))
         {
             <div class="col-12">
                 <div class="card shadow-sm">
                     <div class="card-header bg-info text-white">
                         <h6 class="mb-0">
-                            <i class="fas fa-list-ul me-2"></i>Características Principales
+                            <i class="fas fa-list-ul me-2"></i>Caracteristicas Principales
                         </h6>
                     </div>
                     <div class="card-body">
@@ -133,7 +146,7 @@
             </div>
         }
 
-        <!-- Botón cerrar -->
+        @* ── Boton cerrar modal ── *@
         <div class="col-12 d-flex justify-content-end mt-2">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                 <i class="fas fa-times me-1"></i> Cerrar

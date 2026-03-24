@@ -1,10 +1,24 @@
+@*
+    ══════════════════════════════════════════════════════════════
+    Vista Parcial: Reprogramar Cita
+    ──────────────────────────────────────────────────────────────
+    Se muestra cuando una cita tiene fecha vencida (estado
+    Agendada o Confirmada). Permite seleccionar nueva fecha
+    y bloque horario.
+
+    Modelo: CitaViewModel (cita actual a reprogramar)
+    Dependencias JS: confirmarReprogramar() en agenda.js
+    ══════════════════════════════════════════════════════════════
+*@
 @model SmartAdmin.Models.Taller.CitaViewModel
 
+@* ── Alerta informativa ── *@
 <div class="alert alert-warning mb-3">
     <i class="fas fa-exclamation-triangle me-1"></i>
     La fecha original de esta cita ya paso. Seleccione una nueva fecha y horario disponible.
 </div>
 
+@* ── Resumen de la cita actual (solo lectura) ── *@
 <div class="card mb-3">
     <div class="card-body">
         <table class="table table-sm table-borderless mb-0">
@@ -32,6 +46,7 @@
     </div>
 </div>
 
+@* ── Formulario de reprogramacion ── *@
 <form id="formReprogramarCita">
     <input type="hidden" id="ReprogramarCitaId" value="@Model.CitaId" />
     <input type="hidden" id="ReprogramarMotivoVisita" value="@Model.MotivoVisita" />
@@ -40,7 +55,9 @@
     <div class="row">
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label fw-bold">Nueva Fecha <span class="text-danger">*</span></label>
+                <label for="ReprogramarFecha" class="form-label fw-bold">
+                    Nueva Fecha <span class="text-danger">*</span>
+                </label>
                 <input type="date" class="form-control" id="ReprogramarFecha"
                        min="@DateTime.Today.ToString("yyyy-MM-dd")"
                        value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
@@ -48,26 +65,27 @@
         </div>
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label fw-bold">Bloque Horario</label>
+                <label for="ReprogramarBloqueHorario" class="form-label fw-bold">Bloque Horario</label>
                 <select class="form-select" id="ReprogramarBloqueHorario">
                     <option value="">Cargando bloques...</option>
                 </select>
                 <small class="text-muted">Si no hay bloques, ingrese hora manual</small>
             </div>
             <div class="mb-3" id="reprogramarHoraManualGroup" style="display:none;">
-                <label class="form-label">Hora Manual</label>
+                <label for="ReprogramarHoraManual" class="form-label">Hora Manual</label>
                 <input type="time" class="form-control" id="ReprogramarHoraManual" value="08:00" />
             </div>
         </div>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Observaciones</label>
+        <label for="ReprogramarObservaciones" class="form-label">Observaciones</label>
         <textarea class="form-control" id="ReprogramarObservaciones" rows="2"
                   placeholder="Motivo de reprogramacion (opcional)">@Model.Observaciones</textarea>
     </div>
 </form>
 
+@* ── Botones de accion ── *@
 <div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
     <button type="button" class="btn btn-primary" id="btnReprogramar" onclick="confirmarReprogramar()">
@@ -75,14 +93,20 @@
     </button>
 </div>
 
+@* ══════════════════════════════════════════════════════════════
+   Script: Carga bloques horarios disponibles para la nueva fecha.
+   Al cambiar fecha se recargan los bloques automaticamente.
+   ══════════════════════════════════════════════════════════════ *@
 <script>
     $(document).ready(function () {
         cargarBloquesReprogramar();
 
+        // Recargar bloques al cambiar fecha
         $('#ReprogramarFecha').on('change', function () {
             cargarBloquesReprogramar();
         });
 
+        // Opcion "hora manual" al final del select
         $('#ReprogramarBloqueHorario').on('change', function () {
             if ($(this).val() === '__manual__') {
                 $('#reprogramarHoraManualGroup').show();
@@ -93,6 +117,7 @@
         });
     });
 
+    // ── Carga bloques disponibles para la fecha seleccionada ──
     function cargarBloquesReprogramar() {
         const fecha = $('#ReprogramarFecha').val();
         const params = { fecha: fecha };

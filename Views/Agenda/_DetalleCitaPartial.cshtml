@@ -1,30 +1,41 @@
+@*
+    ══════════════════════════════════════════════════════════════
+    Vista Parcial: Detalle de Cita
+    ──────────────────────────────────────────────────────────────
+    Muestra toda la informacion de una cita: cliente, vehiculo,
+    horario, servicio, evidencias fotograficas y botones de
+    accion segun el estado actual.
+
+    Modelo: CitaViewModel
+    Dependencias JS: accionCita(), cancelarCita(),
+        abrirReprogramarCita(), abrirTransferirCita() en agenda.js
+    ══════════════════════════════════════════════════════════════
+*@
 @model SmartAdmin.Models.Taller.CitaViewModel
 @{
+    // Mapeo de estado a clase CSS del badge
     var badgeClass = Model.Estado switch
     {
-        SmartAdmin.Models.Enums.EstadoCita.Agendada => "bg-primary",
-        SmartAdmin.Models.Enums.EstadoCita.Confirmada => "bg-info",
-        SmartAdmin.Models.Enums.EstadoCita.EnProceso => "bg-warning text-dark",
-        SmartAdmin.Models.Enums.EstadoCita.Completada => "bg-success",
-        SmartAdmin.Models.Enums.EstadoCita.Cancelada => "bg-danger",
-        SmartAdmin.Models.Enums.EstadoCita.NoShow => "bg-dark",
+        SmartAdmin.Models.Enums.EstadoCita.Agendada    => "bg-primary",
+        SmartAdmin.Models.Enums.EstadoCita.Confirmada  => "bg-info",
+        SmartAdmin.Models.Enums.EstadoCita.EnProceso   => "bg-warning text-dark",
+        SmartAdmin.Models.Enums.EstadoCita.Completada  => "bg-success",
+        SmartAdmin.Models.Enums.EstadoCita.Cancelada   => "bg-danger",
+        SmartAdmin.Models.Enums.EstadoCita.NoShow      => "bg-dark",
         _ => "bg-secondary"
     };
-
 }
 
-<!-- Header with status -->
+@* ── Encabezado: Estado + Codigo ── *@
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <span class="badge @badgeClass fs-6">@Model.EstadoNombre</span>
-    </div>
+    <span class="badge @badgeClass fs-6">@Model.EstadoNombre</span>
     <code class="fs-6">@Model.CodigoCita</code>
 </div>
 
 <div class="row">
-    <!-- Left: Info -->
+    @* ── Columna Izquierda: Cliente y Vehiculo ── *@
     <div class="col-md-6">
-        <!-- Cliente -->
+        @* Card: Cliente *@
         <div class="card mb-3">
             <div class="card-header bg-light">
                 <h6 class="mb-0"><i class="fas fa-user me-2"></i>Cliente</h6>
@@ -46,7 +57,7 @@
             </div>
         </div>
 
-        <!-- Vehiculo -->
+        @* Card: Vehiculo *@
         <div class="card mb-3">
             <div class="card-header bg-light">
                 <h6 class="mb-0"><i class="fas fa-car me-2"></i>Vehiculo</h6>
@@ -69,9 +80,9 @@
         </div>
     </div>
 
-    <!-- Right: Schedule & Service -->
+    @* ── Columna Derecha: Horario y Servicio ── *@
     <div class="col-md-6">
-        <!-- Horario -->
+        @* Card: Horario *@
         <div class="card mb-3">
             <div class="card-header bg-light">
                 <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Horario</h6>
@@ -105,7 +116,7 @@
             </div>
         </div>
 
-        <!-- Servicio -->
+        @* Card: Servicio *@
         <div class="card mb-3">
             <div class="card-header bg-light">
                 <h6 class="mb-0"><i class="fas fa-wrench me-2"></i>Servicio</h6>
@@ -133,6 +144,7 @@
     </div>
 </div>
 
+@* ── Alerta: Minutos trabajados (transferencias) ── *@
 @if (Model.MinutosTrabajados.HasValue && Model.MinutosTrabajados > 0)
 {
     <div class="alert alert-info mb-3">
@@ -142,6 +154,7 @@
     </div>
 }
 
+@* ── Alerta: Motivo de cancelacion ── *@
 @if (Model.Estado == SmartAdmin.Models.Enums.EstadoCita.Cancelada && !string.IsNullOrEmpty(Model.MotivoCancelacion))
 {
     <div class="alert alert-danger mb-3">
@@ -150,7 +163,11 @@
     </div>
 }
 
-<!-- Evidencias Fotograficas -->
+@* ══════════════════════════════════════════════════════════════
+   Seccion: Evidencias Fotograficas
+   Solo se muestra si la cita tiene una Orden de Servicio asociada.
+   Carga fotos via AJAX y las clasifica en: Entrada, Danos, Salida.
+   ══════════════════════════════════════════════════════════════ *@
 @if (Model.OsId.HasValue)
 {
     <div class="card mb-3">
@@ -166,17 +183,17 @@
                 <i class="fas fa-image me-1"></i> Sin evidencias registradas
             </div>
             <div id="detalleFotosContainer" class="d-none">
-                <!-- Fotos de entrada -->
+                @* Fotos de entrada *@
                 <div id="detalleFotosEntrada" class="d-none mb-2">
                     <small class="text-muted fw-bold d-block mb-1"><i class="fas fa-sign-in-alt me-1"></i>Entrada</small>
                     <div id="detalleFotosEntradaGrid" class="d-flex flex-wrap gap-2"></div>
                 </div>
-                <!-- Fotos de dano -->
+                @* Fotos de danos *@
                 <div id="detalleFotosDano" class="d-none mb-2">
                     <small class="text-muted fw-bold d-block mb-1"><i class="fas fa-exclamation-circle me-1"></i>Danos</small>
                     <div id="detalleFotosDanoGrid" class="d-flex flex-wrap gap-2"></div>
                 </div>
-                <!-- Fotos de salida -->
+                @* Fotos de salida *@
                 <div id="detalleFotosSalida" class="d-none mb-2">
                     <small class="text-muted fw-bold d-block mb-1"><i class="fas fa-sign-out-alt me-1"></i>Salida</small>
                     <div id="detalleFotosSalidaGrid" class="d-flex flex-wrap gap-2"></div>
@@ -184,25 +201,33 @@
             </div>
         </div>
     </div>
+
     @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
     <script>
+        // Carga evidencias fotograficas de la OS asociada
         (function () {
             var apiBase = '@(Configuration["PremierFlowApi:BaseUrl"]?.TrimEnd('/'))';
+
             $.get(URLS.getEvidenciasByOs, { osId: @Model.OsId }, function (response) {
                 $('#detalleFotosLoading').addClass('d-none');
+
                 if (!response.success || !response.data || response.data.length === 0) {
                     $('#detalleFotosEmpty').removeClass('d-none');
                     $('#detalleFotosCount').text('0');
                     return;
                 }
+
                 var fotos = response.data.filter(function (e) { return e.esImagen; });
                 $('#detalleFotosCount').text(fotos.length);
+
                 if (fotos.length === 0) {
                     $('#detalleFotosEmpty').removeClass('d-none');
                     return;
                 }
+
                 $('#detalleFotosContainer').removeClass('d-none');
 
+                // Clasificar cada foto en su categoria
                 fotos.forEach(function (foto) {
                     var fullUrl = foto.urlArchivo.startsWith('http') ? foto.urlArchivo : apiBase + foto.urlArchivo;
                     var img = '<a href="' + fullUrl + '" target="_blank">' +
@@ -230,18 +255,27 @@
     </script>
 }
 
-<!-- Action Buttons -->
+@* ══════════════════════════════════════════════════════════════
+   Seccion: Botones de Accion
+   Se muestran segun el estado de la cita y si la fecha es
+   pasada, hoy o futura. Cada estado tiene acciones especificas.
+   ══════════════════════════════════════════════════════════════ *@
 @{
     var esFechaPasada = Model.FechaHoraInicio.Date < DateTime.Today;
     var esHoy = Model.FechaHoraInicio.Date == DateTime.Today;
 }
+
 <div class="d-flex justify-content-between mt-3 pt-3 border-top">
     <div>
         @if (esFechaPasada && (Model.Estado == SmartAdmin.Models.Enums.EstadoCita.Agendada
             || Model.Estado == SmartAdmin.Models.Enums.EstadoCita.Confirmada
             || Model.Estado == SmartAdmin.Models.Enums.EstadoCita.EnProceso))
         {
-            <span class="badge bg-secondary me-2 align-middle"><i class="fas fa-exclamation-triangle me-1"></i>Fecha vencida</span>
+            @* ── Fecha vencida: Reprogramar o Transferir segun estado ── *@
+            <span class="badge bg-secondary me-2 align-middle">
+                <i class="fas fa-exclamation-triangle me-1"></i>Fecha vencida
+            </span>
+
             @if (Model.Estado == SmartAdmin.Models.Enums.EstadoCita.EnProceso)
             {
                 <button class="btn btn-sm btn-primary me-1" onclick="abrirTransferirCita(@Model.CitaId)">
@@ -260,6 +294,7 @@
         }
         else
         {
+            @* ── Acciones segun estado actual ── *@
             @switch (Model.Estado)
             {
                 case SmartAdmin.Models.Enums.EstadoCita.Agendada:
@@ -270,6 +305,7 @@
                         <i class="fas fa-times me-1"></i> Cancelar
                     </button>
                     break;
+
                 case SmartAdmin.Models.Enums.EstadoCita.Confirmada:
                     @if (esHoy)
                     {
@@ -284,6 +320,7 @@
                         <i class="fas fa-times me-1"></i> Cancelar
                     </button>
                     break;
+
                 case SmartAdmin.Models.Enums.EstadoCita.EnProceso:
                     <button class="btn btn-sm btn-success me-1" onclick="AppModal.close(); setTimeout(function(){ abrirCompletarCita(@Model.CitaId); }, 300);">
                         <i class="fas fa-check-double me-1"></i> Completar

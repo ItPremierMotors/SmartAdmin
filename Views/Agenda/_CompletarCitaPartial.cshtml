@@ -1,5 +1,19 @@
+@*
+    ══════════════════════════════════════════════════════════════
+    Vista Parcial: Evidencia de Salida
+    ──────────────────────────────────────────────────────────────
+    Permite capturar fotos del vehiculo antes de entregarlo
+    al cliente (frontal, trasera, laterales, general).
+    Las fotos se suben como base64 al API de evidencias.
+
+    Modelo: CitaViewModel (cita completada con OS asociada)
+    Dependencias JS: initFotosSalida(), subirSoloEvidencia()
+        definidas en agenda.js
+    ══════════════════════════════════════════════════════════════
+*@
 @model SmartAdmin.Models.Taller.CitaViewModel
 
+@* ── Instrucciones ── *@
 <div class="mb-3">
     <div class="alert alert-info mb-3">
         <i class="fas fa-camera me-1"></i>
@@ -9,79 +23,41 @@
     <input type="hidden" id="completarOsId" value="@Model.OsId" />
     <input type="hidden" id="completarCitaId" value="@Model.CitaId" />
 
+    @* ── Grid de zonas de captura (5 angulos) ── *@
     <div class="row g-3">
-        <!-- Foto Frontal -->
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-2">
-                    <div class="foto-salida-dropzone w-100" data-tipo="FotoSalidaFrontal" style="cursor:pointer; min-height:120px; border:2px dashed #ccc; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                        <i class="fas fa-camera fa-2x text-muted mb-1"></i>
-                        <small class="text-muted">Frontal</small>
-                        <input type="file" accept="image/*" capture="environment" class="d-none foto-salida-input" />
-                    </div>
-                    <div class="foto-salida-preview mt-1" data-tipo="FotoSalidaFrontal"></div>
-                </div>
-            </div>
-        </div>
+        @{
+            // Definicion de las zonas de captura de fotos
+            var zonasFoto = new[] {
+                new { Tipo = "FotoSalidaFrontal", Label = "Frontal" },
+                new { Tipo = "FotoSalidaTrasera", Label = "Trasera" },
+                new { Tipo = "FotoSalidaLateralIzq", Label = "Lateral Izq" },
+                new { Tipo = "FotoSalidaLateralDer", Label = "Lateral Der" },
+                new { Tipo = "FotoSalidaGeneral", Label = "General" }
+            };
+        }
 
-        <!-- Foto Trasera -->
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-2">
-                    <div class="foto-salida-dropzone w-100" data-tipo="FotoSalidaTrasera" style="cursor:pointer; min-height:120px; border:2px dashed #ccc; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                        <i class="fas fa-camera fa-2x text-muted mb-1"></i>
-                        <small class="text-muted">Trasera</small>
-                        <input type="file" accept="image/*" capture="environment" class="d-none foto-salida-input" />
+        @foreach (var zona in zonasFoto)
+        {
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-2">
+                        <div class="foto-salida-dropzone w-100" data-tipo="@zona.Tipo"
+                             style="cursor:pointer; min-height:120px; border:2px dashed #ccc; border-radius:8px;
+                                    display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                            <i class="fas fa-camera fa-2x text-muted mb-1"></i>
+                            <small class="text-muted">@zona.Label</small>
+                            <input type="file" accept="image/*" capture="environment"
+                                   class="d-none foto-salida-input" />
+                        </div>
+                        <div class="foto-salida-preview mt-1" data-tipo="@zona.Tipo"></div>
                     </div>
-                    <div class="foto-salida-preview mt-1" data-tipo="FotoSalidaTrasera"></div>
                 </div>
             </div>
-        </div>
-
-        <!-- Foto Lateral Izq -->
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-2">
-                    <div class="foto-salida-dropzone w-100" data-tipo="FotoSalidaLateralIzq" style="cursor:pointer; min-height:120px; border:2px dashed #ccc; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                        <i class="fas fa-camera fa-2x text-muted mb-1"></i>
-                        <small class="text-muted">Lateral Izq</small>
-                        <input type="file" accept="image/*" capture="environment" class="d-none foto-salida-input" />
-                    </div>
-                    <div class="foto-salida-preview mt-1" data-tipo="FotoSalidaLateralIzq"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Foto Lateral Der -->
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-2">
-                    <div class="foto-salida-dropzone w-100" data-tipo="FotoSalidaLateralDer" style="cursor:pointer; min-height:120px; border:2px dashed #ccc; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                        <i class="fas fa-camera fa-2x text-muted mb-1"></i>
-                        <small class="text-muted">Lateral Der</small>
-                        <input type="file" accept="image/*" capture="environment" class="d-none foto-salida-input" />
-                    </div>
-                    <div class="foto-salida-preview mt-1" data-tipo="FotoSalidaLateralDer"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Foto General -->
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-2">
-                    <div class="foto-salida-dropzone w-100" data-tipo="FotoSalidaGeneral" style="cursor:pointer; min-height:120px; border:2px dashed #ccc; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                        <i class="fas fa-camera fa-2x text-muted mb-1"></i>
-                        <small class="text-muted">General</small>
-                        <input type="file" accept="image/*" capture="environment" class="d-none foto-salida-input" />
-                    </div>
-                    <div class="foto-salida-preview mt-1" data-tipo="FotoSalidaGeneral"></div>
-                </div>
-            </div>
-        </div>
+        }
     </div>
 </div>
 
+@* ── Botones de accion ── *@
 <div class="d-flex justify-content-between mt-3 pt-3 border-top">
     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
     <button type="button" class="btn btn-success" id="btnCompletarConFotos">

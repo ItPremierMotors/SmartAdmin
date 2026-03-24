@@ -1,4 +1,17 @@
-// ─── orden-servicio-detalle.js — Detalle de Orden de Servicio ───
+// ============================================================
+// Archivo:       orden-servicio-detalle.js
+// Descripcion:   JavaScript para la vista Detalle de una Orden
+//                de Servicio. Gestiona tres tabs (Servicios,
+//                Tecnicos, Evidencias), acciones del header
+//                (cambiar estado, recalcular, cerrar, cancelar),
+//                y operaciones CRUD sobre servicios y asignaciones.
+// Vista:         OrdenServicio/Detalle.cshtml
+// Dependencias:  jQuery, AppModal, AppAlert, Toast
+//                Requiere constantes globales: OS_ID, OS_ESTADO_CODIGO,
+//                OS_PUEDE_MODIFICARSE, OS_ESTA_ABIERTA, URLS
+// ============================================================
+
+// ── Mapeo de codigos de estado de OS a clases CSS de badge ──
 
 const estadoOsBadge = {
     'ABIERTA':      'bg-primary',
@@ -13,12 +26,16 @@ const estadoOsBadge = {
     'CANCELADA':    'bg-danger'
 };
 
+// ── Mapeo de estados de servicio (por ID numerico) ──
+
 const estadoServicioBadge = {
     1: { cls: 'bg-secondary',        nombre: 'Pendiente' },
     2: { cls: 'bg-warning text-dark', nombre: 'En Proceso' },
     3: { cls: 'bg-success',           nombre: 'Completado' },
     4: { cls: 'bg-danger',            nombre: 'Cancelado' }
 };
+
+// ── Mapeo de estados de asignacion de tecnico (por ID numerico) ──
 
 const estadoAsignacionBadge = {
     1: { cls: 'bg-info',              nombre: 'Asignado' },
@@ -27,13 +44,15 @@ const estadoAsignacionBadge = {
     4: { cls: 'bg-secondary',         nombre: 'Pausado' }
 };
 
+// ── Inicializacion ──
+
 $(document).ready(function () {
     renderAccionesOs();
     cargarServicios();
     cargarAsignaciones();
     actualizarEvidenciasCount();
 
-    // Cargar tabs on show
+    // Recargar datos del tab de tecnicos al mostrarse
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
         const target = $(e.target).data('bs-target');
         if (target === '#tabTecnicos') cargarAsignaciones();
@@ -42,12 +61,15 @@ $(document).ready(function () {
 
 // ═══════════════════════════════════════════
 // ACCIONES OS (Header buttons)
+// Renderiza los botones de accion segun el
+// estado actual de la orden de servicio.
 // ═══════════════════════════════════════════
 
 function renderAccionesOs() {
     const $container = $('#accionesOs');
     $container.empty();
 
+    // ── OS cerrada o cancelada: mostrar solo enlace al reporte ──
     if (!OS_ESTA_ABIERTA) {
         let closedHtml = '<span class="text-muted"><i class="fas fa-lock me-1"></i> Orden cerrada/cancelada</span>';
         closedHtml += ` <a class="btn btn-outline-info btn-sm ms-2" href="${URLS.reporte}" target="_blank" title="Ver Reporte">
@@ -58,12 +80,12 @@ function renderAccionesOs() {
         return;
     }
 
-    // Agregar servicio: solo en DIAGNOSTICO
+    // ── Agregar servicio: solo visible en estado DIAGNOSTICO ──
     if (OS_ESTADO_CODIGO !== 'DIAGNOSTICO') {
         $('#btnAgregarServicio').addClass('d-none');
     }
 
-    // Asignar tecnico: en DIAGNOSTICO, COTIZADA, APROBADA, EN_TRABAJO
+    // ── Asignar tecnico: visible en DIAGNOSTICO, COTIZADA, APROBADA, EN_TRABAJO ──
     const estadosAsignarTecnico = ['DIAGNOSTICO', 'COTIZADA', 'APROBADA', 'EN_TRABAJO'];
     if (!estadosAsignarTecnico.includes(OS_ESTADO_CODIGO)) {
         $('#btnAsignarTecnico').addClass('d-none');
@@ -71,7 +93,7 @@ function renderAccionesOs() {
 
     let html = '<div class="btn-group btn-group-sm">';
 
-    // Reporte - disponible a partir de COTIZADA
+    // ── Boton Reporte: disponible a partir de COTIZADA ──
     const estadosConReporte = ['COTIZADA', 'APROBADA', 'EN_TRABAJO', 'PAUSADA', 'COMPLETADA', 'FACTURADA'];
     if (estadosConReporte.includes(OS_ESTADO_CODIGO)) {
         html += `<a class="btn btn-outline-info" href="${URLS.reporte}" target="_blank" title="Ver Reporte">
@@ -79,26 +101,26 @@ function renderAccionesOs() {
                  </a>`;
     }
 
-    // Cambiar estado - siempre disponible si la OS no esta cerrada/cancelada
+    // ── Boton Cambiar estado: siempre disponible si la OS esta abierta ──
     html += `<button class="btn btn-warning" onclick="abrirCambiarEstado()" title="Cambiar Estado">
                 <i class="fas fa-exchange-alt me-1"></i> Estado
              </button>`;
 
-    // Recalcular - disponible en DIAGNOSTICO y COTIZADA
+    // ── Boton Recalcular: disponible en DIAGNOSTICO y COTIZADA ──
     if (['DIAGNOSTICO', 'COTIZADA'].includes(OS_ESTADO_CODIGO)) {
         html += `<button class="btn btn-outline-secondary" onclick="recalcularTotales()" title="Recalcular Totales">
                     <i class="fas fa-calculator me-1"></i> Recalcular
                  </button>`;
     }
 
-    // Cerrar - solo FACTURADA
+    // ── Boton Cerrar: solo en estado FACTURADA ──
     if (OS_ESTADO_CODIGO === 'FACTURADA') {
         html += `<button class="btn btn-success" onclick="cerrarOs()" title="Cerrar Orden">
                     <i class="fas fa-check-double me-1"></i> Cerrar
                  </button>`;
     }
 
-    // Cancelar - no disponible en EN_TRABAJO, COMPLETADA, FACTURADA
+    // ── Boton Cancelar: no disponible en EN_TRABAJO, COMPLETADA, FACTURADA ──
     const puedeCancelar = !['EN_TRABAJO', 'COMPLETADA', 'FACTURADA'].includes(OS_ESTADO_CODIGO);
     if (puedeCancelar) {
         html += `<button class="btn btn-outline-danger" onclick="cancelarOs()" title="Cancelar Orden">
@@ -112,7 +134,11 @@ function renderAccionesOs() {
 
 // ═══════════════════════════════════════════
 // TAB: SERVICIOS
+// Carga, renderizado y acciones sobre los
+// servicios de la orden de servicio.
 // ═══════════════════════════════════════════
+
+// ── Carga de servicios via AJAX ──
 
 function cargarServicios() {
     $('#loadingServicios').removeClass('d-none');
@@ -133,6 +159,8 @@ function cargarServicios() {
         Toast.error('Error al cargar servicios');
     });
 }
+
+// ── Renderizado de filas de servicios en la tabla ──
 
 function renderServicios(servicios) {
     const $body = $('#serviciosBody');
@@ -157,8 +185,10 @@ function renderServicios(servicios) {
     });
 }
 
+// ── Determina botones de accion disponibles para un servicio ──
+
 function obtenerAccionesServicio(s) {
-    // Solo permitir quitar servicio en DIAGNOSTICO y si esta Pendiente
+    // Solo permitir quitar servicio en DIAGNOSTICO y si esta Pendiente (estado 1)
     if (OS_ESTADO_CODIGO === 'DIAGNOSTICO' && s.estado === 1) {
         return `<button class="btn btn-outline-danger btn-sm" onclick="quitarServicio(${s.osServicioId})" title="Quitar">
                     <i class="fas fa-trash"></i>
@@ -166,6 +196,8 @@ function obtenerAccionesServicio(s) {
     }
     return '';
 }
+
+// ── Accion generica sobre un servicio (iniciar, completar, cancelar) ──
 
 function accionServicio(accion, osServicioId) {
     let url;
@@ -213,6 +245,8 @@ function accionServicio(accion, osServicioId) {
     });
 }
 
+// ── Quitar (eliminar) un servicio con confirmacion ──
+
 function quitarServicio(osServicioId) {
     AppAlert.eliminar({
         title: 'Quitar servicio',
@@ -240,6 +274,8 @@ function quitarServicio(osServicioId) {
     });
 }
 
+// ── Abre el modal para agregar un servicio ──
+
 function abrirAgregarServicio() {
     AppModal.open({
         title: '<i class="fas fa-plus me-2"></i>Agregar Servicio',
@@ -248,6 +284,8 @@ function abrirAgregarServicio() {
         size: 'lg'
     });
 }
+
+// ── Confirma y envia el nuevo servicio al servidor ──
 
 function confirmarAgregarServicio() {
     const tipoServicioId = parseInt($('#AgregarTipoServicioId').val());
@@ -294,7 +332,11 @@ function confirmarAgregarServicio() {
 
 // ═══════════════════════════════════════════
 // TAB: TECNICOS / ASIGNACIONES
+// Carga, renderizado y acciones sobre las
+// asignaciones de tecnicos a servicios.
 // ═══════════════════════════════════════════
+
+// ── Carga de asignaciones via AJAX ──
 
 function cargarAsignaciones() {
     $('#loadingTecnicos').removeClass('d-none');
@@ -315,6 +357,8 @@ function cargarAsignaciones() {
         Toast.error('Error al cargar asignaciones');
     });
 }
+
+// ── Renderizado de filas de asignaciones en la tabla ──
 
 function renderAsignaciones(asignaciones) {
     const $body = $('#tecnicosBody');
@@ -340,13 +384,15 @@ function renderAsignaciones(asignaciones) {
     });
 }
 
+// ── Determina botones de accion disponibles para una asignacion ──
+
 function obtenerAccionesAsignacion(a) {
     if (!OS_ESTA_ABIERTA) return '';
 
     const osPuedeIniciar = ['APROBADA', 'EN_TRABAJO'].includes(OS_ESTADO_CODIGO);
     let html = '<div class="btn-group btn-group-sm">';
 
-    // Asignado -> Iniciar (solo si OS APROBADA/EN_TRABAJO), Cancelar
+    // Estado 1 (Asignado): puede Iniciar (si OS APROBADA/EN_TRABAJO) y Cancelar
     if (a.estado === 1) {
         if (osPuedeIniciar) {
             html += `<button class="btn btn-outline-success btn-sm" onclick="accionAsignacion('iniciar', ${a.asignacionId})" title="Iniciar">
@@ -357,7 +403,7 @@ function obtenerAccionesAsignacion(a) {
                     <i class="fas fa-trash"></i>
                  </button>`;
     }
-    // EnProceso -> Pausar, Completar
+    // Estado 2 (En Proceso): puede Pausar y Completar
     else if (a.estado === 2) {
         html += `<button class="btn btn-outline-secondary btn-sm" onclick="accionAsignacion('pausar', ${a.asignacionId})" title="Pausar">
                     <i class="fas fa-pause"></i>
@@ -366,7 +412,7 @@ function obtenerAccionesAsignacion(a) {
                     <i class="fas fa-check"></i>
                  </button>`;
     }
-    // Pausado -> Reanudar
+    // Estado 4 (Pausado): puede Reanudar
     else if (a.estado === 4) {
         html += `<button class="btn btn-outline-primary btn-sm" onclick="accionAsignacion('reanudar', ${a.asignacionId})" title="Reanudar">
                     <i class="fas fa-play"></i>
@@ -376,6 +422,8 @@ function obtenerAccionesAsignacion(a) {
     html += '</div>';
     return html;
 }
+
+// ── Accion generica sobre una asignacion (iniciar, pausar, reanudar, completar) ──
 
 function accionAsignacion(accion, asignacionId) {
     let url;
@@ -432,6 +480,8 @@ function accionAsignacion(accion, asignacionId) {
     });
 }
 
+// ── Cancelar una asignacion con confirmacion ──
+
 function cancelarAsignacion(asignacionId) {
     AppAlert.eliminar({
         title: 'Cancelar asignacion',
@@ -459,6 +509,8 @@ function cancelarAsignacion(asignacionId) {
     });
 }
 
+// ── Abre el modal para asignar un tecnico ──
+
 function abrirAsignarTecnico() {
     AppModal.open({
         title: '<i class="fas fa-hard-hat me-2"></i>Asignar Tecnico',
@@ -467,6 +519,8 @@ function abrirAsignarTecnico() {
         size: 'md'
     });
 }
+
+// ── Confirma y envia la asignacion de tecnico al servidor ──
 
 function confirmarAsignarTecnico() {
     const tecnicoId = parseInt($('#AsignarTecnicoId').val());
@@ -516,7 +570,11 @@ function confirmarAsignarTecnico() {
 
 // ═══════════════════════════════════════════
 // COMANDOS OS
+// Operaciones de nivel de orden: cambiar
+// estado, cancelar, cerrar, recalcular.
 // ═══════════════════════════════════════════
+
+// ── Abre el modal para cambiar estado de la OS ──
 
 function abrirCambiarEstado() {
     AppModal.open({
@@ -526,6 +584,8 @@ function abrirCambiarEstado() {
         size: 'md'
     });
 }
+
+// ── Confirma y envia el cambio de estado (recarga la pagina al exito) ──
 
 function confirmarCambiarEstado() {
     const osId = parseInt($('#CambiarEstadoOsId').val());
@@ -561,6 +621,8 @@ function confirmarCambiarEstado() {
     });
 }
 
+// ── Cancelar la OS completa (requiere motivo obligatorio) ──
+
 function cancelarOs() {
     AppAlert.input({
         title: 'Cancelar Orden',
@@ -593,6 +655,8 @@ function cancelarOs() {
         }
     });
 }
+
+// ── Cerrar la OS (observaciones opcionales, redirige a agenda si hay CitaId) ──
 
 function cerrarOs() {
     AppAlert.input({
@@ -627,6 +691,8 @@ function cerrarOs() {
     });
 }
 
+// ── Recalcular totales de la OS (mano de obra + repuestos) ──
+
 function recalcularTotales() {
     $.ajax({
         url: URLS.postRecalcular,
@@ -649,8 +715,11 @@ function recalcularTotales() {
 
 // ═══════════════════════════════════════════
 // UTILIDADES
+// Funciones auxiliares para refrescar datos
+// en la vista sin recargar la pagina completa.
 // ═══════════════════════════════════════════
 
+/** Refresca los totales y contadores del header via AJAX */
 function refrescarDetalle() {
     $.get(URLS.getDetalle, { osId: OS_ID }, function (r) {
         if (r.success && r.data) {
@@ -666,6 +735,7 @@ function refrescarDetalle() {
     });
 }
 
+/** Sincroniza el contador de evidencias del tab con el badge del header */
 function actualizarEvidenciasCount() {
     // Se actualiza via refrescarDetalle, pero init desde el model
     const count = $('#countEvidencias').text();

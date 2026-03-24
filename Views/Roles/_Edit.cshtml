@@ -1,4 +1,15 @@
-﻿@model SmartAdmin.Models.UserRole.RoleViewModels.UpdateRoleViewModel
+﻿@*
+    ══════════════════════════════════════════════════════════════
+    Vista/Parcial: _Edit (Roles)
+    ──────────────────────────────────────────────────────────────
+    Formulario para editar un rol existente. Permite modificar
+    nombre y descripción del rol.
+
+    Modelo: UpdateRoleViewModel
+    Dependencias JS: actualizarRol() definida en Index.cshtml
+    ══════════════════════════════════════════════════════════════
+*@
+@model SmartAdmin.Models.UserRole.RoleViewModels.UpdateRoleViewModel
 
 <form id="formEditarRol">
     <input type="hidden" asp-for="Id" />

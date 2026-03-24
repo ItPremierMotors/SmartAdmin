@@ -1,21 +1,40 @@
+// ============================================================
 // Agenda de Citas - Page JS
-// Requiere: URLS (definido en la vista), AppModal, AppAlert, Toast
+// ============================================================
+// Logica principal de la vista de Agenda diaria.
+// Gestiona la carga, filtrado, renderizado de citas y todas
+// las acciones disponibles (agendar, confirmar, cancelar,
+// reprogramar, transferir, completar, evidencia de salida).
+//
+// Requiere (definidos en Index.cshtml):
+//   - URLS: objeto con endpoints del controlador Agenda
+//   - PERMISOS: permisos del usuario (crear, editar, eliminar)
+//   - AppModal: componente de modales
+//   - AppAlert: componente de alertas/inputs
+//   - Toast: componente de notificaciones
+// ============================================================
 
-let todasLasCitas = [];
-let filtroEstadoActual = null;
+// ─── Estado global ───
+
+let todasLasCitas = [];       // Cache de citas del dia seleccionado
+let filtroEstadoActual = null; // Filtro de estado activo (null = todas)
+
+// ─── Helpers ───
 
 function getSucursalId() {
     return $('#filtroSucursal').val() || null;
 }
 
+// ─── Inicializacion ───
+
 $(document).ready(function () {
     cargarSucursales();
 
-    // Si viene de cerrar OS, abrir modal de fotos de salida automáticamente
+    // Si viene de cerrar OS, abrir modal de fotos de salida automaticamente
+    // (redireccion desde el cierre de Orden de Servicio con ?fotosSalida=citaId)
     const params = new URLSearchParams(window.location.search);
     const fotosSalidaCitaId = params.get('fotosSalida');
     if (fotosSalidaCitaId) {
-        // Limpiar el parámetro de la URL sin recargar
         window.history.replaceState({}, '', window.location.pathname);
         setTimeout(function () {
             abrirEvidenciaSalida(parseInt(fotosSalidaCitaId));
@@ -24,6 +43,7 @@ $(document).ready(function () {
 });
 
 // ─── Sucursales ───
+// Carga el selector de sucursales y persiste la seleccion en localStorage
 
 function cargarSucursales() {
     $.get(URLS.getSucursales, function (response) {
@@ -33,6 +53,7 @@ function cargarSucursales() {
             response.data.forEach(s => {
                 $sel.append(`<option value="${s.id}">${s.nombre}</option>`);
             });
+            // Restaurar seleccion guardada
             const saved = localStorage.getItem('sucursalAgenda');
             if (saved && $sel.find(`option[value="${saved}"]`).length) {
                 $sel.val(saved);
@@ -49,6 +70,7 @@ function cargarSucursales() {
         cargarCitas();
     });
 
+    // Eventos: cambio de sucursal y cambio de fecha
     $('#filtroSucursal').on('change', function () {
         localStorage.setItem('sucursalAgenda', $(this).val());
         actualizarLinkRecepcionDirecta();
@@ -61,6 +83,7 @@ function cargarSucursales() {
     });
 }
 
+// Actualiza el href del boton "Recepcion Directa" con la sucursal seleccionada
 function actualizarLinkRecepcionDirecta() {
     const $btn = $('#btnRecepcionDirecta');
     if (!$btn.length) return;
@@ -69,14 +92,16 @@ function actualizarLinkRecepcionDirecta() {
     $btn.attr('href', sId ? baseUrl + '?sucursalId=' + sId : baseUrl);
 }
 
-// ─── Data ───
+// ─── Carga de datos ───
 
+// Formatea la fecha seleccionada en texto legible (ej: "martes 24 de marzo de 2026")
 function actualizarFechaTitulo() {
     const fecha = $('#fechaSeleccionada').val();
     const d = new Date(fecha + 'T12:00:00');
     $('#fechaTitulo').text(d.toLocaleDateString('es-HN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }));
 }
 
+// Consulta las citas del dia seleccionado via AJAX
 function cargarCitas() {
     const fecha = $('#fechaSeleccionada').val();
     $('#loadingCitas').removeClass('d-none');
@@ -106,8 +131,9 @@ function cargarCitas() {
     });
 }
 
-// ─── Render ───
+// ─── Renderizado de tabla ───
 
+// Renderiza las filas de la tabla aplicando el filtro de estado activo
 function renderizarCitas() {
     const citas = filtroEstadoActual
         ? todasLasCitas.filter(c => c.estado === filtroEstadoActual)
@@ -121,6 +147,7 @@ function renderizarCitas() {
         return;
     }
 
+    // Ordenar por hora de inicio
     citas.sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio));
 
     citas.forEach(function (c) {
@@ -151,21 +178,19 @@ function renderizarCitas() {
     });
 }
 
+// Actualiza los contadores del panel de resumen
 function actualizarStats() {
     const total = todasLasCitas.length;
-    const agendadas = todasLasCitas.filter(c => c.estado === 1).length;
-    const confirmadas = todasLasCitas.filter(c => c.estado === 2).length;
-    const enProceso = todasLasCitas.filter(c => c.estado === 3).length;
-    const completadas = todasLasCitas.filter(c => c.estado === 4).length;
-    const canceladas = todasLasCitas.filter(c => c.estado === 5 || c.estado === 6).length;
-
     $('#statTotal').text(total);
-    $('#statAgendadas').text(agendadas);
-    $('#statConfirmadas').text(confirmadas);
-    $('#statEnProceso').text(enProceso);
-    $('#statCompletadas').text(completadas);
-    $('#statCanceladas').text(canceladas);
+    $('#statAgendadas').text(todasLasCitas.filter(c => c.estado === 1).length);
+    $('#statConfirmadas').text(todasLasCitas.filter(c => c.estado === 2).length);
+    $('#statEnProceso').text(todasLasCitas.filter(c => c.estado === 3).length);
+    $('#statCompletadas').text(todasLasCitas.filter(c => c.estado === 4).length);
+    $('#statCanceladas').text(todasLasCitas.filter(c => c.estado === 5 || c.estado === 6).length);
 }
+
+// ─── Mapeo de estados ───
+// Estados: 1=Agendada, 2=Confirmada, 3=EnProceso, 4=Completada, 5=Cancelada, 6=NoShow
 
 function obtenerBadgeEstado(estado) {
     switch (estado) {
@@ -191,10 +216,12 @@ function obtenerNombreEstado(estado) {
     }
 }
 
+// ─── Botones de accion por estado ───
+// Genera los botones de accion segun el estado de la cita,
+// si la fecha es pasada/hoy/futura, y los permisos del usuario.
 function obtenerAcciones(cita) {
     let btns = '';
 
-    // Verificar si la fecha de la cita ya paso o es futura
     const fechaCita = new Date(cita.fechaHoraInicio);
     fechaCita.setHours(0, 0, 0, 0);
     const hoy = new Date();
@@ -205,6 +232,7 @@ function obtenerAcciones(cita) {
     switch (cita.estado) {
         case 1: // Agendada
             if (esFechaPasada) {
+                // Fecha vencida: solo reprogramar o cancelar
                 if (PERMISOS.editar) btns += `
                     <button class="btn btn-sm btn-outline-primary" onclick="abrirReprogramarCita(${cita.citaId})" title="Reprogramar">
                         <i class="fas fa-calendar-day"></i>
@@ -214,6 +242,7 @@ function obtenerAcciones(cita) {
                         <i class="fas fa-times"></i>
                     </button>`;
             } else {
+                // Fecha vigente: confirmar o cancelar
                 if (PERMISOS.editar) btns += `
                     <button class="btn btn-sm btn-outline-info" onclick="accionCita('confirmar', ${cita.citaId})" title="Confirmar">
                         <i class="fas fa-check"></i>
@@ -224,8 +253,10 @@ function obtenerAcciones(cita) {
                     </button>`;
             }
             break;
+
         case 2: // Confirmada
             if (esFechaPasada) {
+                // Fecha vencida: reprogramar o cancelar
                 if (PERMISOS.editar) btns += `
                     <button class="btn btn-sm btn-outline-primary" onclick="abrirReprogramarCita(${cita.citaId})" title="Reprogramar">
                         <i class="fas fa-calendar-day"></i>
@@ -235,6 +266,7 @@ function obtenerAcciones(cita) {
                         <i class="fas fa-times"></i>
                     </button>`;
             } else if (esHoy) {
+                // Hoy: iniciar atencion, marcar no show o cancelar
                 if (PERMISOS.editar) btns += `
                     <button class="btn btn-sm btn-outline-warning" onclick="accionCita('iniciar', ${cita.citaId})" title="Iniciar Atencion">
                         <i class="fas fa-play"></i>
@@ -247,19 +279,22 @@ function obtenerAcciones(cita) {
                         <i class="fas fa-times"></i>
                     </button>`;
             } else {
+                // Fecha futura: solo cancelar
                 if (PERMISOS.eliminar) btns += `
                     <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.citaId})" title="Cancelar">
                         <i class="fas fa-times"></i>
                     </button>`;
             }
             break;
-        case 3: // En Proceso - solo transferir (no en fechas futuras), completar se hace desde la OS
+
+        case 3: // En Proceso - solo transferir (completar se hace desde la OS)
             if (PERMISOS.editar && (esHoy || esFechaPasada)) btns += `
                 <button class="btn btn-sm btn-outline-primary" onclick="abrirTransferirCita(${cita.citaId})" title="Transferir a manana">
                     <i class="fas fa-exchange-alt"></i>
                 </button>`;
             break;
-        case 4: // Completada - solo evidencia de salida si tiene OS
+
+        case 4: // Completada - evidencia de salida si tiene OS
             if (cita.osId && PERMISOS.editar) {
                 btns += `
                     <button class="btn btn-sm btn-outline-info" onclick="abrirEvidenciaSalida(${cita.citaId})" title="Evidencia de Salida">
@@ -269,12 +304,15 @@ function obtenerAcciones(cita) {
             break;
     }
 
+    // Siempre: boton de ver detalle
     btns += `
         <button class="btn btn-sm btn-outline-secondary ms-1" onclick="abrirDetalleCita(${cita.citaId})" title="Ver Detalle">
             <i class="fas fa-eye"></i>
         </button>`;
     return `<div class="btn-group">${btns}</div>`;
 }
+
+// ─── Filtro por estado ───
 
 function filtrarEstado(estado, btn) {
     filtroEstadoActual = estado;
@@ -283,8 +321,9 @@ function filtrarEstado(estado, btn) {
     renderizarCitas();
 }
 
-// ─── Modals ───
+// ─── Modales ───
 
+// Abre el modal para agendar una nueva cita
 function abrirAgendarCita() {
     const fecha = $('#fechaSeleccionada').val();
     const now = new Date();
@@ -304,6 +343,7 @@ function abrirAgendarCita() {
     });
 }
 
+// Abre el modal de detalle de una cita
 function abrirDetalleCita(citaId) {
     AppModal.open({
         title: '<i class="fas fa-calendar-check me-2"></i>Detalle de Cita',
@@ -313,8 +353,9 @@ function abrirDetalleCita(citaId) {
     });
 }
 
-// ─── CRUD ───
+// ─── Acciones CRUD ───
 
+// Envia el formulario de agendar cita al servidor
 function confirmarAgendar() {
     const btn = document.getElementById('btnAgendar');
     const btnOriginal = btn.innerHTML;
@@ -327,6 +368,7 @@ function confirmarAgendar() {
     let fechaHoraInicio;
     let bloqueHorarioId = null;
 
+    // Determinar hora: desde bloque seleccionado o manual
     if (bloqueId && bloqueId !== '__manual__') {
         const horaBloque = $bloqueOption.data('hora');
         fechaHoraInicio = fecha + 'T' + horaBloque;
@@ -367,8 +409,9 @@ function confirmarAgendar() {
     });
 }
 
+// Ejecuta acciones simples: confirmar, noshow
+// "iniciar" redirige al wizard de recepcion
 function accionCita(accion, citaId) {
-    // Iniciar atencion redirige al wizard de recepcion
     if (accion === 'iniciar') {
         window.location.href = URLS.wizardRecepcion + '?citaId=' + citaId;
         return;
@@ -400,9 +443,10 @@ function accionCita(accion, citaId) {
 }
 
 // ─── Evidencia de Salida ───
+// Gestion de fotos de salida del vehiculo (captura base64 + upload)
 
-let fotosSalidaData = {};
-let fotosSalidaInitialized = false;
+let fotosSalidaData = {};          // { tipo: { base64, nombre } }
+let fotosSalidaInitialized = false; // Evita doble inicializacion
 
 function abrirEvidenciaSalida(citaId) {
     fotosSalidaData = {};
@@ -418,11 +462,11 @@ function abrirEvidenciaSalida(citaId) {
     });
 }
 
+// Inicializa las zonas de captura de fotos (dropzones)
+// Reintenta si el contenido AJAX aun no cargo
 function initFotosSalida() {
-    // Evitar doble inicializacion
     if (fotosSalidaInitialized) return;
 
-    // Reintentar si el contenido AJAX aun no cargo
     var btn = document.getElementById('btnCompletarConFotos');
     if (!btn) {
         setTimeout(initFotosSalida, 200);
@@ -434,14 +478,13 @@ function initFotosSalida() {
     btn.innerHTML = '<i class="fas fa-camera me-1"></i> Guardar Evidencia';
     btn.className = 'btn btn-info';
 
+    // Configurar cada dropzone de foto
     document.querySelectorAll('.foto-salida-dropzone').forEach(function (zone) {
         var tipo = zone.dataset.tipo;
         var input = zone.querySelector('.foto-salida-input');
 
         zone.addEventListener('click', function (e) {
-            // No abrir file dialog si se hizo click en el boton remover
             if (e.target.closest('.foto-remove')) return;
-            // No abrir si el click viene del input (evita doble trigger)
             if (e.target === input) return;
             input.click();
         });
@@ -463,6 +506,7 @@ function initFotosSalida() {
     btn.addEventListener('click', subirSoloEvidencia);
 }
 
+// Muestra/oculta la preview de una foto capturada
 function renderFotoSalidaPreview(tipo) {
     const container = document.querySelector(`.foto-salida-preview[data-tipo="${tipo}"]`);
     const zone = document.querySelector(`.foto-salida-dropzone[data-tipo="${tipo}"]`);
@@ -492,6 +536,7 @@ function removerFotoSalida(tipo) {
     renderFotoSalidaPreview(tipo);
 }
 
+// Sube todas las fotos capturadas al servidor como evidencia
 async function subirSoloEvidencia() {
     const btn = document.getElementById('btnCompletarConFotos');
     const osId = parseInt(document.getElementById('completarOsId').value);
@@ -549,6 +594,9 @@ async function subirSoloEvidencia() {
     }
 }
 
+// ─── Cancelar Cita ───
+// Solicita motivo de cancelacion via AppAlert.input
+
 function cancelarCita(citaId) {
     AppAlert.input({
         title: 'Cancelar Cita',
@@ -576,7 +624,7 @@ function cancelarCita(citaId) {
     });
 }
 
-// ─── Reprogramar ───
+// ─── Reprogramar Cita ───
 
 function abrirReprogramarCita(citaId) {
     AppModal.open({
@@ -587,6 +635,7 @@ function abrirReprogramarCita(citaId) {
     });
 }
 
+// Envia la reprogramacion al servidor
 function confirmarReprogramar() {
     const form = document.getElementById('formReprogramarCita');
     if (!form.checkValidity()) { form.reportValidity(); return; }
@@ -636,7 +685,8 @@ function confirmarReprogramar() {
     });
 }
 
-// ─── Transferir ───
+// ─── Transferir Cita ───
+// Transfiere una cita "En Proceso" al dia siguiente
 
 function abrirTransferirCita(citaId) {
     AppModal.open({
@@ -647,6 +697,7 @@ function abrirTransferirCita(citaId) {
     });
 }
 
+// Envia la transferencia al servidor
 function confirmarTransferirCita() {
     const form = document.getElementById('formTransferirCita');
     if (!form.checkValidity()) { form.reportValidity(); return; }

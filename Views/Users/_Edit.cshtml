@@ -1,4 +1,14 @@
-﻿@* SmartAdmin/Views/Users/_EditPartial.cshtml *@
+﻿@*
+    ══════════════════════════════════════════════════════════════
+    Vista/Parcial: _Edit (Users)
+    ──────────────────────────────────────────────────────────────
+    Formulario para editar un usuario existente. Permite modificar
+    datos personales, rol, cargo y estado con valores precargados.
+
+    Modelo: UserViewModel
+    Dependencias JS: actualizarUsuario() definida en Index.cshtml
+    ══════════════════════════════════════════════════════════════
+*@
 @model SmartAdmin.Models.UserRole.UserViewModels.UserViewModel
 @{
     var rolesDisponibles = ViewBag.RolesDisponibles as List<SmartAdmin.Models.UserRole.RoleViewModels.RoleViewModel> ?? new List<SmartAdmin.Models.UserRole.RoleViewModels.RoleViewModel>();

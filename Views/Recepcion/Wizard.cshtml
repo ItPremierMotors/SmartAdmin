@@ -1,3 +1,15 @@
+@*
+    ══════════════════════════════════════════════════════════════
+    Vista/Parcial: Wizard (Recepcion)
+    ──────────────────────────────────────────────────────────────
+    Wizard multi-paso para la recepción de vehículos en el taller.
+    Soporta recepción programada y walk-in. Guía al usuario por
+    los pasos de identificación, inspección y creación de la OS.
+
+    Modelo: RecepcionWizardViewModel
+    Dependencias JS: recepcion-wizard.js, jQuery, Toast
+    ══════════════════════════════════════════════════════════════
+*@
 @model SmartAdmin.Models.Taller.RecepcionWizardViewModel
 @{
     ViewData["Title"] = Model.IsWalkIn ? "Recepcion Directa (Walk-In)" : "Recepcion de Vehiculo";

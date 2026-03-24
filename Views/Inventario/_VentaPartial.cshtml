@@ -1,3 +1,14 @@
+@*
+    ══════════════════════════════════════════════════════════════
+    Vista/Parcial: _VentaPartial (Inventario)
+    ──────────────────────────────────────────────────────────────
+    Formulario para registrar la venta de un vehículo del inventario.
+    Incluye precio de lista, cliente asignado y datos de la venta.
+
+    Modelo: Ninguno (usa ViewBag: VehiculoInfo, PrecioLista, ClienteId, ClienteNombre)
+    Dependencias JS: venderVehiculo() definida en Index.cshtml
+    ══════════════════════════════════════════════════════════════
+*@
 @{
     var vehiculoInfo = ViewBag.VehiculoInfo as string;
     var precioLista = ViewBag.PrecioLista as decimal?;
