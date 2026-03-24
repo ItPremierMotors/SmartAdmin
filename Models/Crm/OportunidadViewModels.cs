@@ -88,13 +88,21 @@ namespace SmartAdmin.Models.Crm
         public DateTime? FechaCierreEstimada { get; set; }
     }
 
+    /// <summary>Cerrar como Ganada: solo necesita OportunidadId (requiere cotización aceptada)</summary>
+    public class CerrarGanadaViewModel
+    {
+        public int OportunidadId { get; set; }
+    }
+
+    /// <summary>Cerrar como Perdida o Cancelar: motivo obligatorio</summary>
     public class CerrarOportunidadViewModel
     {
         public int OportunidadId { get; set; }
 
         [Display(Name = "Motivo")]
+        [Required(ErrorMessage = "El motivo es obligatorio")]
         [StringLength(500)]
-        public string? MotivoResultado { get; set; }
+        public string MotivoResultado { get; set; } = null!;
     }
 
     public class CambiarEtapaViewModel

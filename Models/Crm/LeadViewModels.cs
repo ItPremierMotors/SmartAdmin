@@ -16,16 +16,18 @@ namespace SmartAdmin.Models.Crm
         public int Estado { get; set; }
         public DateTime FechaIngreso { get; set; }
         public DateTime? FechaPrimeraRespuesta { get; set; }
+        public DateTime? FechaUltimaActividad { get; set; }
         public string? VehiculoInteres { get; set; }
+        public int? TipoVehiculoInteres { get; set; }
         public decimal? PresupuestoEstimado { get; set; }
-        public int SucursalId { get; set; }
+        public int? SucursalId { get; set; }
         public string? SucursalNombre { get; set; }
         public string? VendedorAsignadoId { get; set; }
         public string? VendedorNombre { get; set; }
-        public int? ClienteId { get; set; }
         public string? EstadoNombre { get; set; }
         public string? OrigenNombre { get; set; }
         public bool SinContactar { get; set; }
+        public int? DiasInactivo { get; set; }
         public int CantidadOportunidades { get; set; }
         public int CantidadActividades { get; set; }
     }
@@ -62,7 +64,7 @@ namespace SmartAdmin.Models.Crm
         public string? DetalleOrigen { get; set; }
 
         [Display(Name = "Sucursal")]
-        public int SucursalId { get; set; }
+        public int? SucursalId { get; set; }
 
         [Display(Name = "Vendedor")]
         public string? VendedorAsignadoId { get; set; }
@@ -71,10 +73,11 @@ namespace SmartAdmin.Models.Crm
         [StringLength(200)]
         public string? VehiculoInteres { get; set; }
 
+        [Display(Name = "Tipo Vehículo")]
+        public int? TipoVehiculoInteres { get; set; }
+
         [Display(Name = "Presupuesto Estimado")]
         public decimal? PresupuestoEstimado { get; set; }
-
-        public int? ClienteId { get; set; }
     }
 
     public class EditLeadViewModel
@@ -111,16 +114,16 @@ namespace SmartAdmin.Models.Crm
         [StringLength(200)]
         public string? VehiculoInteres { get; set; }
 
+        [Display(Name = "Tipo Vehículo")]
+        public int? TipoVehiculoInteres { get; set; }
+
         [Display(Name = "Presupuesto Estimado")]
         public decimal? PresupuestoEstimado { get; set; }
-
-        public int? ClienteId { get; set; }
     }
 
     public class CalificarLeadViewModel
     {
         public int LeadId { get; set; }
-        public int? ClienteId { get; set; }
     }
 
     public class DescartarLeadViewModel
@@ -135,6 +138,7 @@ namespace SmartAdmin.Models.Crm
     public class AsignarVendedorLeadViewModel
     {
         public int LeadId { get; set; }
+        public int? SucursalId { get; set; }
 
         [Required(ErrorMessage = "Debe seleccionar un vendedor")]
         public string VendedorId { get; set; } = string.Empty;

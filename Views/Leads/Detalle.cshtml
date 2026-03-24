@@ -1,11 +1,18 @@
 @model SmartAdmin.Models.Crm.LeadViewModel
 @{
     ViewData["Title"] = $"Lead {Model.CodigoLead}";
-    var estadoColor = Model.Estado switch { 1 => "info", 2 => "primary", 3 => "success", 5 => "danger", _ => "secondary" };
-    var origenes = new Dictionary<int,string> { {1,"Web"},{2,"WhatsApp"},{3,"Llamada"},{4,"Showroom"},{5,"Referido"},{6,"Redes Sociales"},{7,"Evento"},{8,"Recompra"},{99,"Otro"} };
+    // EstadoLead: Incompleto(1), Nuevo(2), Contactado(3), Calificado(4), Convertido(5), Descartado(6)
+    var estadoColor = Model.Estado switch { 1 => "warning", 2 => "info", 3 => "primary", 4 => "success", 6 => "danger", _ => "secondary" };
+    var tipoVehiculo = new Dictionary<int,string> { {1,"Nuevo"}, {2,"Usado"} };
 }
+
 <div class="container-fluid">
-    <!-- Header -->
+    <!-- ══════════════════════════════════════════════════════════════
+         HEADER: Código, badge estado, botones de acción
+         - MarcarContactado: visible en Incompleto(1) y Nuevo(2) sin contactar
+         - Calificar: visible en Contactado(3)
+         - Descartar/Asignar: visible si no está convertido ni descartado
+    ══════════════════════════════════════════════════════════════ -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary me-2">
@@ -13,21 +20,32 @@
             </a>
             <span class="h3 mb-0">@Model.CodigoLead</span>
             <span class="badge bg-@estadoColor ms-2">@Model.EstadoNombre</span>
+            @if (Model.DiasInactivo.HasValue)
+            {
+                var diasColor = Model.DiasInactivo >= 30 ? "danger" : Model.DiasInactivo >= 7 ? "warning" : Model.DiasInactivo >= 3 ? "info" : "success";
+                <span class="badge bg-@diasColor ms-1" title="Días inactivo">@(Model.DiasInactivo)d</span>
+            }
         </div>
         <div class="btn-group">
-            @if (Model.Estado == 2 && User.TienePermiso("Lead.Editar"))
+            @if ((Model.Estado == 1 || Model.Estado == 2) && Model.SinContactar && User.TienePermiso("Lead.Editar"))
+            {
+                <button class="btn btn-outline-success btn-sm" onclick="marcarContactado()">
+                    <i class="fas fa-phone-alt me-1"></i>Marcar Contactado
+                </button>
+            }
+            @if (Model.Estado == 3 && User.TienePermiso("Lead.Editar"))
             {
                 <button class="btn btn-success btn-sm" onclick="calificarLead()">
                     <i class="fas fa-check me-1"></i>Calificar
                 </button>
             }
-            @if (Model.Estado <= 3 && User.TienePermiso("Lead.Editar"))
+            @if (Model.Estado <= 4 && User.TienePermiso("Lead.Editar"))
             {
                 <button class="btn btn-danger btn-sm" onclick="abrirDescartar()">
                     <i class="fas fa-times me-1"></i>Descartar
                 </button>
             }
-            @if (Model.Estado <= 3 && User.TienePermiso("Lead.Asignar"))
+            @if (Model.Estado <= 4 && User.TienePermiso("Lead.Asignar"))
             {
                 <button class="btn btn-warning btn-sm" onclick="abrirAsignarVendedor()">
                     <i class="fas fa-user-plus me-1"></i>Asignar Vendedor
@@ -36,7 +54,9 @@
         </div>
     </div>
 
-    <!-- Info general -->
+    <!-- ══════════════════════════════════════════════════════════════
+         INFO GENERAL + RESUMEN
+    ══════════════════════════════════════════════════════════════ -->
     <div class="row g-3 mb-4">
         <div class="col-md-8">
             <div class="card shadow-sm">
@@ -64,7 +84,7 @@
                         </div>
                         <div class="col-md-4">
                             <small class="text-muted d-block">Origen</small>
-                            @(origenes.GetValueOrDefault(Model.Origen, "—"))
+                            @Model.OrigenNombre
                         </div>
                         <div class="col-md-4">
                             <small class="text-muted d-block">Detalle Origen</small>
@@ -83,6 +103,10 @@
                             @(Model.VehiculoInteres ?? "—")
                         </div>
                         <div class="col-md-4">
+                            <small class="text-muted d-block">Tipo Vehículo</small>
+                            @(Model.TipoVehiculoInteres.HasValue ? tipoVehiculo.GetValueOrDefault((int)Model.TipoVehiculoInteres, "—") : "—")
+                        </div>
+                        <div class="col-md-4">
                             <small class="text-muted d-block">Presupuesto Estimado</small>
                             @(Model.PresupuestoEstimado.HasValue ? Model.PresupuestoEstimado.Value.ToString("C2") : "—")
                         </div>
@@ -93,6 +117,10 @@
                         <div class="col-md-4">
                             <small class="text-muted d-block">Primer Contacto</small>
                             @(Model.FechaPrimeraRespuesta.HasValue ? Model.FechaPrimeraRespuesta.Value.ToString("dd/MM/yyyy") : "Sin contactar")
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Última Actividad</small>
+                            @(Model.FechaUltimaActividad.HasValue ? Model.FechaUltimaActividad.Value.ToString("dd/MM/yyyy HH:mm") : "Sin actividad")
                         </div>
                     </div>
                 </div>
@@ -117,7 +145,9 @@
         </div>
     </div>
 
-    <!-- Tabs -->
+    <!-- ══════════════════════════════════════════════════════════════
+         TABS: Actividades | Notas
+    ══════════════════════════════════════════════════════════════ -->
     <ul class="nav nav-tabs" id="detalleTabs">
         <li class="nav-item">
             <a class="nav-link active" data-bs-toggle="tab" href="#tabActividades">
@@ -132,9 +162,9 @@
     </ul>
 
     <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white">
-        <!-- Tab Actividades -->
+        <!-- Tab Actividades: botón crear solo si lead no está convertido ni descartado -->
         <div class="tab-pane fade show active" id="tabActividades">
-            @if (Model.Estado < 5)
+            @if (Model.Estado <= 4)
             {
                 <div class="d-flex justify-content-end mb-2">
                     <button class="btn btn-sm btn-primary" onclick="abrirModalActividad()">
@@ -159,36 +189,49 @@
 
 @section Scripts {
 <script>
+    // ══════════════════════════════════════════════════════════════
+    //  CONFIGURACIÓN
+    //  EstadoLead: Incompleto(1), Nuevo(2), Contactado(3), Calificado(4), Convertido(5), Descartado(6)
+    //  TipoActividadCrm: Llamada(1), WhatsApp(2), Email(3), Visita(4), TestDrive(5), Reunión(6)
+    // ══════════════════════════════════════════════════════════════
     const LEAD_ID = @Model.LeadId;
-    const ESTADO = @Model.Estado;
+    const ESTADO = @((int)Model.Estado);
+
     const URLS = {
-        getActividades:          '@Url.Action("GetActividades")',
-        actividadPartial:        '@Url.Action("ActividadPartial")',
-        completarPartial:        '@Url.Action("CompletarActividadPartial")',
-        createActividad:         '@Url.Action("CreateActividad")',
-        completarActividad:      '@Url.Action("CompletarActividad")',
-        cancelarActividad:       '@Url.Action("CancelarActividad")',
-        getNotas:                '@Url.Action("GetNotas")',
-        notaPartial:             '@Url.Action("NotaPartial")',
-        createNota:              '@Url.Action("CreateNota")',
-        deleteNota:              '@Url.Action("DeleteNota")',
-        calificar:               '@Url.Action("Calificar")',
-        descartarPartial:        '@Url.Action("DescartarPartial")',
-        descartar:               '@Url.Action("Descartar")',
-        asignarVendedorPartial:  '@Url.Action("AsignarVendedorPartial")',
-        asignarVendedor:         '@Url.Action("AsignarVendedor")'
+        // Actividades
+        getActividades:         '@Url.Action("GetActividades")',
+        actividadPartial:       '@Url.Action("ActividadPartial")',
+        completarPartial:       '@Url.Action("CompletarActividadPartial")',
+        createActividad:        '@Url.Action("CreateActividad")',
+        completarActividad:     '@Url.Action("CompletarActividad")',
+        cancelarActividad:      '@Url.Action("CancelarActividad")',
+        // Notas
+        getNotas:               '@Url.Action("GetNotas")',
+        notaPartial:            '@Url.Action("NotaPartial")',
+        createNota:             '@Url.Action("CreateNota")',
+        deleteNota:             '@Url.Action("DeleteNota")',
+        // Acciones del lead
+        marcarContactado:       '@Url.Action("MarcarContactado")',
+        calificar:              '@Url.Action("Calificar")',
+        descartarPartial:       '@Url.Action("DescartarPartial")',
+        descartar:              '@Url.Action("Descartar")',
+        asignarVendedorPartial: '@Url.Action("AsignarVendedorPartial")',
+        asignarVendedor:        '@Url.Action("AsignarVendedor")'
     };
 
-    const TIPO_ACTIVIDAD = { 1:'Llamada', 2:'WhatsApp', 3:'Email', 4:'Visita', 5:'Test Drive', 6:'Reunión', 7:'Seguimiento Auto' };
-    const ESTADO_ACTIVIDAD = { 1:'Pendiente', 2:'Completada', 3:'Cancelada', 4:'Vencida' };
-    const ESTADO_ACTIVIDAD_COLOR = { 1:'warning', 2:'success', 3:'danger', 4:'secondary' };
+    // Enums alineados con EnumsDomain.cs
+    const TIPO_ACTIVIDAD         = { 1: 'Llamada', 2: 'WhatsApp', 3: 'Email', 4: 'Visita', 5: 'Test Drive', 6: 'Reunión' };
+    const ESTADO_ACTIVIDAD       = { 1: 'Pendiente', 2: 'Completada', 3: 'Cancelada' };
+    const ESTADO_ACTIVIDAD_COLOR = { 1: 'warning', 2: 'success', 3: 'danger' };
 
     $(document).ready(function () {
         cargarActividades();
         cargarNotas();
     });
 
-    // ═══ ACTIVIDADES ═══
+    // ══════════════════════════════════════════════════════════════
+    //  ACTIVIDADES: Cargar, render, crear, completar, cancelar
+    // ══════════════════════════════════════════════════════════════
     function cargarActividades() {
         $.get(URLS.getActividades, { leadId: LEAD_ID }, function (r) {
             if (r.success && r.data) renderActividades(r.data);
@@ -197,38 +240,33 @@
     }
 
     function renderActividades(items) {
-        if (items.length === 0) {
+        if (!items.length) {
             $('#listaActividades').html('<p class="text-muted text-center">No hay actividades registradas</p>');
             return;
         }
-        let html = '<div class="list-group">';
-        items.forEach(a => {
-            html += `
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <strong>${a.asunto}</strong>
-                            <span class="badge bg-${ESTADO_ACTIVIDAD_COLOR[a.estado]} ms-1">${ESTADO_ACTIVIDAD[a.estado]}</span>
-                            <span class="badge bg-light text-dark ms-1">${TIPO_ACTIVIDAD[a.tipo] || a.tipo}</span>
-                        </div>
+        const html = '<div class="list-group">' + items.map(a => `
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <strong>${a.asunto}</strong>
+                        <span class="badge bg-${ESTADO_ACTIVIDAD_COLOR[a.estado]} ms-1">${ESTADO_ACTIVIDAD[a.estado]}</span>
+                        <span class="badge bg-light text-dark ms-1">${TIPO_ACTIVIDAD[a.tipo] || a.tipoNombre}</span>
+                    </div>
+                    ${a.estado === 1 ? `
                         <div class="btn-group btn-group-sm">
-                            ${a.estado === 1 ? `
-                                <button class="btn btn-outline-success" onclick="abrirCompletarActividad(${a.actividadCrmId})" title="Completar"><i class="fas fa-check"></i></button>
-                                <button class="btn btn-outline-danger" onclick="cancelarActividad(${a.actividadCrmId})" title="Cancelar"><i class="fas fa-times"></i></button>
-                            ` : ''}
-                        </div>
-                    </div>
-                    <small class="text-muted">${a.descripcion || ''}</small>
-                    <div class="mt-1">
-                        <small class="text-muted">
-                            ${a.fechaProgramada ? '<i class="fas fa-calendar me-1"></i>' + new Date(a.fechaProgramada).toLocaleDateString('es-HN') : ''}
-                            | ${a.realizadaPorNombre}
-                        </small>
-                        ${a.resultado ? `<br/><small class="text-success"><i class="fas fa-check-circle me-1"></i>${a.resultado}</small>` : ''}
-                    </div>
-                </div>`;
-        });
-        html += '</div>';
+                            <button class="btn btn-outline-success" onclick="abrirCompletarActividad(${a.actividadCrmId})" title="Completar"><i class="fas fa-check"></i></button>
+                            <button class="btn btn-outline-danger" onclick="cancelarActividad(${a.actividadCrmId})" title="Cancelar"><i class="fas fa-times"></i></button>
+                        </div>` : ''}
+                </div>
+                ${a.descripcion ? `<small class="text-muted">${a.descripcion}</small>` : ''}
+                <div class="mt-1">
+                    <small class="text-muted">
+                        ${a.fechaProgramada ? '<i class="fas fa-calendar me-1"></i>' + new Date(a.fechaProgramada).toLocaleDateString('es-HN') + ' | ' : ''}
+                        ${a.realizadaPorNombre}
+                    </small>
+                    ${a.resultado ? `<br/><small class="text-success"><i class="fas fa-check-circle me-1"></i>${a.resultado}</small>` : ''}
+                </div>
+            </div>`).join('') + '</div>';
         $('#listaActividades').html(html);
     }
 
@@ -242,56 +280,36 @@
 
     function guardarActividad() {
         const form = document.getElementById('formActividad');
-        const btn = document.getElementById('btnGuardarActividad');
-        const btnOriginal = btn.innerHTML;
         if (!form.checkValidity()) { form.reportValidity(); return; }
-        const data = {
+        enviarForm('btnGuardarActividad', URLS.createActividad, {
             leadId: LEAD_ID,
             tipo: parseInt($('#Tipo').val()),
             direccion: parseInt($('#Direccion').val()),
             asunto: $('#Asunto').val().trim(),
             descripcion: $('#Descripcion').val()?.trim() || null,
             fechaProgramada: $('#FechaProgramada').val() || null
-        };
-        $.ajax({
-            url: URLS.createActividad, type: 'POST', contentType: 'application/json', data: JSON.stringify(data),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>'),
-            success: r => { if (r.success) { AppModal.close(); cargarActividades(); Toast.success('Actividad creada'); } else Toast.error(r.message); },
-            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
-            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
-        });
+        }, () => { AppModal.close(); cargarActividades(); Toast.success('Actividad creada'); });
     }
 
     function completarActividad() {
         const form = document.getElementById('formCompletarActividad');
-        const btn = document.getElementById('btnCompletarActividad');
-        const btnOriginal = btn.innerHTML;
         if (!form.checkValidity()) { form.reportValidity(); return; }
-        const data = {
+        enviarForm('btnCompletarActividad', URLS.completarActividad, {
             actividadCrmId: parseInt($('#ActividadCrmId').val()),
             resultado: $('#Resultado').val().trim(),
             duracionMinutos: $('#DuracionMinutos').val() ? parseInt($('#DuracionMinutos').val()) : null,
             proximoContacto: $('#ProximoContacto').val() || null
-        };
-        $.ajax({
-            url: URLS.completarActividad, type: 'POST', contentType: 'application/json', data: JSON.stringify(data),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>'),
-            success: r => { if (r.success) { AppModal.close(); cargarActividades(); Toast.success('Actividad completada'); } else Toast.error(r.message); },
-            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
-            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
-        });
+        }, () => { AppModal.close(); cargarActividades(); Toast.success('Actividad completada'); });
     }
 
     function cancelarActividad(id) {
         if (!confirm('¿Cancelar esta actividad?')) return;
-        $.ajax({
-            url: URLS.cancelarActividad, type: 'POST', contentType: 'application/json', data: JSON.stringify(id),
-            success: r => { if (r.success) { cargarActividades(); Toast.success('Actividad cancelada'); } else Toast.error(r.message); },
-            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error')
-        });
+        postSimple(URLS.cancelarActividad, id, () => { cargarActividades(); Toast.success('Actividad cancelada'); });
     }
 
-    // ═══ NOTAS ═══
+    // ══════════════════════════════════════════════════════════════
+    //  NOTAS: Cargar, render, crear, eliminar
+    // ══════════════════════════════════════════════════════════════
     function cargarNotas() {
         $.get(URLS.getNotas, { leadId: LEAD_ID }, function (r) {
             if (r.success && r.data) renderNotas(r.data);
@@ -300,26 +318,21 @@
     }
 
     function renderNotas(items) {
-        if (items.length === 0) { $('#listaNotas').html('<p class="text-muted text-center">No hay notas</p>'); return; }
-        let html = '';
-        items.forEach(n => {
-            html += `
-                <div class="card mb-2">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <strong>${n.autorNombre}</strong>
-                                <small class="text-muted ms-2">${new Date(n.fechaCreacion).toLocaleString('es-HN')}</small>
-                                ${n.esPrivada ? '<span class="badge bg-warning ms-1">Privada</span>' : ''}
-                            </div>
-                            <button class="btn btn-sm btn-outline-danger" onclick="eliminarNota(${n.notaCrmId})">
-                                <i class="fas fa-trash"></i>
-                            </button>
+        if (!items.length) { $('#listaNotas').html('<p class="text-muted text-center">No hay notas</p>'); return; }
+        const html = items.map(n => `
+            <div class="card mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>${n.autorNombre}</strong>
+                            <small class="text-muted ms-2">${new Date(n.fechaCreacion).toLocaleString('es-HN')}</small>
+                            ${n.esPrivada ? '<span class="badge bg-warning ms-1">Privada</span>' : ''}
                         </div>
-                        <p class="mb-0 mt-1">${n.contenido}</p>
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarNota(${n.notaCrmId})"><i class="fas fa-trash"></i></button>
                     </div>
-                </div>`;
-        });
+                    <p class="mb-0 mt-1">${n.contenido}</p>
+                </div>
+            </div>`).join('');
         $('#listaNotas').html(html);
     }
 
@@ -329,41 +342,33 @@
 
     function guardarNota() {
         const form = document.getElementById('formNota');
-        const btn = document.getElementById('btnGuardarNota');
-        const btnOriginal = btn.innerHTML;
         if (!form.checkValidity()) { form.reportValidity(); return; }
-        const data = {
+        enviarForm('btnGuardarNota', URLS.createNota, {
             leadId: LEAD_ID,
             contenido: $('#Contenido').val().trim(),
             esPrivada: $('#EsPrivada').is(':checked')
-        };
-        $.ajax({
-            url: URLS.createNota, type: 'POST', contentType: 'application/json', data: JSON.stringify(data),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>'),
-            success: r => { if (r.success) { AppModal.close(); cargarNotas(); Toast.success('Nota creada'); } else Toast.error(r.message); },
-            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
-            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
-        });
+        }, () => { AppModal.close(); cargarNotas(); Toast.success('Nota creada'); });
     }
 
     function eliminarNota(id) {
         if (!confirm('¿Eliminar esta nota?')) return;
-        $.ajax({
-            url: URLS.deleteNota, type: 'POST', contentType: 'application/json', data: JSON.stringify(id),
-            success: r => { if (r.success) { cargarNotas(); Toast.success('Nota eliminada'); } else Toast.error(r.message); },
-            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error')
-        });
+        postSimple(URLS.deleteNota, id, () => { cargarNotas(); Toast.success('Nota eliminada'); });
     }
 
-    // ═══ ACCIONES DEL LEAD ═══
+    // ══════════════════════════════════════════════════════════════
+    //  ACCIONES DEL LEAD: MarcarContactado, Calificar, Descartar, Asignar
+    // ══════════════════════════════════════════════════════════════
+
+    /** Marca como contactado (Incompleto/Nuevo → Contactado) */
+    function marcarContactado() {
+        if (!confirm('¿Marcar este lead como contactado?')) return;
+        postSimple(URLS.marcarContactado, LEAD_ID, () => { Toast.success('Lead marcado como contactado'); location.reload(); });
+    }
+
+    /** Califica el lead (Contactado → Calificado) */
     function calificarLead() {
         if (!confirm('¿Calificar este lead? Pasará a estado Calificado.')) return;
-        $.ajax({
-            url: URLS.calificar, type: 'POST', contentType: 'application/json',
-            data: JSON.stringify({ leadId: LEAD_ID }),
-            success: r => { if (r.success) { Toast.success('Lead calificado'); location.reload(); } else Toast.error(r.message); },
-            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error')
-        });
+        postSimple(URLS.calificar, { leadId: LEAD_ID }, () => { Toast.success('Lead calificado'); location.reload(); });
     }
 
     function abrirDescartar() {
@@ -372,17 +377,11 @@
 
     function descartarLead() {
         const form = document.getElementById('formDescartar');
-        const btn = document.getElementById('btnDescartar');
-        const btnOriginal = btn.innerHTML;
         if (!form.checkValidity()) { form.reportValidity(); return; }
-        const data = { leadId: LEAD_ID, motivo: $('#Motivo').val().trim() };
-        $.ajax({
-            url: URLS.descartar, type: 'POST', contentType: 'application/json', data: JSON.stringify(data),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>'),
-            success: r => { if (r.success) { Toast.success('Lead descartado'); window.location.href = '@Url.Action("Index")'; } else Toast.error(r.message); },
-            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
-            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
-        });
+        enviarForm('btnDescartar', URLS.descartar, {
+            leadId: LEAD_ID,
+            motivo: $('#Motivo').val().trim()
+        }, () => { Toast.success('Lead descartado'); window.location.href = '@Url.Action("Index")'; });
     }
 
     function abrirAsignarVendedor() {
@@ -391,16 +390,38 @@
 
     function asignarVendedor() {
         const form = document.getElementById('formAsignarVendedor');
-        const btn = document.getElementById('btnAsignarVendedor');
-        const btnOriginal = btn.innerHTML;
         if (!form.checkValidity()) { form.reportValidity(); return; }
-        const data = { leadId: LEAD_ID, vendedorId: $('#VendedorId').val() };
+        enviarForm('btnAsignarVendedor', URLS.asignarVendedor, {
+            leadId: LEAD_ID,
+            vendedorId: $('#VendedorId').val()
+        }, () => { AppModal.close(); Toast.success('Vendedor asignado'); location.reload(); });
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  HELPERS: Funciones reutilizables para AJAX
+    // ══════════════════════════════════════════════════════════════
+
+    /** POST con botón de loading */
+    function enviarForm(btnId, url, data, onSuccess) {
+        const btn = document.getElementById(btnId);
+        const btnOriginal = btn.innerHTML;
         $.ajax({
-            url: URLS.asignarVendedor, type: 'POST', contentType: 'application/json', data: JSON.stringify(data),
+            url, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
             beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>'),
-            success: r => { if (r.success) { AppModal.close(); Toast.success('Vendedor asignado'); location.reload(); } else Toast.error(r.message); },
+            success: r => { if (r.success) onSuccess(r); else Toast.error(r.message); },
             error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
             complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+        });
+    }
+
+    /** POST simple sin botón de loading */
+    function postSimple(url, data, onSuccess) {
+        $.ajax({
+            url, type: 'POST',
+            contentType: 'application/json', data: JSON.stringify(data),
+            success: r => { if (r.success) onSuccess(r); else Toast.error(r.message); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error')
         });
     }
 </script>

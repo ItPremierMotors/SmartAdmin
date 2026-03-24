@@ -1,0 +1,145 @@
+@{
+    ViewData["Title"] = "Alertas de Leads Fríos";
+}
+
+<div class="container-fluid">
+    <!-- ══════════════════════════════════════════════════════════════
+         Panel gerencial: muestra leads categorizados por urgencia
+         - Sin contactar: nunca se les llamó
+         - Fríos: 3-7 días sin actividad
+         - Muy fríos: 7-30 días sin actividad
+         - Candidatos a descarte: +30 días sin actividad
+    ══════════════════════════════════════════════════════════════ -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fas fa-thermometer-empty me-2"></i>@ViewData["Title"]</h1>
+        <div class="d-flex gap-2 align-items-center">
+            <select class="form-select form-select-sm" id="filtroSucursal" style="width:200px">
+                <option value="">Seleccione sucursal...</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="cargarAlertas()">
+                <i class="fas fa-search me-1"></i>Consultar
+            </button>
+        </div>
+    </div>
+
+    <div id="loading" class="text-center py-4 d-none">
+        <div class="spinner-border text-primary"></div>
+    </div>
+
+    <!-- Resumen de contadores -->
+    <div class="row g-3 mb-4" id="resumen">
+        <div class="col-md-3">
+            <div class="card border-danger text-center p-3">
+                <h3 class="text-danger" id="countSinContactar">0</h3>
+                <small class="text-muted">Sin Contactar</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning text-center p-3">
+                <h3 class="text-warning" id="countFrios">0</h3>
+                <small class="text-muted">Fríos (3-7d)</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-orange text-center p-3" style="border-color:#fd7e14 !important">
+                <h3 style="color:#fd7e14" id="countMuyFrios">0</h3>
+                <small class="text-muted">Muy Fríos (7-30d)</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-dark text-center p-3">
+                <h3 class="text-dark" id="countDescarte">0</h3>
+                <small class="text-muted">Candidatos Descarte (+30d)</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tablas colapsables por categoría -->
+    <div id="contenedorAlertas"></div>
+</div>
+
+@section Scripts {
+<script>
+    const URLS = {
+        alertas:   '@Url.Action("GetAlertasFrios")',
+        sucursales:'@Url.Action("GetSucursales")',
+        detalle:   '@Url.Action("Detalle")'
+    };
+
+    const CATEGORIAS = [
+        { key: 'sinContactar',      label: 'Sin Contactar',         color: '#dc3545', icon: 'fa-exclamation-circle' },
+        { key: 'frios',             label: 'Fríos (3-7 días)',      color: '#ffc107', icon: 'fa-thermometer-quarter' },
+        { key: 'muyFrios',          label: 'Muy Fríos (7-30 días)', color: '#fd7e14', icon: 'fa-thermometer-half' },
+        { key: 'candidatosDescarte',label: 'Candidatos a Descarte (+30d)', color: '#343a40', icon: 'fa-skull-crossbones' }
+    ];
+
+    $(document).ready(function () {
+        $.get(URLS.sucursales, r => {
+            if (r.success && r.data) r.data.forEach(s => $('#filtroSucursal').append(`<option value="${s.id}">${s.nombre}</option>`));
+        });
+    });
+
+    function cargarAlertas() {
+        const sucursalId = $('#filtroSucursal').val();
+        if (!sucursalId) { Toast.error('Seleccione una sucursal'); return; }
+
+        $('#loading').removeClass('d-none');
+        $.get(URLS.alertas, { sucursalId }, function (r) {
+            $('#loading').addClass('d-none');
+            if (!r.success) { Toast.error(r.message || 'Error'); return; }
+            renderAlertas(r.data);
+        }).fail(() => { $('#loading').addClass('d-none'); Toast.error('Error al conectar'); });
+    }
+
+    function renderAlertas(data) {
+        // Contadores
+        $('#countSinContactar').text(data.sinContactar?.length || 0);
+        $('#countFrios').text(data.frios?.length || 0);
+        $('#countMuyFrios').text(data.muyFrios?.length || 0);
+        $('#countDescarte').text(data.candidatosDescarte?.length || 0);
+
+        // Tablas
+        const $container = $('#contenedorAlertas').empty();
+        CATEGORIAS.forEach(cat => {
+            const items = data[cat.key] || [];
+            if (!items.length) return;
+            $container.append(`
+                <div class="card mb-3" style="border-left: 4px solid ${cat.color}">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2" style="cursor:pointer"
+                         onclick="$('#grupo-${cat.key}').toggleClass('d-none'); $(this).find('.fa-chevron-down,.fa-chevron-right').toggleClass('fa-chevron-down fa-chevron-right');">
+                        <span class="fw-bold" style="color:${cat.color}">
+                            <i class="fas ${cat.icon} me-1"></i>${cat.label}
+                            <span class="badge rounded-pill" style="background:${cat.color}">${items.length}</span>
+                        </span>
+                        <i class="fas fa-chevron-down text-muted small"></i>
+                    </div>
+                    <div id="grupo-${cat.key}">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr><th>Código</th><th>Nombre</th><th>Teléfono</th><th>Vendedor</th><th class="text-center">Días Inactivo</th><th>Fecha Ingreso</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    ${items.map(l => `
+                                        <tr>
+                                            <td><span class="text-muted">${l.codigoLead}</span></td>
+                                            <td><strong>${l.nombreCompleto}</strong></td>
+                                            <td>${l.telefono || '<span class="text-muted">N/A</span>'}</td>
+                                            <td>${l.vendedorNombre || '<span class="text-muted">Sin asignar</span>'}</td>
+                                            <td class="text-center"><span class="badge" style="background:${cat.color}">${l.diasInactivo}d</span></td>
+                                            <td>${new Date(l.fechaIngreso).toLocaleDateString('es-HN')}</td>
+                                            <td><button class="btn btn-sm btn-outline-info" onclick="window.location.href='${URLS.detalle}/' + ${l.leadId}"><i class="fas fa-eye"></i></button></td>
+                                        </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>`);
+        });
+
+        if (!$container.children().length) {
+            $container.html('<div class="alert alert-success text-center"><i class="fas fa-check-circle me-2"></i>No hay leads fríos en esta sucursal</div>');
+        }
+    }
+</script>
+}

@@ -18,12 +18,28 @@
 
 <script>
     (function () {
-        $.get('@Url.Action("GetVendedores", "Leads")', function (res) {
-            if (res.success && res.data) {
-                res.data.forEach(u => {
-                    $('#VendedorId').append(`<option value="${u.id}">${u.nombreCompleto}</option>`);
-                });
-            }
-        });
+        var sucursalId = '@Model.SucursalId';
+
+        if (sucursalId && sucursalId !== '') {
+            // Cargar solo vendedores asignados a la sucursal del lead
+            $.get('@Url.Action("GetBySucursal", "VendedoresSucursal")', { sucursalId }, function (res) {
+                if (res.success && res.data) {
+                    res.data.forEach(v => $('#VendedorId').append(`<option value="${v.vendedorId}">${v.vendedorNombre}</option>`));
+                }
+                // Si no hay vendedores en la sucursal, cargar todos como fallback
+                if (!res.data?.length) cargarTodosVendedores();
+            });
+        } else {
+            // Sin sucursal, cargar todos
+            cargarTodosVendedores();
+        }
+
+        function cargarTodosVendedores() {
+            $.get('@Url.Action("GetVendedores", "Leads")', function (res) {
+                if (res.success && res.data) {
+                    res.data.forEach(u => $('#VendedorId').append(`<option value="${u.id}">${u.nombreCompleto}</option>`));
+                }
+            });
+        }
     })();
 </script>

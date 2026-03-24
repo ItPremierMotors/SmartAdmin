@@ -1,0 +1,399 @@
+@{
+    ViewData["Title"] = "Dashboard CRM";
+}
+
+<div class="container-fluid">
+    <!-- ══════════════════════════════════════════════════════════════
+         HEADER + FILTROS: Periodo (desde/hasta) y Sucursal
+    ══════════════════════════════════════════════════════════════ -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0"><i class="fas fa-chart-line me-2"></i>@ViewData["Title"]</h1>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-0">Desde</label>
+                    <input type="date" class="form-control form-control-sm" id="filtroDesde" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-0">Hasta</label>
+                    <input type="date" class="form-control form-control-sm" id="filtroHasta" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-0">Sucursal</label>
+                    <select class="form-select form-select-sm" id="filtroSucursal">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary btn-sm w-100" onclick="cargarTodo()">
+                        <i class="fas fa-search me-1"></i>Consultar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         SECCIÓN 1: LEADS
+    ══════════════════════════════════════════════════════════════ -->
+
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <h5 class="text-muted"><i class="fas fa-user-tag me-1"></i>Leads</h5>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center p-3">
+                <h3 id="kLeadsNuevos" class="mb-0">-</h3><small class="text-muted">Nuevos</small>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center p-3">
+                <h3 id="kLeadsConvertidos" class="mb-0">-</h3><small class="text-muted">Convertidos</small>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center p-3">
+                <h3 id="kTasaConversion" class="mb-0">-</h3><small class="text-muted">Tasa Conversión</small>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center p-3">
+                <h3 id="kResponseTime" class="mb-0 text-warning">-</h3><small class="text-muted">Resp. Promedio
+                (h)</small>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center p-3">
+                <h3 id="kSinContactar" class="mb-0 text-danger">-</h3><small class="text-muted">Sin Contactar</small>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center p-3">
+                <h3 id="kDescartadosP" class="mb-0 text-danger">-</h3><small class="text-muted">Descartados</small>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card p-3">
+                <small class="text-muted mb-2 d-block"><i class="fas fa-chart-bar me-1"></i>Por Origen</small>
+                <div id="barsLeadsOrigen"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 2: PIPELINE -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <h5 class="text-muted"><i class="fas fa-funnel-dollar me-1"></i>Pipeline</h5>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3 id="kOpsAbiertas">-</h3><small class="text-muted">Abiertas</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3 id="kValorPipeline">-</h3><small class="text-muted">Valor Pipeline</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3 id="kWinRate">-</h3><small class="text-muted">Win Rate</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3 id="kValorPromedio">-</h3><small class="text-muted">Valor Promedio</small>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card p-3">
+                <div id="barsPipelineEtapas"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 3: EQUIPO -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <h5 class="text-muted"><i class="fas fa-users me-1"></i>Equipo</h5>
+        </div>
+        <div class="col-12">
+            <div class="card p-3">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0" id="tablaEquipo">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Vendedor</th>
+                                <th class="text-center">Leads</th>
+                                <th class="text-center">Ganadas</th>
+                                <th class="text-end">Valor Vendido</th>
+                                <th class="text-center">Carga Actual</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 4: RETENCIÓN -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <h5 class="text-muted"><i class="fas fa-heart-broken me-1"></i>Retención</h5>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-3">
+                <h3 id="kDescartados">-</h3><small class="text-muted">Leads Descartados</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-3">
+                <h3 id="kPerdidas">-</h3><small class="text-muted">Ops. Perdidas</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-3">
+                <h3 id="kCanceladas">-</h3><small class="text-muted">Ops. Canceladas</small>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h6 class="text-muted">Motivos de Descarte</h6>
+                <div id="listaMotivosDescarte"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h6 class="text-muted">Motivos de Pérdida</h6>
+                <div id="listaMotivoPerdida"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 5: ACTIVIDAD -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <h5 class="text-muted"><i class="fas fa-tasks me-1"></i>Actividad</h5>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3 id="kTotalAct">-</h3><small class="text-muted">Total</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3 id="kCompletadas">-</h3><small class="text-muted">Completadas</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3 id="kVencidas">-</h3><small class="text-muted">Vencidas</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3 id="kCumplimiento">-</h3><small class="text-muted">Cumplimiento</small>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h6 class="text-muted">Por Tipo</h6>
+                <div id="barsActTipo"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0" id="tablaActVendedor">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Vendedor</th>
+                                <th class="text-center">Realizadas</th>
+                                <th class="text-center">Vencidas</th>
+                                <th class="text-center">Cumplimiento</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 6: ORIGEN -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <h5 class="text-muted"><i class="fas fa-bullseye me-1"></i>Origen / Canal</h5>
+        </div>
+        <div class="col-12">
+            <div class="card p-3">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0" id="tablaOrigen">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Origen</th>
+                                <th class="text-center">Leads</th>
+                                <th class="text-center">Convertidos</th>
+                                <th class="text-center">Conversión</th>
+                                <th class="text-center">Ganadas</th>
+                                <th class="text-center">Win Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 7: TIEMPO -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <h5 class="text-muted"><i class="fas fa-clock me-1"></i>Tiempo</h5>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-center p-3">
+                <h3 id="kTiempoResp">-</h3><small class="text-muted">Tiempo Promedio Respuesta (horas)</small>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-center p-3">
+                <h3 id="kCicloVenta">-</h3><small class="text-muted">Ciclo de Venta Promedio (días)</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Gráficos con barras CSS (sin dependencias externas) -->
+    <script>
+        // ══════════════════════════════════════════════════════════════
+        //  URLs apuntan a DashboardCrmController
+        // ══════════════════════════════════════════════════════════════
+        const URLS = {
+            leads: '@Url.Action("Leads", "DashboardCrm")',
+            pipeline: '@Url.Action("Pipeline", "DashboardCrm")',
+            equipo: '@Url.Action("Equipo", "DashboardCrm")',
+            retencion: '@Url.Action("Retencion", "DashboardCrm")',
+            actividad: '@Url.Action("Actividad", "DashboardCrm")',
+            origen: '@Url.Action("Origen", "DashboardCrm")',
+            tiempo: '@Url.Action("Tiempo", "DashboardCrm")',
+            sucursales: '@Url.Action("Sucursales", "DashboardCrm")'
+        };
+
+        $(document).ready(function () {
+            const hoy = new Date();
+            const hace30 = new Date(hoy); hace30.setDate(hoy.getDate() - 30);
+            $('#filtroDesde').val(hace30.toISOString().split('T')[0]);
+            $('#filtroHasta').val(hoy.toISOString().split('T')[0]);
+            cargarSucursales();
+            cargarTodo();
+        });
+
+        function cargarSucursales() {
+            $.get(URLS.sucursales, r => {
+                if (r.success && r.data) r.data.forEach(s => $('#filtroSucursal').append(`<option value="${s.id}">${s.nombre}</option>`));
+            });
+        }
+
+        function getFiltros() {
+            return { desde: $('#filtroDesde').val(), hasta: $('#filtroHasta').val(), sucursalId: $('#filtroSucursal').val() || null };
+        }
+
+        function cargarTodo() {
+            const f = getFiltros();
+            if (!f.desde || !f.hasta) { Toast.error('Seleccione periodo'); return; }
+            cargarLeads(f); cargarPipeline(f); cargarEquipo(f);
+            cargarRetencion(f); cargarActividad(f); cargarOrigen(f); cargarTiempo(f);
+        }
+
+        // ═══ HELPERS ═══
+        function fetchKpi(url, filtros, cb) {
+            $.get(url, filtros, r => {
+                console.log('fetchKpi', url, r);
+                if (r.success && r.data) cb(r.data);
+                else if (r.data?.success && r.data?.data) cb(r.data.data); // respuesta envuelta doble
+            }).fail(err => console.error('fetchKpi error', url, err));
+        }
+        function money(v) { return new Intl.NumberFormat('es-HN', { style: 'currency', currency: 'HNL', maximumFractionDigits: 0 }).format(v); }
+
+        function renderMotivos(id, items) {
+            if (!items?.length) { $(`#${id}`).html('<p class="text-muted small">Sin datos</p>'); return; }
+            $(`#${id}`).html(items.map(m => `<div class="d-flex justify-content-between mb-1"><span class="small">${m.nombre}</span><span class="badge bg-secondary">${m.cantidad}</span></div>`).join(''));
+        }
+
+        /** Renderiza barras horizontales con Bootstrap progress bars */
+        function renderBars(containerId, items, colors) {
+            const el = document.getElementById(containerId);
+            if (!el || !items?.length) { if (el) el.innerHTML = '<p class="text-muted small text-center">Sin datos</p>'; return; }
+            const max = Math.max(...items.map(i => i.cantidad));
+            el.innerHTML = items.map((item, idx) => {
+                const pct = max > 0 ? Math.round(item.cantidad / max * 100) : 0;
+                const color = colors?.[idx % colors.length] || '#0d6efd';
+                return `<div class="d-flex align-items-center mb-2">
+                    <span class="small text-muted me-2" style="min-width:90px;text-align:right">${item.nombre}</span>
+                    <div class="flex-grow-1">
+                        <div class="progress" style="height:20px">
+                            <div class="progress-bar" style="width:${pct}%;background:${color}">${item.cantidad}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // ═══ SECCIONES ═══
+        function cargarLeads(f) {
+            fetchKpi(URLS.leads, f, d => {
+                $('#kLeadsNuevos').text(d.leadsNuevos); $('#kLeadsConvertidos').text(d.leadsConvertidos);
+                $('#kTasaConversion').text(d.tasaConversion + '%'); $('#kResponseTime').text(d.tiempoPromedioRespuestaHoras);
+                $('#kSinContactar').text(d.leadsSinContactar);
+                $('#kDescartadosP').text(d.leadsDescartados);
+                renderBars('barsLeadsOrigen', d.leadsPorOrigen, ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6c757d', '#0dcaf0', '#fd7e14', '#8e44ad']);
+            });
+        }
+
+        function cargarPipeline(f) {
+            fetchKpi(URLS.pipeline, f, d => {
+                $('#kOpsAbiertas').text(d.oportunidadesAbiertas); $('#kValorPipeline').text(money(d.valorTotalPipeline));
+                $('#kWinRate').text(d.winRate + '%'); $('#kValorPromedio').text(money(d.valorPromedioOportunidad));
+                renderBars('barsPipelineEtapas', d.oportunidadesPorEtapa, ['#fd7e14', '#e67e22', '#8e44ad', '#198754']);
+            });
+        }
+
+        function cargarEquipo(f) {
+            fetchKpi(URLS.equipo, f, d => {
+                $('#tablaEquipo tbody').html(d.vendedores?.map(v => `<tr><td>${v.vendedorNombre}</td><td class="text-center">${v.leadsAsignados}</td><td class="text-center">${v.oportunidadesGanadas}</td><td class="text-end">${money(v.valorVendido)}</td><td class="text-center"><span class="badge bg-info">${v.cargaActual}</span></td></tr>`).join('') || '<tr><td colspan="5" class="text-center text-muted">Sin datos</td></tr>');
+            });
+        }
+
+        function cargarRetencion(f) {
+            fetchKpi(URLS.retencion, f, d => {
+                $('#kDescartados').text(d.leadsDescartados); $('#kPerdidas').text(d.oportunidadesPerdidas); $('#kCanceladas').text(d.oportunidadesCanceladas);
+                renderMotivos('listaMotivosDescarte', d.motivoDescarte); renderMotivos('listaMotivoPerdida', d.motivoPerdida);
+            });
+        }
+
+        function cargarActividad(f) {
+            fetchKpi(URLS.actividad, f, d => {
+                $('#kTotalAct').text(d.totalActividades); $('#kCompletadas').text(d.completadas);
+                $('#kVencidas').text(d.vencidas); $('#kCumplimiento').text(d.tasaCumplimiento + '%');
+                renderBars('barsActTipo', d.actividadesPorTipo, ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6c757d', '#0dcaf0']);
+                $('#tablaActVendedor tbody').html(d.actividadesPorVendedor?.map(v => `<tr><td>${v.vendedorNombre}</td><td class="text-center">${v.realizadas}</td><td class="text-center">${v.vencidas}</td><td class="text-center">${v.tasaCumplimiento}%</td></tr>`).join('') || '<tr><td colspan="4" class="text-center text-muted">Sin datos</td></tr>');
+            });
+        }
+
+        function cargarOrigen(f) {
+            fetchKpi(URLS.origen, f, d => {
+                $('#tablaOrigen tbody').html(d.origenes?.map(o => `<tr><td>${o.origen}</td><td class="text-center">${o.totalLeads}</td><td class="text-center">${o.convertidos}</td><td class="text-center">${o.tasaConversion}%</td><td class="text-center">${o.oportunidadesGanadas}</td><td class="text-center">${o.winRate}%</td></tr>`).join('') || '<tr><td colspan="6" class="text-center text-muted">Sin datos</td></tr>');
+            });
+        }
+
+        function cargarTiempo(f) {
+            fetchKpi(URLS.tiempo, f, d => { $('#kTiempoResp').text(d.tiempoPromedioRespuestaHoras); $('#kCicloVenta').text(d.cicloVentaPromedioDias); });
+        }
+    </script>
+}

@@ -1,4 +1,9 @@
 @model SmartAdmin.Models.Crm.LeadViewModel
+@{
+    // EstadoLead: Incompleto(1), Nuevo(2), Contactado(3), Calificado(4), Convertido(5), Descartado(6)
+    var estadoColor = Model.Estado switch { 1 => "warning", 2 => "info", 3 => "primary", 4 => "success", 6 => "danger", _ => "secondary" };
+    var tipoVehiculo = new Dictionary<int,string> { {1,"Nuevo"}, {2,"Usado"} };
+}
 <div class="row g-3">
     <div class="col-md-6">
         <small class="text-muted d-block">Código</small>
@@ -6,9 +11,12 @@
     </div>
     <div class="col-md-6">
         <small class="text-muted d-block">Estado</small>
-        <span class="badge bg-@(Model.Estado switch { 1 => "info", 2 => "primary", 3 => "success", 5 => "danger", _ => "secondary" })">
-            @Model.EstadoNombre
-        </span>
+        <span class="badge bg-@estadoColor">@Model.EstadoNombre</span>
+        @if (Model.DiasInactivo.HasValue)
+        {
+            var diasColor = Model.DiasInactivo >= 30 ? "danger" : Model.DiasInactivo >= 7 ? "warning" : Model.DiasInactivo >= 3 ? "info" : "success";
+            <span class="badge bg-@diasColor ms-1">@(Model.DiasInactivo)d inactivo</span>
+        }
     </div>
     <div class="col-md-6">
         <small class="text-muted d-block">Nombre Completo</small>
@@ -47,6 +55,10 @@
         @(Model.VehiculoInteres ?? "N/A")
     </div>
     <div class="col-md-6">
+        <small class="text-muted d-block">Tipo Vehículo</small>
+        @(Model.TipoVehiculoInteres.HasValue ? tipoVehiculo.GetValueOrDefault((int)Model.TipoVehiculoInteres, "N/A") : "N/A")
+    </div>
+    <div class="col-md-6">
         <small class="text-muted d-block">Presupuesto Estimado</small>
         @(Model.PresupuestoEstimado?.ToString("C") ?? "N/A")
     </div>
@@ -57,6 +69,10 @@
     <div class="col-md-6">
         <small class="text-muted d-block">Primera Respuesta</small>
         @(Model.FechaPrimeraRespuesta?.ToString("dd/MM/yyyy HH:mm") ?? "Sin contactar")
+    </div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">Última Actividad</small>
+        @(Model.FechaUltimaActividad?.ToString("dd/MM/yyyy HH:mm") ?? "Sin actividad")
     </div>
     <div class="col-md-6">
         <small class="text-muted d-block">Oportunidades</small>

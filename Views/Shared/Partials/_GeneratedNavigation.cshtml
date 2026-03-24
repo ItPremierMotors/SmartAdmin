@@ -231,7 +231,8 @@
 
     @* ============ CRM ============ *@
     @if (User.TienePermiso("Lead.Ver") ||
-         User.TienePermiso("Oportunidad.Ver"))
+         User.TienePermiso("Oportunidad.Ver") ||
+         User.TienePermiso("Dashboard.Ver"))
     {
         <li class="nav-item">
             <a href="#" title="CRM" data-filter-tags>
@@ -241,19 +242,40 @@
                 <span class="nav-link-text" data-i18n>CRM</span>
             </a>
             <ul>
+                @if (User.TienePermiso("Dashboard.Ver"))
+                {
+                    <li>
+                        <a href="@Url.Action("Index", "DashboardCrm")">
+                            <span class="nav-link-text" data-i18n>Dashboard CRM</span>
+                        </a>
+                    </li>
+                }
                 @if (User.TienePermiso("Lead.Ver"))
                 {
                     <li>
-                        <a href=@Url.Action("Index", "Leads")>
+                        <a href="@Url.Action("Index", "Leads")">
                             <span class="nav-link-text" data-i18n>Leads</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("AlertasFrios", "Leads")">
+                            <span class="nav-link-text" data-i18n>Alertas Leads Fríos</span>
                         </a>
                     </li>
                 }
                 @if (User.TienePermiso("Oportunidad.Ver"))
                 {
                     <li>
-                        <a href=@Url.Action("Index", "Oportunidades")>
+                        <a href="@Url.Action("Index", "Oportunidades")">
                             <span class="nav-link-text" data-i18n>Pipeline de Ventas</span>
+                        </a>
+                    </li>
+                }
+                @if (User.TienePermiso("Lead.Asignar"))
+                {
+                    <li>
+                        <a href="@Url.Action("Index", "VendedoresSucursal")">
+                            <span class="nav-link-text" data-i18n>Vendedores por Sucursal</span>
                         </a>
                     </li>
                 }

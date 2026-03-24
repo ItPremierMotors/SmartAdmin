@@ -114,6 +114,8 @@ builder.Services.AddScoped<IOportunidadClient, OportunidadClientServices>();
 builder.Services.AddScoped<IActividadCrmClient, ActividadCrmClientServices>();
 builder.Services.AddScoped<INotaCrmClient, NotaCrmClientServices>();
 builder.Services.AddScoped<ICotizacionVehiculoClient, CotizacionVehiculoClientServices>();
+builder.Services.AddScoped<IDashboardCrmClient, DashboardCrmClientServices>();
+builder.Services.AddScoped<IVendedorSucursalClient, VendedorSucursalClientServices>();
 
 // Para poder leer cookies en servicios
 builder.Services.AddHttpContextAccessor(); 

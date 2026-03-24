@@ -55,11 +55,18 @@
             <label class="form-label">Vehículo de Interés</label>
             <input type="text" class="form-control" id="VehiculoInteres" maxlength="200" />
         </div>
-        <div class="col-md-6">
+        <div class="col-md-3">
+            <label class="form-label">Tipo Vehículo</label>
+            <select class="form-select" id="TipoVehiculoInteres">
+                <option value="">Sin definir</option>
+                <option value="1">Nuevo</option>
+                <option value="2">Usado</option>
+            </select>
+        </div>
+        <div class="col-md-3">
             <label class="form-label">Presupuesto Estimado</label>
             <input type="number" class="form-control" id="PresupuestoEstimado" step="0.01" min="0" />
         </div>
-        <input type="hidden" id="ClienteId" />
     </div>
     <hr />
     <div class="d-flex justify-content-end gap-2">
@@ -72,19 +79,26 @@
 
 <script>
     (function () {
+        // Cargar sucursales
         $.get('@Url.Action("GetSucursales", "Leads")', function (res) {
             if (res.success && res.data) {
-                res.data.forEach(s => {
-                    $('#SucursalId').append(`<option value="${s.id}">${s.nombre}</option>`);
-                });
+                res.data.forEach(s => $('#SucursalId').append(`<option value="${s.id}">${s.nombre}</option>`));
             }
         });
-        $.get('@Url.Action("GetVendedores", "Leads")', function (res) {
-            if (res.success && res.data) {
-                res.data.forEach(u => {
-                    $('#VendedorAsignadoId').append(`<option value="${u.id}">${u.nombreCompleto}</option>`);
-                });
-            }
+
+        // Al cambiar sucursal, recargar vendedores de esa sucursal
+        $('#SucursalId').on('change', function () {
+            const sucursalId = $(this).val();
+            const $vendedor = $('#VendedorAsignadoId');
+            $vendedor.html('<option value="">Sin asignar</option>');
+
+            if (!sucursalId) return;
+
+            $.get('@Url.Action("GetBySucursal", "VendedoresSucursal")', { sucursalId }, function (res) {
+                if (res.success && res.data) {
+                    res.data.forEach(v => $vendedor.append(`<option value="${v.vendedorId}">${v.vendedorNombre}</option>`));
+                }
+            });
         });
     })();
 </script>

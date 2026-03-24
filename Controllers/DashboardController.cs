@@ -19,7 +19,6 @@ namespace Smartadmin.Controllers
         {
             if (!User.TienePermiso("Dashboard.Ver"))
                 return RedirectToAction("Index", "Home");
-
             return View();
         }
 
@@ -30,13 +29,9 @@ namespace Smartadmin.Controllers
         [HttpGet]
         public async Task<IActionResult> Resumen(int? sucursalId = null)
         {
-            if (!User.TienePermiso("Dashboard.Ver"))
-                return Forbid();
-
+            if (!User.TienePermiso("Dashboard.Ver")) return Forbid();
             var url = "api/Dashboard/Resumen";
-            if (sucursalId.HasValue)
-                url += $"?sucursalId={sucursalId.Value}";
-
+            if (sucursalId.HasValue) url += $"?sucursalId={sucursalId.Value}";
             var result = await _apiClient.GetAsync<object>(url);
             return Json(result);
         }
@@ -44,13 +39,9 @@ namespace Smartadmin.Controllers
         [HttpGet]
         public async Task<IActionResult> Taller(DateTime fechaInicio, DateTime fechaFin, int? sucursalId = null)
         {
-            if (!User.TienePermiso("Dashboard.Ver"))
-                return Forbid();
-
+            if (!User.TienePermiso("Dashboard.Ver")) return Forbid();
             var url = $"api/Dashboard/Taller?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}";
-            if (sucursalId.HasValue)
-                url += $"&sucursalId={sucursalId.Value}";
-
+            if (sucursalId.HasValue) url += $"&sucursalId={sucursalId.Value}";
             var result = await _apiClient.GetAsync<object>(url);
             return Json(result);
         }
@@ -58,13 +49,9 @@ namespace Smartadmin.Controllers
         [HttpGet]
         public async Task<IActionResult> Ventas(DateTime fechaInicio, DateTime fechaFin, int? sucursalId = null)
         {
-            if (!User.TienePermiso("Dashboard.Ver"))
-                return Forbid();
-
+            if (!User.TienePermiso("Dashboard.Ver")) return Forbid();
             var url = $"api/Dashboard/Ventas?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}";
-            if (sucursalId.HasValue)
-                url += $"&sucursalId={sucursalId.Value}";
-
+            if (sucursalId.HasValue) url += $"&sucursalId={sucursalId.Value}";
             var result = await _apiClient.GetAsync<object>(url);
             return Json(result);
         }
@@ -72,13 +59,9 @@ namespace Smartadmin.Controllers
         [HttpGet]
         public async Task<IActionResult> Inventario(int? sucursalId = null)
         {
-            if (!User.TienePermiso("Dashboard.Ver"))
-                return Forbid();
-
+            if (!User.TienePermiso("Dashboard.Ver")) return Forbid();
             var url = "api/Dashboard/Inventario";
-            if (sucursalId.HasValue)
-                url += $"?sucursalId={sucursalId.Value}";
-
+            if (sucursalId.HasValue) url += $"?sucursalId={sucursalId.Value}";
             var result = await _apiClient.GetAsync<object>(url);
             return Json(result);
         }
@@ -86,9 +69,7 @@ namespace Smartadmin.Controllers
         [HttpGet]
         public async Task<IActionResult> Sucursales()
         {
-            if (!User.TienePermiso("Dashboard.Ver"))
-                return Forbid();
-
+            if (!User.TienePermiso("Dashboard.Ver")) return Forbid();
             var result = await _apiClient.GetAsync<object>("api/Sucursales/GetAll");
             return Json(result);
         }

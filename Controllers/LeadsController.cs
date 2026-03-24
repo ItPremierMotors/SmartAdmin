@@ -52,8 +52,8 @@ namespace SmartAdmin.Controllers
                     Ciudad = response.Data.Ciudad,
                     DetalleOrigen = response.Data.DetalleOrigen,
                     VehiculoInteres = response.Data.VehiculoInteres,
-                    PresupuestoEstimado = response.Data.PresupuestoEstimado,
-                    ClienteId = response.Data.ClienteId
+                    TipoVehiculoInteres = response.Data.TipoVehiculoInteres,
+                    PresupuestoEstimado = response.Data.PresupuestoEstimado
                 };
                 return PartialView("_EditPartial", model);
             }
@@ -90,9 +90,11 @@ namespace SmartAdmin.Controllers
         }
 
         [HttpGet]
-        public IActionResult AsignarVendedorPartial(int id)
+        public async Task<IActionResult> AsignarVendedorPartial(int id)
         {
-            return PartialView("_AsignarVendedorPartial", new AsignarVendedorLeadViewModel { LeadId = id });
+            var lead = await leadClient.GetByIdAsync(id);
+            var sucursalId = lead.Data?.SucursalId;
+            return PartialView("_AsignarVendedorPartial", new AsignarVendedorLeadViewModel { LeadId = id, SucursalId = sucursalId });
         }
 
         // ── Endpoints AJAX (proxy a PremierFlow API) ──
@@ -243,5 +245,26 @@ namespace SmartAdmin.Controllers
             var response = await notaClient.DeleteAsync(notaId);
             return StatusCode(response.StatusCode, response);
         }
-    }           
+
+        // ═══ ALERTAS LEADS FRÍOS ═══
+
+        public IActionResult AlertasFrios()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAlertasFrios(int sucursalId)
+        {
+            var result = await leadClient.GetAlertasFriosAsync(sucursalId);
+            return Json(result);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarcarContactado([FromBody] int leadId)
+        {
+            var result = await leadClient.MarcarContactadoAsync(leadId);
+            return Json(result);
+        }
+    }
 }

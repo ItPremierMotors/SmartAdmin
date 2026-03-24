@@ -15,5 +15,7 @@ namespace SmartAdmin.Interfaces.Crm
         Task<ApiResponse<bool>> CalificarAsync(CalificarLeadViewModel model);
         Task<ApiResponse<bool>> DescartarAsync(DescartarLeadViewModel model);
         Task<ApiResponse<bool>> AsignarVendedorAsync(AsignarVendedorLeadViewModel model);
+        Task<ApiResponse<bool>> MarcarContactadoAsync(int leadId);
+        Task<ApiResponse<AlertasLeadsFriosVM>> GetAlertasFriosAsync(int sucursalId);
     }
 }

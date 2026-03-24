@@ -64,5 +64,15 @@ namespace SmartAdmin.Services.Crm
         {
             return await apiClient.PutAsync<bool>("api/leads/AsignarVendedor", model);
         }
+
+        public async Task<ApiResponse<bool>> MarcarContactadoAsync(int leadId)
+        {
+            return await apiClient.PutAsync<bool>($"api/leads/MarcarContactado/{leadId}", new { });
+        }
+
+        public async Task<ApiResponse<AlertasLeadsFriosVM>> GetAlertasFriosAsync(int sucursalId)
+        {
+            return await apiClient.GetAsync<AlertasLeadsFriosVM>($"api/leads/alertas-frios?sucursalId={sucursalId}");
+        }
     }
 }

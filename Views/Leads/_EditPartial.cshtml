@@ -30,11 +30,19 @@
             <label class="form-label">Vehículo de Interés</label>
             <input type="text" class="form-control" id="VehiculoInteres" value="@Model.VehiculoInteres" maxlength="200" />
         </div>
-        <div class="col-md-6">
+        <div class="col-md-3">
+            <label class="form-label">Tipo Vehículo</label>
+            <select class="form-select" id="TipoVehiculoInteres">
+                <option value="">Sin definir</option>
+                <option value="1">Nuevo</option>
+                <option value="2">Usado</option>
+            </select>
+            <script>$('#TipoVehiculoInteres').val('@(Model.TipoVehiculoInteres?.ToString() ?? "")');</script>
+        </div>
+        <div class="col-md-3">
             <label class="form-label">Presupuesto Estimado</label>
             <input type="number" class="form-control" id="PresupuestoEstimado" value="@Model.PresupuestoEstimado" step="0.01" min="0" />
         </div>
-        <input type="hidden" id="ClienteId" value="@Model.ClienteId" />
     </div>
     <hr />
     <div class="d-flex justify-content-end gap-2">

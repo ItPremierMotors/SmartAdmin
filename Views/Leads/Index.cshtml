@@ -1,7 +1,11 @@
 @{
     ViewData["Title"] = "Gestión de Leads";
 }
+
 <div class="container-fluid">
+    <!-- ══════════════════════════════════════════════════════════════
+         HEADER: Título y botón crear
+    ══════════════════════════════════════════════════════════════ -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0"><i class="fas fa-user-tag me-2"></i>@ViewData["Title"]</h1>
         @if (User.TienePermiso("Lead.Crear"))
@@ -14,17 +18,21 @@
 
     <div class="card shadow-sm">
         <div class="card-body">
-            <!-- Filtros -->
+            <!-- ══════════════════════════════════════════════════════════════
+                 FILTROS: Estado, Origen, Tipo Vehículo
+                 EstadoLead: Incompleto(1), Nuevo(2), Contactado(3), Calificado(4), Convertido(5), Descartado(6)
+            ══════════════════════════════════════════════════════════════ -->
             <div class="row g-3 mb-3">
                 <div class="col-md-3">
                     <label class="form-label small text-muted">Estado</label>
                     <select class="form-select form-select-sm" id="filtroEstado">
                         <option value="">Todos</option>
-                        <option value="1">Nuevo</option>
-                        <option value="2">Contactado</option>
-                        <option value="3">Calificado</option>
-                        <option value="4">Convertido</option>
-                        <option value="5">Descartado</option>
+                        <option value="1">Incompleto</option>
+                        <option value="2">Nuevo</option>
+                        <option value="3">Contactado</option>
+                        <option value="4">Calificado</option>
+                        <option value="5">Convertido</option>
+                        <option value="6">Descartado</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -42,13 +50,23 @@
                         <option value="99">Otro</option>
                     </select>
                 </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Tipo Vehículo</label>
+                    <select class="form-select form-select-sm" id="filtroTipoVehiculo">
+                        <option value="">Todos</option>
+                        <option value="1">Nuevo</option>
+                        <option value="2">Usado</option>
+                    </select>
+                </div>
             </div>
 
+            <!-- Loading -->
             <div id="loading" class="text-center py-4">
                 <div class="spinner-border text-primary"></div>
                 <p class="mt-2 text-muted">Cargando leads...</p>
             </div>
 
+            <!-- Tabla de leads -->
             <table class="table table-hover table-sm d-none" id="tabla" style="width:100%">
                 <thead class="table-light">
                     <tr>
@@ -56,8 +74,10 @@
                         <th>Nombre</th>
                         <th>Teléfono</th>
                         <th>Origen</th>
+                        <th>Tipo Veh.</th>
                         <th>Estado</th>
                         <th>Vendedor</th>
+                        <th>Días Inactivo</th>
                         <th>Fecha Ingreso</th>
                         <th class="text-center">Acciones</th>
                     </tr>
@@ -70,59 +90,67 @@
 
 @section Scripts {
 <script>
+    // ══════════════════════════════════════════════════════════════
+    //  CONFIGURACIÓN
+    //  EstadoLead: Incompleto(1), Nuevo(2), Contactado(3), Calificado(4),
+    //              ConvertidoAOportunidad(5), Descartado(6)
+    //  TipoVehiculo: Nuevo(1), Usado(2)
+    // ══════════════════════════════════════════════════════════════
     const PERMISOS = {
-        crear: @Json.Serialize(User.TienePermiso("Lead.Crear")),
-        editar: @Json.Serialize(User.TienePermiso("Lead.Editar")),
+        crear:     @Json.Serialize(User.TienePermiso("Lead.Crear")),
+        editar:    @Json.Serialize(User.TienePermiso("Lead.Editar")),
         calificar: @Json.Serialize(User.TienePermiso("Lead.Editar")),
-        asignar: @Json.Serialize(User.TienePermiso("Lead.Asignar"))
-    };
-    const URLS = {
-        getAll: '@Url.Action("GetAll")',
-        getByEstado: '@Url.Action("GetByEstado")',
-        createPartial: '@Url.Action("CreatePartial")',
-        editPartial: '@Url.Action("EditPartial")',
-        detailPartial: '@Url.Action("DetailPartial")',
-        descartarPartial: '@Url.Action("DescartarPartial")',
-        asignarPartial: '@Url.Action("AsignarVendedorPartial")',
-        create: '@Url.Action("Create")',
-        edit: '@Url.Action("Edit")',
-        calificar: '@Url.Action("Calificar")',
-        descartar: '@Url.Action("Descartar")',
-        asignarVendedor: '@Url.Action("AsignarVendedor")'
+        asignar:   @Json.Serialize(User.TienePermiso("Lead.Asignar"))
     };
 
-    const ESTADOS = { 1: 'Nuevo', 2: 'Contactado', 3: 'Calificado', 4: 'Convertido', 5: 'Descartado' };
-    const ESTADO_COLORS = { 1: 'info', 2: 'primary', 3: 'success', 4: 'secondary', 5: 'danger' };
+    const URLS = {
+        getAll:             '@Url.Action("GetAll")',
+        getByEstado:        '@Url.Action("GetByEstado")',
+        createPartial:      '@Url.Action("CreatePartial")',
+        editPartial:        '@Url.Action("EditPartial")',
+        detailPartial:      '@Url.Action("DetailPartial")',
+        descartarPartial:   '@Url.Action("DescartarPartial")',
+        asignarPartial:     '@Url.Action("AsignarVendedorPartial")',
+        create:             '@Url.Action("Create")',
+        edit:               '@Url.Action("Edit")',
+        calificar:          '@Url.Action("Calificar")',
+        descartar:          '@Url.Action("Descartar")',
+        asignarVendedor:    '@Url.Action("AsignarVendedor")',
+        marcarContactado:   '@Url.Action("MarcarContactado")'
+    };
+
+    // Enums alineados con EnumsDomain.cs
+    const ESTADOS       = { 1: 'Incompleto', 2: 'Nuevo', 3: 'Contactado', 4: 'Calificado', 5: 'Convertido', 6: 'Descartado' };
+    const ESTADO_COLORS = { 1: 'warning', 2: 'info', 3: 'primary', 4: 'success', 5: 'secondary', 6: 'danger' };
+    const TIPO_VEHICULO = { 1: 'Nuevo', 2: 'Usado' };
 
     let dataTable = null;
     let datosOriginales = [];
 
+    // ══════════════════════════════════════════════════════════════
+    //  INICIALIZACIÓN Y CARGA
+    // ══════════════════════════════════════════════════════════════
     $(document).ready(function () {
         cargarDatos();
         if (PERMISOS.crear) $('#btnNuevo').on('click', abrirModalCrear);
-        $('#filtroEstado, #filtroOrigen').on('change', aplicarFiltros);
+        $('#filtroEstado, #filtroOrigen, #filtroTipoVehiculo').on('change', aplicarFiltros);
     });
 
     function cargarDatos() {
-        $.ajax({
-            url: URLS.getAll,
-            type: 'GET',
-            success: function (response) {
-                if (response.success && response.data) {
-                    datosOriginales = response.data;
-                    inicializarDataTable(response.data);
-                } else {
-                    Toast.error('Error al cargar leads');
-                    $('#loading').addClass('d-none');
-                }
-            },
-            error: function () {
-                Toast.error('Error al conectar con el servidor');
-                $('#loading').addClass('d-none');
+        $.get(URLS.getAll, function (r) {
+            if (r.success && r.data) {
+                datosOriginales = r.data;
+                inicializarDataTable(r.data);
+            } else {
+                Toast.error('Error al cargar leads');
             }
-        });
+            $('#loading').addClass('d-none');
+        }).fail(() => { Toast.error('Error al conectar con el servidor'); $('#loading').addClass('d-none'); });
     }
 
+    // ══════════════════════════════════════════════════════════════
+    //  DATATABLE: Columnas con DiasInactivo, TipoVehiculo, MarcarContactado
+    // ══════════════════════════════════════════════════════════════
     function inicializarDataTable(datos) {
         if (dataTable) dataTable.destroy();
 
@@ -132,21 +160,32 @@
                 { data: 'codigoLead' },
                 {
                     data: 'nombreCompleto',
-                    render: function (data, type, row) {
+                    render: (data, type, row) => {
                         let html = `<strong>${data}</strong>`;
-                        if (row.sinContactar) {
-                            html += ` <span class="badge bg-warning" title="Sin contactar"><i class="fas fa-clock"></i></span>`;
-                        }
+                        if (row.sinContactar) html += ` <span class="badge bg-warning" title="Sin contactar"><i class="fas fa-clock"></i></span>`;
                         return html;
                     }
                 },
                 { data: 'telefono', render: d => d || '<span class="text-muted">N/A</span>' },
                 { data: 'origenNombre' },
                 {
+                    data: 'tipoVehiculoInteres',
+                    render: d => d ? `<span class="badge bg-light text-dark">${TIPO_VEHICULO[d] || d}</span>` : '<span class="text-muted">-</span>'
+                },
+                {
                     data: 'estado',
-                    render: (data) => `<span class="badge bg-${ESTADO_COLORS[data] || 'secondary'}">${ESTADOS[data] || data}</span>`
+                    render: d => `<span class="badge bg-${ESTADO_COLORS[d] || 'secondary'}">${ESTADOS[d] || d}</span>`
                 },
                 { data: 'vendedorNombre', render: d => d || '<span class="text-muted">Sin asignar</span>' },
+                {
+                    data: 'diasInactivo',
+                    className: 'text-center',
+                    render: d => {
+                        if (d == null) return '-';
+                        const color = d >= 30 ? 'danger' : d >= 7 ? 'warning' : d >= 3 ? 'info' : 'success';
+                        return `<span class="badge bg-${color}">${d}d</span>`;
+                    }
+                },
                 {
                     data: 'fechaIngreso',
                     render: d => d ? new Date(d).toLocaleDateString('es-HN') : ''
@@ -155,40 +194,13 @@
                     data: 'leadId',
                     orderable: false,
                     className: 'text-center',
-                    render: function (data, type, row) {
-                        let btns = `<div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-info" onclick="abrirDetalle(${data})" title="Ver detalle">
-                                <i class="fas fa-eye"></i>
-                            </button>`;
-                        if (PERMISOS.editar && row.estado <= 3) {
-                            btns += `<button class="btn btn-outline-primary" onclick="abrirModalEditar(${data})" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>`;
-                        }
-                        if (PERMISOS.calificar && row.estado === 2) {
-                            btns += `<button class="btn btn-outline-success" onclick="calificarLead(${data})" title="Calificar">
-                                <i class="fas fa-check"></i>
-                            </button>`;
-                        }
-                        if (PERMISOS.editar && row.estado <= 3) {
-                            btns += `<button class="btn btn-outline-danger" onclick="abrirModalDescartar(${data})" title="Descartar">
-                                <i class="fas fa-times"></i>
-                            </button>`;
-                        }
-                        if (PERMISOS.asignar && row.estado <= 3) {
-                            btns += `<button class="btn btn-outline-warning" onclick="abrirModalAsignar(${data})" title="Asignar vendedor">
-                                <i class="fas fa-user-plus"></i>
-                            </button>`;
-                        }
-                        btns += `</div>`;
-                        return btns;
-                    }
+                    render: (data, type, row) => renderAcciones(data, row)
                 }
             ],
             language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
             pageLength: 10,
             lengthMenu: [5, 10, 25, 50],
-            order: [[6, 'desc']],
+            order: [[8, 'desc']],
             responsive: true
         });
 
@@ -196,30 +208,64 @@
         $('#tabla').removeClass('d-none');
     }
 
+    /** Genera botones de acción según estado y permisos */
+    function renderAcciones(leadId, row) {
+        let btns = `<div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-info" onclick="abrirDetalle(${leadId})" title="Ver detalle"><i class="fas fa-eye"></i></button>`;
+
+        // Solo editable si no está convertido ni descartado
+        const editable = row.estado <= 4;
+
+        if (PERMISOS.editar && editable) {
+            btns += `<button class="btn btn-outline-primary" onclick="abrirModalEditar(${leadId})" title="Editar"><i class="fas fa-edit"></i></button>`;
+        }
+        // MarcarContactado: solo si es Nuevo(2) o Incompleto(1) y sin contactar
+        if (PERMISOS.editar && (row.estado === 1 || row.estado === 2) && row.sinContactar) {
+            btns += `<button class="btn btn-outline-success" onclick="marcarContactado(${leadId})" title="Marcar contactado"><i class="fas fa-phone-alt"></i></button>`;
+        }
+        // Calificar: solo si está Contactado(3)
+        if (PERMISOS.calificar && row.estado === 3) {
+            btns += `<button class="btn btn-outline-success" onclick="calificarLead(${leadId})" title="Calificar"><i class="fas fa-check"></i></button>`;
+        }
+        // Descartar: si no está convertido
+        if (PERMISOS.editar && editable) {
+            btns += `<button class="btn btn-outline-danger" onclick="abrirModalDescartar(${leadId})" title="Descartar"><i class="fas fa-times"></i></button>`;
+        }
+        // Asignar vendedor
+        if (PERMISOS.asignar && editable) {
+            btns += `<button class="btn btn-outline-warning" onclick="abrirModalAsignar(${leadId})" title="Asignar vendedor"><i class="fas fa-user-plus"></i></button>`;
+        }
+
+        return btns + '</div>';
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  FILTROS: Estado, Origen, Tipo Vehículo (lado cliente)
+    // ══════════════════════════════════════════════════════════════
     function aplicarFiltros() {
         const estado = $('#filtroEstado').val();
         const origen = $('#filtroOrigen').val();
+        const tipo   = $('#filtroTipoVehiculo').val();
         let filtrados = [...datosOriginales];
-        if (estado !== '') filtrados = filtrados.filter(l => l.estado == estado);
-        if (origen !== '') filtrados = filtrados.filter(l => l.origen == origen);
+        if (estado) filtrados = filtrados.filter(l => l.estado == estado);
+        if (origen) filtrados = filtrados.filter(l => l.origen == origen);
+        if (tipo)   filtrados = filtrados.filter(l => l.tipoVehiculoInteres == tipo);
         inicializarDataTable(filtrados);
     }
 
     function recargarTabla() {
-        $.ajax({
-            url: URLS.getAll, type: 'GET',
-            success: function (r) {
-                if (r.success && r.data) {
-                    datosOriginales = r.data;
-                    $('#filtroEstado').val('');
-                    $('#filtroOrigen').val('');
-                    inicializarDataTable(r.data);
-                }
+        $.get(URLS.getAll, function (r) {
+            if (r.success && r.data) {
+                datosOriginales = r.data;
+                $('#filtroEstado, #filtroOrigen, #filtroTipoVehiculo').val('');
+                inicializarDataTable(r.data);
             }
         });
     }
 
-    // ── Modales ──
+    // ══════════════════════════════════════════════════════════════
+    //  MODALES
+    // ══════════════════════════════════════════════════════════════
     function abrirModalCrear() {
         AppModal.open({ title: '<i class="fas fa-user-plus me-2"></i>Nuevo Lead', url: URLS.createPartial, size: 'lg' });
     }
@@ -236,15 +282,17 @@
         AppModal.open({ title: '<i class="fas fa-user-plus me-2"></i>Asignar Vendedor', url: URLS.asignarPartial, data: { id }, size: 'md' });
     }
 
-    // ── CRUD ──
+    // ══════════════════════════════════════════════════════════════
+    //  ACCIONES: CRUD + MarcarContactado
+    //  - guardarLead: incluye TipoVehiculoInteres, sin clienteId
+    //  - marcarContactado: cambia estado de Nuevo/Incompleto → Contactado
+    // ══════════════════════════════════════════════════════════════
+
+    /** Crear lead desde modal */
     function guardarLead() {
         const form = document.getElementById('formCrearLead');
-        const btn = document.getElementById('btnGuardarLead');
-        const btnOriginal = btn.innerHTML;
-
         if (!form.checkValidity()) { form.reportValidity(); return; }
-
-        const data = {
+        enviarForm('btnGuardarLead', URLS.create, {
             nombreCompleto: $('#NombreCompleto').val().trim(),
             telefono: $('#Telefono').val()?.trim() || null,
             email: $('#Email').val()?.trim() || null,
@@ -252,34 +300,19 @@
             ciudad: $('#Ciudad').val()?.trim() || null,
             origen: parseInt($('#Origen').val()),
             detalleOrigen: $('#DetalleOrigen').val()?.trim() || null,
-            sucursalId: parseInt($('#SucursalId').val()),
+            sucursalId: $('#SucursalId').val() ? parseInt($('#SucursalId').val()) : null,
             vendedorAsignadoId: $('#VendedorAsignadoId').val() || null,
             vehiculoInteres: $('#VehiculoInteres').val()?.trim() || null,
-            presupuestoEstimado: $('#PresupuestoEstimado').val() ? parseFloat($('#PresupuestoEstimado').val()) : null,
-            clienteId: $('#ClienteId').val() ? parseInt($('#ClienteId').val()) : null
-        };
-
-        $.ajax({
-            url: URLS.create, type: 'POST',
-            contentType: 'application/json', data: JSON.stringify(data),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'),
-            success: function (r) {
-                if (r.success) { AppModal.close(); recargarTabla(); Toast.success(r.message || 'Lead creado'); }
-                else Toast.error(r.message || 'Error al guardar');
-            },
-            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error al guardar'),
-            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
-        });
+            tipoVehiculoInteres: $('#TipoVehiculoInteres').val() ? parseInt($('#TipoVehiculoInteres').val()) : null,
+            presupuestoEstimado: $('#PresupuestoEstimado').val() ? parseFloat($('#PresupuestoEstimado').val()) : null
+        }, () => { AppModal.close(); recargarTabla(); Toast.success('Lead creado'); });
     }
 
+    /** Editar lead desde modal */
     function actualizarLead() {
         const form = document.getElementById('formEditarLead');
-        const btn = document.getElementById('btnActualizarLead');
-        const btnOriginal = btn.innerHTML;
-
         if (!form.checkValidity()) { form.reportValidity(); return; }
-
-        const data = {
+        enviarForm('btnActualizarLead', URLS.edit, {
             leadId: parseInt($('#LeadId').val()),
             nombreCompleto: $('#NombreCompleto').val().trim(),
             telefono: $('#Telefono').val()?.trim() || null,
@@ -288,83 +321,68 @@
             ciudad: $('#Ciudad').val()?.trim() || null,
             detalleOrigen: $('#DetalleOrigen').val()?.trim() || null,
             vehiculoInteres: $('#VehiculoInteres').val()?.trim() || null,
-            presupuestoEstimado: $('#PresupuestoEstimado').val() ? parseFloat($('#PresupuestoEstimado').val()) : null,
-            clienteId: $('#ClienteId').val() ? parseInt($('#ClienteId').val()) : null
-        };
-
-        $.ajax({
-            url: URLS.edit, type: 'POST',
-            contentType: 'application/json', data: JSON.stringify(data),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...'),
-            success: function (r) {
-                if (r.success) { AppModal.close(); recargarTabla(); Toast.success(r.message || 'Lead actualizado'); }
-                else Toast.error(r.message || 'Error al actualizar');
-            },
-            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error al actualizar'),
-            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
-        });
+            tipoVehiculoInteres: $('#TipoVehiculoInteres').val() ? parseInt($('#TipoVehiculoInteres').val()) : null,
+            presupuestoEstimado: $('#PresupuestoEstimado').val() ? parseFloat($('#PresupuestoEstimado').val()) : null
+        }, () => { AppModal.close(); recargarTabla(); Toast.success('Lead actualizado'); });
     }
 
+    /** Marcar lead como contactado (Nuevo/Incompleto → Contactado) */
+    function marcarContactado(leadId) {
+        if (!confirm('¿Marcar este lead como contactado?')) return;
+        postSimple(URLS.marcarContactado, leadId, () => { recargarTabla(); Toast.success('Lead marcado como contactado'); });
+    }
+
+    /** Calificar lead (Contactado → Calificado) */
     function calificarLead(leadId) {
         if (!confirm('¿Calificar este lead?')) return;
-        $.ajax({
-            url: URLS.calificar, type: 'POST',
-            contentType: 'application/json', data: JSON.stringify({ leadId, clienteId: null }),
-            success: function (r) {
-                if (r.success) { recargarTabla(); Toast.success(r.message || 'Lead calificado'); }
-                else Toast.error(r.message || 'Error');
-            },
-            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error')
-        });
+        postSimple(URLS.calificar, { leadId }, () => { recargarTabla(); Toast.success('Lead calificado'); });
     }
 
+    /** Descartar lead con motivo */
     function descartarLead() {
         const form = document.getElementById('formDescartarLead');
-        const btn = document.getElementById('btnDescartarLead');
-        const btnOriginal = btn.innerHTML;
-
         if (!form.checkValidity()) { form.reportValidity(); return; }
-
-        const data = {
+        enviarForm('btnDescartarLead', URLS.descartar, {
             leadId: parseInt($('#DescartarLeadId').val()),
             motivo: $('#Motivo').val().trim()
-        };
+        }, () => { AppModal.close(); recargarTabla(); Toast.success('Lead descartado'); });
+    }
 
+    /** Asignar vendedor a lead */
+    function asignarVendedor() {
+        const form = document.getElementById('formAsignarVendedor');
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+        enviarForm('btnAsignarVendedor', URLS.asignarVendedor, {
+            leadId: parseInt($('#AsignarLeadId').val()),
+            vendedorId: $('#VendedorId').val()
+        }, () => { AppModal.close(); recargarTabla(); Toast.success('Vendedor asignado'); });
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  HELPERS: Funciones reutilizables para AJAX
+    // ══════════════════════════════════════════════════════════════
+
+    /** POST con botón de loading */
+    function enviarForm(btnId, url, data, onSuccess) {
+        const btn = document.getElementById(btnId);
+        const btnOriginal = btn.innerHTML;
         $.ajax({
-            url: URLS.descartar, type: 'POST',
+            url, type: 'POST',
             contentType: 'application/json', data: JSON.stringify(data),
             beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...'),
-            success: function (r) {
-                if (r.success) { AppModal.close(); recargarTabla(); Toast.success(r.message || 'Lead descartado'); }
-                else Toast.error(r.message || 'Error');
-            },
-            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error'),
+            success: r => { if (r.success) onSuccess(r); else Toast.error(r.message || 'Error'); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error'),
             complete: () => $(btn).prop('disabled', false).html(btnOriginal)
         });
     }
 
-    function asignarVendedor() {
-        const form = document.getElementById('formAsignarVendedor');
-        const btn = document.getElementById('btnAsignarVendedor');
-        const btnOriginal = btn.innerHTML;
-
-        if (!form.checkValidity()) { form.reportValidity(); return; }
-
-        const data = {
-            leadId: parseInt($('#AsignarLeadId').val()),
-            vendedorId: $('#VendedorId').val()
-        };
-
+    /** POST simple sin botón de loading */
+    function postSimple(url, data, onSuccess) {
         $.ajax({
-            url: URLS.asignarVendedor, type: 'POST',
+            url, type: 'POST',
             contentType: 'application/json', data: JSON.stringify(data),
-            beforeSend: () => $(btn).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Asignando...'),
-            success: function (r) {
-                if (r.success) { AppModal.close(); recargarTabla(); Toast.success(r.message || 'Vendedor asignado'); }
-                else Toast.error(r.message || 'Error');
-            },
-            error: (xhr) => Toast.error(xhr.responseJSON?.message || 'Error'),
-            complete: () => $(btn).prop('disabled', false).html(btnOriginal)
+            success: r => { if (r.success) onSuccess(r); else Toast.error(r.message || 'Error'); },
+            error: xhr => Toast.error(xhr.responseJSON?.message || 'Error')
         });
     }
 </script>
